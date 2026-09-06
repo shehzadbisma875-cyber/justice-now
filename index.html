@@ -1,0 +1,2335 @@
+v<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Justice Now</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<!-- =========================
+     TOP HEADER
+========================= -->
+
+<header id="appHeader" class="app-header hidden">
+
+    <div class="header-brand">
+        
+        <strong>JUSTICE NOW</strong>
+    </div>
+
+    <div class="header-actions">
+
+        <button id="liveChatTopButton" class="top-button">
+            💬 Live Chat
+        </button>
+
+        <div class="menu-wrapper">
+
+            <button id="threeDotsButton" class="three-dots">
+                ⋮
+            </button>
+
+            <div id="mainMenu" class="main-menu hidden">
+
+                <!-- THEME -->
+                <div class="menu-item expandable">
+                    <button class="menu-main" data-menu="theme">
+                        <span>🌙 Light / Dark Mode</span>
+                        <span>⌄</span>
+                    </button>
+
+                    <div id="themeMenu" class="submenu hidden">
+                        <button id="lightModeButton">☀️ Light Mode</button>
+                        <button id="darkModeButton">🌙 Dark Mode</button>
+                    </div>
+                </div>
+
+
+                <!-- LANGUAGE -->
+                <div class="menu-item expandable">
+                    <button class="menu-main" data-menu="language">
+                        <span>🌐 Language</span>
+                        <span>⌄</span>
+                    </button>
+
+                    <div id="languageMenu" class="submenu hidden">
+                        <button class="language-option" data-language="en">
+                            English
+                        </button>
+
+                        <button class="language-option" data-language="ur">
+                            اردو
+                        </button>
+                    </div>
+                </div>
+
+
+                <!-- SETTINGS -->
+                <div class="menu-item">
+                    <button id="settingsButton" class="menu-main">
+                        <span>⚙️ Settings</span>
+                        <span>›</span>
+                    </button>
+                </div>
+
+
+                <!-- LOGOUT -->
+                <div class="menu-item">
+                    <button id="logoutButton" class="menu-main">
+                        <span>🚪 Log Out</span>
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</header>
+
+
+
+<!-- =========================
+     SIGN IN PAGE
+========================= -->
+
+<section id="signinPage" class="page active auth-page">
+
+    <div class="auth-card">
+
+        <div class="justice-logo">
+
+    <div class="justice-symbol">⚖️</div>
+
+   
+
+</div>
+
+        <h1>Justice Now</h1>
+
+        <p class="tagline">
+            Your Rights. Your Voice. Your Justice.
+        </p>
+
+        <h2>Sign In</h2>
+
+        <form id="signinForm">
+
+            <label>Full Name</label>
+
+            <input
+                type="text"
+                id="fullName"
+                placeholder="Enter your full name"
+                required
+            >
+
+
+            <label>Email / Phone</label>
+
+            <input
+                type="text"
+                id="email"
+                placeholder="Enter email or phone"
+                required
+            >
+
+
+            <label>Password</label>
+
+            <div class="password-box">
+
+                <input
+                    type="password"
+                    id="password"
+                    placeholder="Enter password"
+                    required
+                >
+
+                <button
+                    type="button"
+                    id="togglePassword"
+                    class="eye-button"
+                >
+                    👁
+                </button>
+
+            </div>
+
+
+            <button
+                type="button"
+                id="forgotPasswordButton"
+                class="text-button"
+            >
+                Forgot Password?
+            </button>
+
+
+            <button
+                type="submit"
+                class="main-button"
+            >
+                Sign In
+            </button>
+
+        </form>
+
+        <p id="signinMessage"></p>
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================
+     FORGOT PASSWORD
+========================= -->
+
+<section id="forgotPage" class="page auth-page">
+
+    <div class="auth-card">
+
+        <button class="simple-back" id="forgotBackButton">
+            ← Back
+        </button>
+
+        <div class="large-logo">🔐</div>
+
+        <h1>Reset Password</h1>
+
+        <p>
+            Enter your email and create a new password.
+        </p>
+
+        <label>Email</label>
+
+        <input
+            type="email"
+            id="resetEmail"
+            placeholder="Enter your email"
+        >
+
+
+        <label>New Password</label>
+
+        <input
+            type="password"
+            id="newPassword"
+            placeholder="Enter new password"
+        >
+
+
+        <label>Confirm Password</label>
+
+        <input
+            type="password"
+            id="confirmPassword"
+            placeholder="Confirm new password"
+        >
+
+
+        <button id="resetPasswordButton" class="main-button">
+            Reset Password
+        </button>
+
+        <p id="resetMessage"></p>
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================
+     WELCOME PAGE
+========================= -->
+
+<section id="welcomePage" class="page">
+
+    <div class="welcome-card">
+<div class="justice-logo">
+
+    <div class="justice-symbol">⚖️</div>
+
+   
+
+</div>
+
+        <h1>Welcome to Justice Now</h1>
+
+        <p class="welcome-description">
+            Justice Now helps people access emergency support,
+            report cases, manage evidence, track cases and receive
+            simple guidance.
+        </p>
+
+
+        <div class="help-grid">
+
+            <div class="help-card">
+                <span>🚨</span>
+                <h3>Emergency Help</h3>
+                <p>Quick access to emergency assistance.</p>
+            </div>
+
+
+            <div class="help-card">
+                <span>📝</span>
+                <h3>Report a Case</h3>
+                <p>Record important incident information.</p>
+            </div>
+
+
+            <div class="help-card">
+                <span>🔐</span>
+                <h3>Evidence Vault</h3>
+                <p>Protect and manage important evidence.</p>
+            </div>
+
+
+            <div class="help-card">
+                <span>🤖</span>
+                <h3>AI Guides</h3>
+                <p>Get simple guidance about your situation.</p>
+            </div>
+
+        </div>
+
+
+        <button id="getStartedButton" class="main-button">
+            Get Started →
+        </button>
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================
+     HOME PAGE
+========================= -->
+
+<section id="homePage" class="page">
+
+    <div class="home-container">
+
+        <div class="home-title">
+
+           <div class="justice-logo">
+
+    <div class="justice-symbol">⚖️</div>
+
+    
+</div>
+
+            <h1>JUSTICE NOW</h1>
+
+            <p>How can I help you?</p>
+
+            <small>Select an option to continue</small>
+
+        </div>
+
+
+        <div class="feature-grid home-features">
+
+
+            <button id="dangerButton" class="feature-button">
+
+                <span class="feature-icon">🚨</span>
+
+                <div>
+                    <strong>I'm in Danger</strong>
+                    <small>Emergency assistance</small>
+                </div>
+
+            </button>
+
+
+            <button id="reportCaseButton" class="feature-button">
+
+                <span class="feature-icon">📝</span>
+
+                <div>
+                    <strong>Report a Case</strong>
+                    <small>Report an incident</small>
+                </div>
+
+            </button>
+
+
+            <button id="myCaseButton" class="feature-button">
+
+                <span class="feature-icon">📂</span>
+
+                <div>
+                    <strong>My Case</strong>
+                    <small>Track your cases</small>
+                </div>
+
+            </button>
+
+
+            <button id="evidenceButton" class="feature-button">
+
+                <span class="feature-icon">🔐</span>
+
+                <div>
+                    <strong>Evidence Vault</strong>
+                    <small>Private evidence storage</small>
+                </div>
+
+            </button>
+
+
+            <button id="aiGuidesButton" class="feature-button">
+
+                <span class="feature-icon">🤖</span>
+
+                <div>
+                    <strong>AI Guides</strong>
+                    <small>Ask about your situation</small>
+                </div>
+
+            </button>
+
+
+            <button id="justiceHubButton" class="feature-button">
+
+                <span class="feature-icon">🏛️</span>
+
+                <div>
+                    <strong>Justice Hub</strong>
+                    <small>Useful tools and resources</small>
+                </div>
+
+            </button>
+
+
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================
+     I'M IN DANGER
+========================= -->
+
+<section id="dangerPage" class="page">
+
+    <div class="danger-layout">
+
+        <div class="page-top">
+
+            <div>
+                <button id="dangerBackButton" class="back-button">
+                    ← Home
+                </button>
+
+                <h1>🚨 I'm in Danger</h1>
+
+                <p>Quick emergency assistance</p>
+            </div>
+
+        </div>
+
+
+        <div class="danger-grid">
+
+
+            <!-- LEFT -->
+
+            <div class="danger-left">
+
+
+                <div class="danger-panel">
+
+                    <h2>📞 Emergency Call</h2>
+
+                    <p>Search any emergency service or contact.</p>
+
+                    <input
+                        id="emergencySearch"
+                        placeholder="Search emergency service..."
+                    >
+
+                    <div id="emergencyResults"></div>
+
+                </div>
+
+
+
+                <div class="danger-panel">
+
+                    <div class="panel-heading">
+
+                        <div>
+                            <h2>👥 Trusted Contacts</h2>
+
+                            <p>Add and contact people you trust.</p>
+                        </div>
+
+                    </div>
+
+
+                    <div class="contact-form">
+
+                        <input
+                            id="contactName"
+                            placeholder="Contact name"
+                        >
+
+                        <input
+                            id="contactPhone"
+                            placeholder="Phone number"
+                        >
+
+                        <button id="addContactButton">
+                            + Add Contact
+                        </button>
+
+                    </div>
+
+
+                    <div id="contactsList"></div>
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- RIGHT -->
+
+            <div class="danger-right">
+
+
+                <div class="danger-panel location-panel">
+
+                    <h2>📍 Live Location</h2>
+
+                    <p>
+                        Share your location with trusted contacts.
+                    </p>
+
+                    <div class="location-visual">
+                        <div class="location-circle">📍</div>
+                        <div>👤</div>
+                        <div>👮</div>
+                        <div>🚑</div>
+                    </div>
+
+                    <button id="shareLocationButton" class="location-button">
+                        📍 Share Live Location
+                    </button>
+
+                    <p id="locationMessage"></p>
+
+                </div>
+
+
+
+                <div class="danger-panel sos-panel">
+
+                    <h2>🆘 Send SOS Alert</h2>
+
+                    <p>
+                        Alert your trusted contacts quickly.
+                    </p>
+
+                    <button id="sosButton" class="sos-button">
+                        🚨 SEND SOS ALERT
+                    </button>
+
+                    <p id="sosMessage"></p>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================
+     REPORT A CASE
+========================= -->
+
+<section id="reportPage" class="page">
+
+    <div class="report-card">
+
+        <button id="reportBackButton" class="simple-back">
+            ← Home
+        </button>
+
+
+        <h1>📝 Report a Case</h1>
+
+        <p class="small-description">
+            Your voice matters. Provide the information you know.
+        </p>
+
+
+        <div class="form-section-title">
+            <span>1</span>
+            <div>
+                <strong>Case Information</strong>
+                <small>Tell us what happened</small>
+            </div>
+        </div>
+
+
+        <label>Case Title *</label>
+
+        <input
+            id="caseTitle"
+            placeholder="Enter short case title"
+        >
+
+
+        <label>Incident Type *</label>
+
+        <select id="incidentType">
+
+            <option value="">Select incident type</option>
+            <option>Harassment</option>
+            <option>Violence</option>
+            <option>Theft</option>
+            <option>Fraud</option>
+            <option>Cybercrime</option>
+            <option>Domestic Violence</option>
+            <option>Child Safety</option>
+            <option>Other</option>
+
+        </select>
+
+
+        <div class="two-column">
+
+            <div>
+
+                <label>Date of Incident</label>
+
+                <input
+                    type="date"
+                    id="incidentDate"
+                >
+
+            </div>
+
+
+            <div>
+
+                <label>Time of Incident</label>
+
+                <input
+                    type="time"
+                    id="incidentTime"
+                >
+
+            </div>
+
+        </div>
+
+
+        <label>Location of Incident</label>
+
+        <div class="location-input">
+
+            <input
+                id="incidentLocation"
+                placeholder="Enter location or address"
+            >
+
+            <button id="useCurrentLocationButton">
+                📍 Use Current Location
+            </button>
+
+        </div>
+
+
+        <label>Detailed Description *</label>
+
+        <textarea
+            id="caseDescription"
+            placeholder="Describe what happened in detail..."
+        ></textarea>
+
+
+        <label>Upload Evidence (Optional)</label>
+
+        <input
+            type="file"
+            id="reportEvidence"
+            multiple
+        >
+
+
+        <button id="saveCaseButton" class="main-button">
+            Save Case
+        </button>
+
+
+        <p id="reportMessage"></p>
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================
+     MY CASE
+========================= -->
+
+<section id="myCasePage" class="page">
+
+    <div class="app-container">
+
+        <div class="page-header">
+
+            <div>
+
+                <h1>📂 My Cases</h1>
+
+                <p>Track your reported cases.</p>
+
+            </div>
+
+
+            <button id="myCaseBackButton" class="back-button">
+                ← Home
+            </button>
+
+        </div>
+
+
+        <div class="case-filter-buttons">
+
+            <button class="case-filter active-filter" data-filter="All">
+                All
+            </button>
+
+            <button class="case-filter" data-filter="Open">
+                🟢 Open
+            </button>
+
+            <button class="case-filter" data-filter="Pending">
+                🟡 Pending
+            </button>
+
+            <button class="case-filter" data-filter="Closed">
+                🔴 Closed
+            </button>
+
+        </div>
+
+
+        <div id="caseSummaryArea"></div>
+
+
+        <div class="digital-protest-section">
+
+            <h2>📢 Digital Protest</h2>
+
+            <p>
+                Share your opinion about a case.
+            </p>
+
+
+            <select id="protestCaseSelect">
+                <option value="">Select a case</option>
+            </select>
+
+
+            <textarea
+                id="protestComment"
+                placeholder="Write your opinion or comment..."
+            ></textarea>
+
+
+            <button id="addProtestButton" class="main-button">
+                Post Comment
+            </button>
+
+
+            <div id="protestList"></div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================
+     EVIDENCE VAULT
+========================= -->
+
+<section id="evidencePage" class="page">
+
+    <div class="app-container evidence-container">
+
+        <div class="page-header">
+
+            <div>
+
+                <h1>🔐 Evidence Vault</h1>
+
+                <p>
+                    Store your evidence privately.
+                </p>
+
+            </div>
+
+
+            <button id="evidenceBackButton" class="back-button">
+                ← Home
+            </button>
+
+        </div>
+
+
+        <div class="evidence-actions">
+
+            <button id="startCameraButton" class="camera-button">
+                📷 Open Camera
+            </button>
+
+            <button id="stopCameraButton" class="danger-small-button">
+                ⏹ Stop Camera
+            </button>
+
+            <button id="capturePhotoButton" class="main-button">
+                📸 Capture Photo
+            </button>
+
+        </div>
+
+
+        <div id="cameraArea" class="camera-area hidden">
+
+            <video
+                id="cameraVideo"
+                autoplay
+                playsinline
+            ></video>
+
+            <canvas id="cameraCanvas"></canvas>
+
+        </div>
+
+<!-- Native Mobile Camera Trigger -->
+<input type="file" accept="image/*" capture="environment" id="cameraInput" />
+        <label class="upload-label">
+            📁 Choose Files / Pictures / Videos
+
+            <input
+                type="file"
+                id="evidenceFile"
+                accept="image/*,video/*,.pdf,.doc,.docx"
+                multiple
+            >
+
+        </label>
+
+
+        <div id="evidenceList"></div>
+
+
+        <div class="sharing-box">
+
+            <h2>🔒 Evidence Access</h2>
+
+            <p>
+                By default, your evidence remains private.
+            </p>
+
+
+            <label>
+                Share with Trusted Person
+            </label>
+
+            <select id="trustedEvidenceSelect">
+                <option value="">
+                    Do not share
+                </option>
+            </select>
+
+
+            <label>
+                Share with Lawyer
+            </label>
+
+            <input
+                id="lawyerName"
+                placeholder="Enter lawyer name"
+            >
+
+
+            <button id="saveEvidenceButton" class="main-button">
+                Save Evidence Access Settings
+            </button>
+
+        </div>
+
+
+        <p id="evidenceMessage"></p>
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================
+     AI GUIDES
+========================= -->
+
+<section id="aiGuidesPage" class="page">
+
+    <div class="ai-container">
+
+        <div class="page-header">
+
+            <div>
+
+                <h1>🤖 AI Guides</h1>
+
+                <p>
+                    Ask about your situation in English or Urdu.
+                </p>
+
+            </div>
+
+
+            <button id="aiBackButton" class="back-button">
+                ← Home
+            </button>
+
+        </div>
+
+
+        <div class="ai-search-box">
+
+            <label>
+                Ask your question
+            </label>
+
+
+            <textarea
+                id="aiQuestion"
+                placeholder="Example: Someone is threatening me. What should I do?"
+            ></textarea>
+
+
+            <div class="ai-controls">
+
+                <select id="aiLanguageSelect">
+
+                    <option value="en">
+                        English
+                    </option>
+
+                    <option value="ur">
+                        اردو
+                    </option>
+
+                </select>
+
+
+                <button id="voiceSearchButton">
+                    🎤 Speak
+                </button>
+
+            </div>
+
+
+            <button id="askAiButton" class="ai-ask-button">
+                🤖 Ask AI Guides
+            </button>
+
+        </div>
+
+
+        <div id="aiAnswerBox" class="ai-answer-box">
+
+            <h2>🤖 Simple Guidance</h2>
+
+            <p>
+                Ask a question to receive guidance based on your topic.
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+
+
+<!-- =========================
+     JUSTICE HUB
+========================= -->
+
+<section id="justiceHubPage" class="page">
+
+    <div class="app-container">
+
+        <div class="page-header">
+
+            <div>
+                <h1 data-i18n="justiceHubTitle">
+                    🏛️ Justice Hub
+                </h1>
+
+                <p data-i18n="justiceHubDescription">
+                    Useful justice tools and resources.
+                </p>
+            </div>
+
+            <button
+                id="justiceHubBackButton"
+                class="back-button"
+                type="button"
+            >
+                ← Home
+            </button>
+
+        </div>
+
+
+        <div class="hub-list">
+
+
+            <!-- 1 HEARING REMINDER -->
+
+            <div class="hub-item">
+
+                <button
+                    class="hub-header"
+                    type="button"
+                >
+                    <span data-i18n="hearingReminder">
+                        1. 📅 Hearing & Deadline Reminder
+                    </span>
+
+                    <span class="hub-arrow">⌄</span>
+                </button>
+
+
+                <div class="hub-content hidden">
+
+                    <p data-i18n="hearingReminderText">
+                        Add hearing dates and important case deadlines.
+                    </p>
+
+
+                    <input
+                        type="text"
+                        id="reminderTitle"
+                        placeholder="Hearing or deadline title"
+                    >
+
+
+                    <input
+                        type="date"
+                        id="reminderDate"
+                    >
+
+
+                    <select id="reminderTime">
+
+                        <option value="same">
+                            Same day
+                        </option>
+
+                        <option value="1day">
+                            1 day before
+                        </option>
+
+                        <option value="3days">
+                            3 days before
+                        </option>
+
+                        <option value="1week">
+                            1 week before
+                        </option>
+
+                    </select>
+
+
+                    <button
+                        id="saveReminderButton"
+                        class="main-button"
+                        type="button"
+                    >
+                        Save Reminder
+                    </button>
+
+
+                    <div
+                        id="reminderList"
+                        class="hub-result-list"
+                    ></div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- 2 CASE TIMELINE -->
+
+            <div class="hub-item">
+
+                <button
+                    class="hub-header"
+                    type="button"
+                >
+                    <span data-i18n="caseTimeline">
+                        2. 🗺️ Case Timeline
+                    </span>
+
+                    <span class="hub-arrow">⌄</span>
+                </button>
+
+
+                <div class="hub-content hidden">
+
+                    <p>
+                        View and add important events in your case.
+                    </p>
+
+
+                    <input
+                        type="text"
+                        id="timelineEvent"
+                        placeholder="Enter case event"
+                    >
+
+
+                    <button
+                        id="addTimelineButton"
+                        class="main-button"
+                        type="button"
+                    >
+                        Add Event
+                    </button>
+
+
+                    <div
+                        id="timelineList"
+                        class="hub-result-list"
+                    ></div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- 3 DOCUMENT SCANNER -->
+
+            <div class="hub-item">
+
+                <button
+                    class="hub-header"
+                    type="button"
+                >
+                    <span data-i18n="documentScanner">
+                        3. 📄 Document Scanner
+                    </span>
+
+                    <span class="hub-arrow">⌄</span>
+                </button>
+
+
+                <div class="hub-content hidden">
+
+                    <p>
+                        Scan or select important documents.
+                    </p>
+
+
+                    <button
+                        id="openDocumentCameraButton"
+                        class="main-button"
+                        type="button"
+                    >
+                        📷 Scan with Camera
+                    </button>
+
+
+                    <button
+                        id="captureDocumentButton"
+                        class="main-button hidden"
+                        type="button"
+                    >
+                        📸 Capture Document
+                    </button>
+
+
+                    <button
+                        id="stopDocumentCameraButton"
+                        class="main-button hidden"
+                        type="button"
+                    >
+                        ⏹ Stop Camera
+                    </button>
+
+
+                    <video
+                        id="documentCameraVideo"
+                        class="hub-camera hidden"
+                        autoplay
+                        playsinline
+                    ></video>
+
+
+                    <canvas
+                        id="documentCanvas"
+                        class="hidden"
+                    ></canvas>
+
+
+                    <img
+                        id="documentPreview"
+                        class="hub-preview hidden"
+                        alt="Document preview"
+                    >
+
+
+                    <label
+                        class="upload-label"
+                        for="documentFileInput"
+                    >
+                        📁 Select Image / Document
+
+                        <input
+                            type="file"
+                            id="documentFileInput"
+                            accept="image/*,.pdf,.doc,.docx"
+                            multiple
+                        >
+                    </label>
+
+
+                    <div
+                        id="documentFileList"
+                        class="hub-result-list"
+                    ></div>
+
+
+                    <button
+                        id="saveDocumentToEvidenceButton"
+                        class="main-button"
+                        type="button"
+                    >
+                        🔐 Save to Evidence Vault
+                    </button>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- 4 VOICE REPORT -->
+
+            <div class="hub-item">
+
+                <button
+                    class="hub-header"
+                    type="button"
+                >
+                    <span data-i18n="voiceReport">
+                        4. 🎙️ Voice Report
+                    </span>
+
+                    <span class="hub-arrow">⌄</span>
+                </button>
+
+
+                <div class="hub-content hidden">
+
+                    <p>
+                        Speak your report instead of typing.
+                    </p>
+
+
+                    <select id="voiceReportLanguage">
+
+                        <option value="en-US">
+                            English
+                        </option>
+
+                        <option value="ur-PK">
+                            اردو
+                        </option>
+
+                    </select>
+
+
+                    <button
+                        id="startVoiceReportButton"
+                        class="main-button"
+                        type="button"
+                    >
+                        🎙️ Start Voice Report
+                    </button>
+
+
+                    <button
+                        id="stopVoiceReportButton"
+                        class="main-button hidden"
+                        type="button"
+                    >
+                        ⏹ Stop
+                    </button>
+
+
+                    <textarea
+                        id="voiceReportText"
+                        placeholder="Your spoken report will appear here..."
+                    ></textarea>
+
+
+                    <button
+                        id="clearVoiceReportButton"
+                        class="main-button"
+                        type="button"
+                    >
+                        🗑 Delete Report
+                    </button>
+
+
+                    <button
+                        id="sendVoiceReportButton"
+                        class="main-button"
+                        type="button"
+                    >
+                        📝 Add to Report a Case
+                    </button>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- 5 QUICK EXIT -->
+
+            <div class="hub-item">
+
+                <button
+                    class="hub-header"
+                    type="button"
+                >
+                    <span data-i18n="quickExit">
+                        5. 🔐 Quick Exit / Privacy Mode
+                    </span>
+
+                    <span class="hub-arrow">⌄</span>
+                </button>
+
+
+                <div class="hub-content hidden">
+
+                    <p>
+                        Quickly leave a sensitive page.
+                    </p>
+
+
+                    <button
+                        id="quickExitButton"
+                        class="main-button"
+                        type="button"
+                    >
+                        🚪 Quick Exit
+                    </button>
+
+
+                    <button
+                        id="privacyModeButton"
+                        class="main-button"
+                        type="button"
+                    >
+                        👁 Hide Sensitive Screen
+                    </button>
+
+
+                    <button
+                        id="normalScreenButton"
+                        class="main-button"
+                        type="button"
+                    >
+                        🖥 Normal Screen
+                    </button>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- 6 SMART NOTIFICATIONS -->
+
+            <div class="hub-item">
+
+                <button
+                    class="hub-header"
+                    type="button"
+                >
+                    <span data-i18n="smartNotifications">
+                        6. 🔔 Smart Notifications
+                    </span>
+
+                    <span class="hub-arrow">⌄</span>
+                </button>
+
+
+                <div class="hub-content hidden">
+
+                    <p>
+                        Choose which important alerts you want to receive.
+                    </p>
+
+
+                    <label>
+                        <input
+                            type="checkbox"
+                            class="smart-notification"
+                            value="lawyer"
+                        >
+                        New lawyer message
+                    </label>
+
+
+                    <label>
+                        <input
+                            type="checkbox"
+                            class="smart-notification"
+                            value="case"
+                        >
+                        New case update
+                    </label>
+
+
+                    <label>
+                        <input
+                            type="checkbox"
+                            class="smart-notification"
+                            value="hearing"
+                        >
+                        Hearing reminder
+                    </label>
+
+
+                    <label>
+                        <input
+                            type="checkbox"
+                            class="smart-notification"
+                            value="trusted"
+                        >
+                        Trusted contact alert
+                    </label>
+
+
+                    <label>
+                        <input
+                            type="checkbox"
+                            class="smart-notification"
+                            value="evidence"
+                        >
+                        Evidence sharing request
+                    </label>
+
+
+                    <label>
+                        <input
+                            type="checkbox"
+                            class="smart-notification"
+                            value="ai"
+                        >
+                        AI Guides answer notification
+                    </label>
+
+
+                    <button
+                        id="saveSmartNotificationsButton"
+                        class="main-button"
+                        type="button"
+                    >
+                        Save Notification Settings
+                    </button>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- 7 ANONYMOUS REPORT -->
+
+            <div class="hub-item">
+
+                <button
+                    class="hub-header"
+                    type="button"
+                >
+                    <span data-i18n="anonymousReport">
+                        7. 🕵️ Anonymous Report
+                    </span>
+
+                    <span class="hub-arrow">⌄</span>
+                </button>
+
+
+                <div class="hub-content hidden">
+
+                    <p>
+                        Choose whether your identity should be visible.
+                    </p>
+
+
+                    <label>
+                        <input
+                            type="radio"
+                            name="anonymousMode"
+                            value="show"
+                            checked
+                        >
+                        👤 Show my identity
+                    </label>
+
+
+                    <label>
+                        <input
+                            type="radio"
+                            name="anonymousMode"
+                            value="hide"
+                        >
+                        🕵️ Hide my identity
+                    </label>
+
+
+                    <button
+                        id="saveAnonymousSettingButton"
+                        class="main-button"
+                        type="button"
+                    >
+                        Save Choice
+                    </button>
+
+
+                    <p id="anonymousStatus"></p>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- 8 LAWYER CONSULTATION -->
+
+            <div class="hub-item">
+
+                <button
+                    class="hub-header"
+                    type="button"
+                >
+                    <span data-i18n="lawyerConsultation">
+                        8. 🤝 Lawyer Consultation Request
+                    </span>
+
+                    <span class="hub-arrow">⌄</span>
+                </button>
+
+
+                <div class="hub-content hidden">
+
+                    <p>
+                        Request a lawyer consultation.
+                    </p>
+
+
+                    <input
+                        type="text"
+                        id="consultationCaseType"
+                        placeholder="Case type"
+                    >
+
+
+                    <input
+                        type="text"
+                        id="consultationCity"
+                        placeholder="City"
+                    >
+
+
+                    <select id="consultationLanguage">
+
+                        <option value="">
+                            Preferred language
+                        </option>
+
+                        <option value="English">
+                            English
+                        </option>
+
+                        <option value="Urdu">
+                            اردو
+                        </option>
+
+                    </select>
+
+
+                    <select id="consultationType">
+
+                        <option value="">
+                            Select consultation type
+                        </option>
+
+                        <option value="Online">
+                            Online consultation
+                        </option>
+
+                        <option value="In-person">
+                            In-person consultation
+                        </option>
+
+                    </select>
+
+
+                    <button
+                        id="sendConsultationRequestButton"
+                        class="main-button"
+                        type="button"
+                    >
+                        ⚖️ Send Request
+                    </button>
+
+
+                    <p id="consultationStatus"></p>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- 9 MY JUSTICE DASHBOARD -->
+
+            <div class="hub-item">
+
+                <button
+                    class="hub-header"
+                    type="button"
+                >
+                    <span data-i18n="justiceDashboard">
+                        9. 📊 My Justice Dashboard
+                    </span>
+
+                    <span class="hub-arrow">⌄</span>
+                </button>
+
+
+                <div class="hub-content hidden">
+
+                    <div class="justice-dashboard">
+
+                        <p>
+                            🟢 Open Cases:
+                            <strong id="dashboardOpenCases">0</strong>
+                        </p>
+
+
+                        <p>
+                            🟡 Pending Cases:
+                            <strong id="dashboardPendingCases">0</strong>
+                        </p>
+
+
+                        <p>
+                            🔴 Closed Cases:
+                            <strong id="dashboardClosedCases">0</strong>
+                        </p>
+
+
+                        <p>
+                            📁 Evidence Files:
+                            <strong id="dashboardEvidenceFiles">0</strong>
+                        </p>
+
+
+                        <p>
+                            🗓️ Upcoming Hearings:
+                            <strong id="dashboardHearings">0</strong>
+                        </p>
+
+                    </div>
+
+
+                    <button
+                        id="refreshJusticeDashboardButton"
+                        class="main-button"
+                        type="button"
+                    >
+                        🔄 Refresh Dashboard
+                    </button>
+
+ <!-- 10 Free Legal Aids -->
+ <div class="hub-item">
+
+                <button
+                    class="hub-header"
+                    type="button"
+                    <span data-i18n="">
+                        10. 📊 Free Legal Help
+                    </span>
+
+                    <span class="help-arrow">⌄</span>
+                </button>
+
+
+
+
+ <div class="hub-content hidden"></div>
+
+        <div>
+            <h2>Free Legal Aid</h2>
+
+            <p>
+                Find free legal assistance in Pakistan
+            </p>
+        </div>
+
+    </div>
+
+
+    <div class="legal-aid-container">
+
+
+        <!-- INTRO -->
+        <div class="legal-aid-card">
+
+            <div class="legal-aid-icon">
+                ⚖️
+            </div>
+
+            <h3>
+                Free Legal Assistance
+            </h3>
+
+            <p>
+                Select your province, district and tehsil
+                to find available verified legal-aid
+                assistance.
+            </p>
+
+        </div>
+
+
+        <!-- LOCATION -->
+        <div class="legal-aid-card">
+
+            <h3>
+                📍 Select Your Location
+            </h3>
+
+
+            <label>
+                Province
+            </label>
+
+            <select
+                id="provinceSelect"
+                onchange="loadDistricts()">
+
+                <option value="">
+                    Select Province
+                </option>
+
+                <option value="Punjab">
+                    Punjab
+                </option>
+
+                <option value="Sindh">
+                    Sindh
+                </option>
+
+                <option value="Khyber Pakhtunkhwa">
+                    Khyber Pakhtunkhwa
+                </option>
+
+                <option value="Balochistan">
+                    Balochistan
+                </option>
+
+                <option value="Islamabad Capital Territory">
+                    Islamabad Capital Territory
+                </option>
+
+                <option value="Gilgit-Baltistan">
+                    Gilgit-Baltistan
+                </option>
+
+                <option value="Azad Jammu and Kashmir">
+                    Azad Jammu and Kashmir
+                </option>
+
+            </select>
+
+
+            <label>
+                District
+            </label>
+
+            <select
+                id="districtSelect"
+                onchange="loadTehsils()"
+                disabled>
+
+                <option value="">
+                    Select District
+                </option>
+
+            </select>
+
+
+            <label>
+                Tehsil
+            </label>
+
+            <select
+                id="tehsilSelect"
+                onchange="showLegalAidContact()"
+                disabled>
+
+                <option value="">
+                    Select Tehsil
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <!-- CONTACT RESULT -->
+
+        <div
+            id="legalAidResult"
+            class="legal-aid-result hidden">
+
+            <div class="result-icon">
+                ⚖️
+            </div>
+
+            <h3>
+                Free Legal Aid Contact
+            </h3>
+
+            <p id="aidLocation"></p>
+
+            <p id="aidProvider"></p>
+
+            <p id="aidContact"></p>
+
+            <button
+                id="aidCallButton"
+                class="call-btn">
+
+                📞 Call Now
+
+            </button>
+
+        </div>
+
+
+        <!-- NATIONAL OPTIONS -->
+
+        <div class="legal-aid-card">
+
+            <h3>
+                🇵🇰 Nationwide Legal Assistance
+            </h3>
+
+            <p>
+                If a specific local contact is not
+                available, you can contact these
+                verified nationwide services.
+            </p>
+
+
+            <div class="national-contact">
+
+                <strong>
+                    Ministry of Human Rights
+                </strong>
+
+                <span>
+                    📞 1099
+                </span>
+
+                <button
+                    onclick="callNumber('1099')">
+
+                    Call 1099
+
+                </button>
+
+            </div>
+
+
+            <div class="national-contact">
+
+                <strong>
+                    Legal Aid & Justice Authority
+                </strong>
+
+                <span>
+                    📞 051-9201790
+                </span>
+
+                <button
+                    onclick="callNumber('0519201790')">
+
+                    Call LAJA
+
+                </button>
+
+            </div>
+
+
+            <div class="national-contact">
+
+                <strong>
+                    Sindh Legal Advisory Call Center
+                </strong>
+
+                <span>
+                    📞 0800-70806
+                </span>
+
+                <button
+                    onclick="callNumber('080070806')">
+
+                    Call SLACC
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+</section>
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================
+     LIVE CHAT
+========================= -->
+
+<section id="liveChatPage" class="page">
+
+    <div class="chat-container">
+
+        <div class="page-header">
+
+            <div>
+
+                <h1>💬 Live Chat</h1>
+
+                <p>
+                    Chat privately or create a group.
+                </p>
+
+            </div>
+
+
+            <button id="chatBackButton" class="back-button">
+                ← Home
+            </button>
+
+        </div>
+
+
+        <div class="chat-create-group">
+
+            <input
+                id="groupName"
+                placeholder="Group name"
+            >
+
+            <input
+                id="groupMembers"
+                placeholder="Members separated by commas"
+            >
+
+            <button id="createGroupButton" class="main-button">
+                Create Group
+            </button>
+
+        </div>
+
+
+        <div id="groupList"></div>
+
+
+        <div class="chat-box">
+
+            <div id="chatMessages" class="chat-messages"></div>
+
+
+            <div class="chat-input-row">
+
+                <input
+                    id="chatMessageInput"
+                    placeholder="Write a message..."
+                >
+
+                <button id="sendMessageButton">
+                    Send
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================
+     SETTINGS
+========================= -->
+
+<section id="settingsPage" class="page">
+
+    <div class="settings-container">
+
+        <div class="page-header">
+
+            <div>
+                <h1>⚙️ Settings</h1>
+                <p>Manage your app preferences.</p>
+            </div>
+
+            <button id="settingsBackButton" class="back-button">
+                ← Home
+            </button>
+
+        </div>
+
+
+        <!-- 1 -->
+
+        <div class="setting-item">
+
+            <button class="setting-header">
+                👤 Account <span>⌄</span>
+            </button>
+
+            <div class="setting-content hidden">
+
+                <input id="accountNameSetting" placeholder="Edit profile name">
+
+                <input id="accountPhoneSetting" placeholder="Phone / Email">
+
+                <button id="saveAccountSettings">
+                    Save Account
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- 2 -->
+
+        <div class="setting-item">
+
+            <button class="setting-header">
+                🔔 Notifications <span>⌄</span>
+            </button>
+
+            <div class="setting-content hidden">
+
+                <label>
+                    <input type="checkbox" id="notificationsToggle">
+                    Enable notifications
+                </label>
+
+                <label>
+                    <input type="checkbox" id="emergencyNotificationsToggle">
+                    Emergency alerts
+                </label>
+
+            </div>
+
+        </div>
+
+
+        <!-- 3 -->
+
+        <div class="setting-item">
+
+            <button class="setting-header">
+                🌐 Language <span>⌄</span>
+            </button>
+
+            <div class="setting-content hidden">
+
+                <button class="settings-language" data-language="en">
+                    English
+                </button>
+
+                <button class="settings-language" data-language="ur">
+                    اردو
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- 4 -->
+
+        <div class="setting-item">
+
+            <button class="setting-header">
+                🤖 AI Settings <span>⌄</span>
+            </button>
+
+            <div class="setting-content hidden">
+
+                <label>
+                    AI Response Style
+                </label>
+
+                <select id="aiStyleSetting">
+
+                    <option>Simple</option>
+                    <option>Detailed</option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+
+        <!-- 5 -->
+
+        <div class="setting-item">
+
+            <button class="setting-header">
+                🎨 Appearance <span>⌄</span>
+            </button>
+
+            <div class="setting-content hidden">
+
+                <button id="settingsLightMode">
+                    ☀️ Light Mode
+                </button>
+
+                <button id="settingsDarkMode">
+                    🌙 Dark Mode
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- 6 -->
+
+        <div class="setting-item">
+
+            <button class="setting-header">
+                ♿ Accessibility <span>⌄</span>
+            </button>
+
+            <div class="setting-content hidden">
+
+                <label>
+                    Text Size
+                </label>
+
+                <input
+                    type="range"
+                    id="fontSizeSlider"
+                    min="12"
+                    max="26"
+                    value="16"
+                >
+
+                <span id="fontSizeValue">
+                    16px
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- 7 -->
+
+        <div class="setting-item">
+
+            <button class="setting-header">
+                🔐 Privacy & Security <span>⌄</span>
+            </button>
+
+            <div class="setting-content hidden">
+
+                <label>
+                    <input type="checkbox" id="privacyLock">
+                    Enable privacy lock
+                </label>
+
+                <label>
+                    <input type="checkbox" id="locationPermission">
+                    Allow location access
+                </label>
+
+            </div>
+
+        </div>
+
+
+        <!-- 8 -->
+
+        <div class="setting-item">
+
+            <button class="setting-header">
+                📦 Data & Storage <span>⌄</span>
+            </button>
+
+            <div class="setting-content hidden">
+
+                <button id="clearAppDataButton">
+                    Clear Local App Data
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- 9 -->
+
+        <div class="setting-item">
+
+            <button class="setting-header">
+                🆘 Help & Support <span>⌄</span>
+            </button>
+
+            <div class="setting-content hidden">
+
+                <button id="faqButton">
+                    FAQs
+                </button>
+
+                <button id="contactSupportButton">
+                    Contact Support
+                </button>
+
+                <button id="reportProblemButton">
+                    Report a Problem
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- 10 -->
+
+        <div class="setting-item">
+
+            <button class="setting-header">
+                ℹ️ About Justice Now <span>⌄</span>
+            </button>
+
+            <div class="setting-content hidden">
+
+                <p>
+                    Justice Now is designed to help users access
+                    emergency tools, organize evidence, report cases,
+                    track case information and receive general guidance.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- 11 -->
+
+        <div class="setting-item">
+
+            <button class="setting-header">
+                🚪 Account Actions <span>⌄</span>
+            </button>
+
+            <div class="setting-content hidden">
+
+                <button id="settingsLogoutButton">
+                    Log Out
+                </button>
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+</section>
+
+
+
+<script src="script.js"></script>
+
+</body>
+</html>
