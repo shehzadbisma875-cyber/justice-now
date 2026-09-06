@@ -5386,3 +5386,25 @@ changeLanguage(
 ========================================== */
 
 showPage("signin");
+// Sign in validation logic
+const signinForm = document.getElementById('signinForm');
+const signinMessage = document.getElementById('signinMessage');
+
+if (signinForm) {
+    signinForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const email = document.querySelector('#signinForm input[type="email"]').value;
+        const password = document.querySelector('#signinForm input[type="password"]').value;
+
+        if (email !== "user@example.com" || password !== "123456") {
+            signinMessage.textContent = "Invalid email or password";
+            signinMessage.style.color = "red";
+            signinMessage.style.marginTop = "10px";
+        } else {
+            signinMessage.textContent = "Sign in successful!";
+            signinMessage.style.color = "green";
+            signinMessage.style.marginTop = "10px";
+        }
+    });
+}
