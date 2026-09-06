@@ -1883,4 +1883,25 @@ select:focus {
 .home-logo .justice-logo-text p {
     font-size: 11px;
 }
+.about-section {
+  max-width: 400px;
+  margin: 20px auto;
+  padding: 15px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  text-align: center;
+  color: #0a192f; /* Navy Blue color theme */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
 
+.about-section h2 {
+  font-size: 1.2rem;
+  margin-bottom: 8px;
+  color: #0a192f;
+}
+
+.about-section p {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #555555;
+}
