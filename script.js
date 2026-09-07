@@ -5408,3 +5408,11 @@ if (signinForm) {
         }
     });
 }
+// URL Hash check to show proper section on page load
+window.addEventListener("DOMContentLoaded", function () {
+    if (window.location.hash === "#signin" || window.location.hash === "") {
+        if (typeof showPage === "function") {
+            showPage("signin");
+        }
+    }
+});
