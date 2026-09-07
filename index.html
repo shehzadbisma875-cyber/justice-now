@@ -1,177 +1,256 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Justice Now</title>
-  <link rel="stylesheet" href="style.css">
-  <style>
-    /* Sab pages default mein hide rahenge */
-    .view-page {
-      display: none;
-    }
-    /* Sirf pehla page open hoga */
-    #page-landing {
-      display: block;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Justice Now</title>
+
+    <link rel="stylesheet" href="style.css">
 </head>
-<body style="margin: 0; padding: 0; background-color: #0a192f; font-family: sans-serif; color: white;">
 
-  <!-- TOP HEADER NAVIGATION -->
-  <header style="background-color: #0a192f; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1a365d;">
-    <div onclick="showPage('landing')" style="font-size: 1.4rem; font-weight: bold; color: #00e6a8; cursor: pointer;">⚖️ Justice Now</div>
-    
-    <nav style="display: flex; align-items: center; gap: 20px; font-size: 0.95rem;">
-      <a href="javascript:void(0)" onclick="showPage('signin')" style="color: white; text-decoration: none; font-weight: bold;">Sign In</a>
-      <a href="javascript:void(0)" onclick="showPage('privacy')" style="color: white; text-decoration: none;">Privacy Policy</a>
-      <a href="javascript:void(0)" onclick="showPage('terms')" style="color: white; text-decoration: none;">Terms & Conditions</a>
-      <a href="javascript:void(0)" onclick="showPage('contact')" style="color: white; text-decoration: none;">Contact Us</a>
-    </nav>
-  </header>
+<body>
+<!-- =========================================================
+     FIRST PAGE - ABOUT JUSTICE NOW
+========================================================= -->
 
-  <!-- ==================== 1. MAIN LANDING PAGE (SAB SE PEHLE SIRF YEH DIKHE GA) ==================== -->
-  <div id="page-landing" class="view-page">
-    <section style="max-width: 1000px; margin: 40px auto; padding: 0 20px;">
-      
-      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
-        <div style="max-width: 500px;">
-          <h1 style="font-size: 3rem; margin-bottom: 10px; font-weight: 800;">About <br><span style="color: #00e6a8;">Justice Now</span></h1>
-          <p style="color: #00e6a8; font-weight: 600; font-size: 1.1rem; margin-bottom: 20px;">Your Rights. Your Voice. Your Justice.</p>
-          <p style="color: #e2e8f0; line-height: 1.6;">Justice Now is dedicated to providing quick, easy and accessible legal and safety support resources for everyone.</p>
-          <p style="color: #e2e8f0; line-height: 1.6; margin-top: 10px;">We aim to empower individuals by connecting them with useful legal information, emergency support and trusted resources.</p>
-        </div>
-        <div>
-          <div style="width: 240px; height: 240px; border-radius: 50%; border: 2px solid #00e6a8; display: flex; justify-content: center; align-items: center; background: #0f2b48;">
-            <span style="font-size: 90px;">⚖️</span>
-          </div>
-        </div>
-      </div>
+<section id="aboutIntroPage" class="about-intro-page active">
 
-      <div style="margin-top: 50px;">
-        <h2 style="color: #00e6a8; border-left: 4px solid #00e6a8; padding-left: 10px; font-size: 1.4rem; margin-bottom: 20px;">Legal Guides & Consumer Awareness</h2>
-        
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px;">
-          <div style="background: #0f2b48; border: 1px solid #1a365d; border-radius: 8px; padding: 20px;">
-            <span style="background: #00e6a8; color: black; padding: 2px 8px; border-radius: 50%; font-weight: bold; font-size: 0.8rem;">1</span>
-            <div style="font-size: 30px; margin: 10px 0;">⚖️</div>
-            <h3 style="font-size: 1.05rem; margin-bottom: 8px;">Fundamental Rights</h3>
-            <p style="color: #a0aec0; font-size: 0.85rem; line-height: 1.4;">Learn about basic constitutional rights and legal protections in simple language.</p>
-          </div>
+    <div class="about-intro-container">
 
-          <div style="background: #0f2b48; border: 1px solid #1a365d; border-radius: 8px; padding: 20px;">
-            <span style="background: #00e6a8; color: black; padding: 2px 8px; border-radius: 50%; font-weight: bold; font-size: 0.8rem;">2</span>
-            <div style="font-size: 30px; margin: 10px 0;">🛒</div>
-            <h3 style="font-size: 1.05rem; margin-bottom: 8px;">Consumer Complaints</h3>
-            <p style="color: #a0aec0; font-size: 0.85rem; line-height: 1.4;">General steps for raising a consumer court complaint and managing documentation.</p>
-          </div>
+        <!-- TOP NAVIGATION -->
+        <div class="about-top-nav">
 
-          <div style="background: #0f2b48; border: 1px solid #1a365d; border-radius: 8px; padding: 20px;">
-            <span style="background: #00e6a8; color: black; padding: 2px 8px; border-radius: 50%; font-weight: bold; font-size: 0.8rem;">3</span>
-            <div style="font-size: 30px; margin: 10px 0;">📄</div>
-            <h3 style="font-size: 1.05rem; margin-bottom: 8px;">Legal Documentation</h3>
-            <p style="color: #a0aec0; font-size: 0.85rem; line-height: 1.4;">Understand essential affidavits, contracts, and legal documentation procedures.</p>
-          </div>
+            <div class="about-brand">
+                <span class="about-brand-icon">⚖️</span>
+                <strong>Justice <span>Now</span></strong>
+            </div>
 
-          <div style="background: #0f2b48; border: 1px solid #00e6a8; border-radius: 8px; padding: 20px;">
-            <span style="background: #00e6a8; color: black; padding: 2px 8px; border-radius: 50%; font-weight: bold; font-size: 0.8rem;">4</span>
-            <div style="font-size: 30px; margin: 10px 0;">🌐</div>
-            <h3 style="font-size: 1.05rem; margin-bottom: 8px;">Online Support</h3>
-            <p style="color: #a0aec0; font-size: 0.85rem; line-height: 1.4;">Explore digital legal resources, portals, and emergency support directories.</p>
-          </div>
-        </div>
-      </div>
+            <div class="about-nav-links">
 
-    </section>
-  </div>
+                <button id="aboutSignInButton">
+                    Sign In
+                </button>
 
-  <!-- ==================== 2. SIGN IN PAGE (SIRF SIGN IN CLICK KRNE PAR AYEGA) ==================== -->
-  <div id="page-signin" class="view-page" style="padding: 60px 20px;">
-    <section style="max-width: 380px; margin: 0 auto; background: #0f2b48; padding: 35px; border-radius: 12px; border: 1px solid #1a365d;">
-      <div style="text-align: center; margin-bottom: 25px;">
-        <h2 style="color: #00e6a8; margin-bottom: 5px;">Sign In</h2>
-        <p style="color: #a0aec0; font-size: 0.85rem;">Sign in to access your account</p>
-      </div>
+                <button id="privacyTopButton">
+                    Privacy Policy
+                </button>
 
-      <form onsubmit="handleSignInSubmit(event)" style="display: flex; flex-direction: column; gap: 18px;">
-        <div>
-          <label style="font-size: 0.85rem; color: #cbd5e0;">Email / Phone</label>
-          <input type="text" placeholder="Enter email or phone" required style="width: 100%; padding: 12px; margin-top: 6px; border-radius: 6px; border: 1px solid #1a365d; background: #0a192f; color: white; box-sizing: border-box;">
+                <button id="termsTopButton">
+                    Terms & Conditions
+                </button>
+
+                <button id="contactTopButton">
+                    Contact Us
+                </button>
+
+            </div>
+
         </div>
 
-        <div>
-          <label style="font-size: 0.85rem; color: #cbd5e0;">Password</label>
-          <input type="password" placeholder="Enter password" required style="width: 100%; padding: 12px; margin-top: 6px; border-radius: 6px; border: 1px solid #1a365d; background: #0a192f; color: white; box-sizing: border-box;">
+
+        <!-- ABOUT HERO -->
+        <div class="about-hero">
+
+            <div class="about-hero-text">
+
+                <h1>
+                    About
+                    <br>
+                    Justice <span>Now</span>
+                </h1>
+
+                <p class="about-tagline">
+                    Your Rights. Your Voice. Your Justice.
+                </p>
+
+                <p>
+                    Justice Now is dedicated to providing quick,
+                    easy and accessible legal and safety support
+                    resources for everyone.
+                </p>
+
+                <p>
+                    We aim to empower individuals by connecting
+                    them with useful legal information, emergency
+                    support and trusted resources.
+                </p>
+
+            </div>
+
+
+            <div class="about-hero-icon">
+                ⚖️
+            </div>
+
         </div>
 
-        <button type="submit" style="background: #00e6a8; color: #0a192f; border: none; padding: 14px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 1rem; margin-top: 10px;">Sign In</button>
-      </form>
-    </section>
-  </div>
 
-  <!-- ==================== 3. NEXT PAGE (SIGN IN PROCESS KE BAAD KHULE GA) ==================== -->
-  <div id="page-dashboard" class="view-page" style="padding: 60px 20px; text-align: center;">
-    <section style="max-width: 800px; margin: 0 auto; background: #0f2b48; padding: 40px; border-radius: 12px; border: 1px solid #00e6a8;">
-      <div style="font-size: 60px; margin-bottom: 15px;">🎉</div>
-      <h1 style="color: #00e6a8; margin-bottom: 10px;">Welcome to Justice Now Dashboard!</h1>
-      <p style="color: #cbd5e0; font-size: 1.1rem;">Aap ka Sign In kamyab ho gaya hai.</p>
-      <button onclick="showPage('landing')" style="margin-top: 20px; background: #ff6600; color: white; border: none; padding: 10px 22px; border-radius: 6px; cursor: pointer; font-weight: bold;">Logout</button>
-    </section>
-  </div>
+        <!-- LEGAL GUIDES -->
+        <div class="guides-section">
 
-  <!-- ==================== 4. PRIVACY POLICY PAGE ==================== -->
-  <div id="page-privacy" class="view-page" style="max-width: 800px; margin: 40px auto; padding: 30px; background: #ffffff; color: #333; border-radius: 8px;">
-    <h2>Privacy Policy</h2>
-    <p style="color: #555; line-height: 1.6; margin-top: 15px;">At Justice Now, accessible from our website, one of our main priorities is the privacy of our visitors.</p>
-  </div>
+            <div class="guides-title">
 
-  <!-- ==================== 5. TERMS & CONDITIONS PAGE ==================== -->
-  <div id="page-terms" class="view-page" style="max-width: 800px; margin: 40px auto; padding: 30px; background: #ffffff; color: #333; border-radius: 8px;">
-    <h2>Terms & Conditions</h2>
-    <p style="color: #555; line-height: 1.6; margin-top: 15px;">Welcome to Justice Now! These terms and conditions outline the rules and regulations for the use of Justice Now's Website.</p>
-  </div>
+                <span></span>
 
-  <!-- ==================== 6. CONTACT US PAGE ==================== -->
-  <div id="page-contact" class="view-page" style="max-width: 800px; margin: 40px auto; padding: 30px; background: #ffffff; color: #333; border-radius: 8px;">
-    <h2>Contact Us</h2>
-    <p style="color: #555; line-height: 1.6; margin-top: 15px;">If you have any questions or concerns, feel free to reach out to us:</p>
-    <p style="margin-top: 10px;"><strong>Email:</strong> amir.fj001@gmail.com</p>
-    <p><strong>Location:</strong> Pakistan</p>
-  </div>
+                <h2>
+                    Legal Guides & Consumer Awareness
+                </h2>
 
-  <!-- FOOTER -->
-  <footer style="text-align: center; margin-top: 60px; padding: 20px 0; font-size: 0.85rem; color: #ffffff; border-top: 1px solid #1a365d;">
-    <a href="javascript:void(0)" onclick="showPage('privacy')" style="color: #ffffff; margin: 0 10px; text-decoration: none;">Privacy Policy</a> |
-    <a href="javascript:void(0)" onclick="showPage('terms')" style="color: #ffffff; margin: 0 10px; text-decoration: none;">Terms & Conditions</a> |
-    <a href="javascript:void(0)" onclick="showPage('contact')" style="color: #ffffff; margin: 0 10px; text-decoration: none;">Contact Us</a>
-    <span style="color: #718096; margin-left: 15px;">© Justice Now</span>
-  </footer>
+            </div>
 
-  <!-- SCRIPT FOR SWITCHING PAGES -->
-  <script>
-    function showPage(pageId) {
-      // 1. Saare pages hide kar do
-      var pages = document.querySelectorAll('.view-page');
-      pages.forEach(function(p) {
-        p.style.display = 'none';
-      });
 
-      // 2. Sirf select kia hua page show karo
-      var target = document.getElementById('page-' + pageId);
-      if (target) {
-        target.style.display = 'block';
-      }
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+            <div class="guide-grid">
 
-    function handleSignInSubmit(event) {
-      event.preventDefault();
-      // Sign In submit hone par next page (Dashboard) par jayega
-      showPage('dashboard');
-    }
-  </script>
-</body>
-</html>
+
+                <!-- GUIDE 1 -->
+                <button
+                    class="guide-card"
+                    id="guideRightsButton"
+                    type="button"
+                >
+
+                    <div class="guide-number">1</div>
+
+                    <div class="guide-icon">
+                        ⚖️
+                    </div>
+
+                    <h3>
+                        Fundamental
+                        Constitutional Rights
+                    </h3>
+
+                    <p>
+                        Learn about important basic
+                        constitutional rights and protections
+                        in simple language.
+                    </p>
+
+                    <span class="guide-arrow">›</span>
+
+                </button>
+
+
+                <!-- GUIDE 2 -->
+                <button
+                    class="guide-card"
+                    id="guideConsumerButton"
+                    type="button"
+                >
+
+                    <div class="guide-number">2</div>
+
+                    <div class="guide-icon">
+                        🛒
+                    </div>
+
+                    <h3>
+                        How to File Consumer
+                        Rights Complaint
+                    </h3>
+
+                    <p>
+                        Learn the general steps for raising
+                        a consumer complaint and keeping
+                        supporting documents.
+                    </p>
+
+                    <span class="guide-arrow">›</span>
+
+                </button>
+
+
+                <!-- GUIDE 3 -->
+                <button
+                    class="guide-card"
+                    id="guideDocumentsButton"
+                    type="button"
+                >
+
+                    <div class="guide-number">3</div>
+
+                    <div class="guide-icon">
+                        📄
+                    </div>
+
+                    <h3>
+                        Understanding Legal
+                        Documentation & Advice
+                    </h3>
+
+                    <p>
+                        Understand common legal documents
+                        and why professional legal advice
+                        may be needed.
+                    </p>
+
+                    <span class="guide-arrow">›</span>
+
+                </button>
+
+
+                <!-- GUIDE 4 -->
+                <button
+                    class="guide-card"
+                    id="guideDigitalButton"
+                    type="button"
+                >
+
+                    <div class="guide-number">4</div>
+
+                    <div class="guide-icon">
+                        🌐
+                    </div>
+
+                    <h3>
+                        Digital Legal Resources
+                        & Support
+                    </h3>
+
+                    <p>
+                        Explore useful digital legal resources,
+                        emergency support and verified
+                        assistance options.
+                    </p>
+
+                    <span class="guide-arrow">›</span>
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- FOOTER -->
+        <div class="about-footer">
+
+            <button id="privacyFooterButton">
+                Privacy Policy
+            </button>
+
+            <span>|</span>
+
+            <button id="termsFooterButton">
+                Terms & Conditions
+            </button>
+
+            <span>|</span>
+
+            <button id="contactFooterButton">
+                Contact Us
+            </button>
+
+            <span class="footer-copy">
+                © Justice Now
+            </span>
+
+        </div>
+
+    </div>
+
+</section>
 <!-- =========================
      TOP HEADER
 ========================= -->
