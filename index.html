@@ -1,16 +1,177 @@
-v<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Justice Now</title>
-
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Justice Now</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Sab pages default mein hide rahenge */
+    .view-page {
+      display: none;
+    }
+    /* Sirf pehla page open hoga */
+    #page-landing {
+      display: block;
+    }
+  </style>
 </head>
+<body style="margin: 0; padding: 0; background-color: #0a192f; font-family: sans-serif; color: white;">
 
-<body>
+  <!-- TOP HEADER NAVIGATION -->
+  <header style="background-color: #0a192f; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1a365d;">
+    <div onclick="showPage('landing')" style="font-size: 1.4rem; font-weight: bold; color: #00e6a8; cursor: pointer;">⚖️ Justice Now</div>
+    
+    <nav style="display: flex; align-items: center; gap: 20px; font-size: 0.95rem;">
+      <a href="javascript:void(0)" onclick="showPage('signin')" style="color: white; text-decoration: none; font-weight: bold;">Sign In</a>
+      <a href="javascript:void(0)" onclick="showPage('privacy')" style="color: white; text-decoration: none;">Privacy Policy</a>
+      <a href="javascript:void(0)" onclick="showPage('terms')" style="color: white; text-decoration: none;">Terms & Conditions</a>
+      <a href="javascript:void(0)" onclick="showPage('contact')" style="color: white; text-decoration: none;">Contact Us</a>
+    </nav>
+  </header>
 
+  <!-- ==================== 1. MAIN LANDING PAGE (SAB SE PEHLE SIRF YEH DIKHE GA) ==================== -->
+  <div id="page-landing" class="view-page">
+    <section style="max-width: 1000px; margin: 40px auto; padding: 0 20px;">
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+        <div style="max-width: 500px;">
+          <h1 style="font-size: 3rem; margin-bottom: 10px; font-weight: 800;">About <br><span style="color: #00e6a8;">Justice Now</span></h1>
+          <p style="color: #00e6a8; font-weight: 600; font-size: 1.1rem; margin-bottom: 20px;">Your Rights. Your Voice. Your Justice.</p>
+          <p style="color: #e2e8f0; line-height: 1.6;">Justice Now is dedicated to providing quick, easy and accessible legal and safety support resources for everyone.</p>
+          <p style="color: #e2e8f0; line-height: 1.6; margin-top: 10px;">We aim to empower individuals by connecting them with useful legal information, emergency support and trusted resources.</p>
+        </div>
+        <div>
+          <div style="width: 240px; height: 240px; border-radius: 50%; border: 2px solid #00e6a8; display: flex; justify-content: center; align-items: center; background: #0f2b48;">
+            <span style="font-size: 90px;">⚖️</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 50px;">
+        <h2 style="color: #00e6a8; border-left: 4px solid #00e6a8; padding-left: 10px; font-size: 1.4rem; margin-bottom: 20px;">Legal Guides & Consumer Awareness</h2>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px;">
+          <div style="background: #0f2b48; border: 1px solid #1a365d; border-radius: 8px; padding: 20px;">
+            <span style="background: #00e6a8; color: black; padding: 2px 8px; border-radius: 50%; font-weight: bold; font-size: 0.8rem;">1</span>
+            <div style="font-size: 30px; margin: 10px 0;">⚖️</div>
+            <h3 style="font-size: 1.05rem; margin-bottom: 8px;">Fundamental Rights</h3>
+            <p style="color: #a0aec0; font-size: 0.85rem; line-height: 1.4;">Learn about basic constitutional rights and legal protections in simple language.</p>
+          </div>
+
+          <div style="background: #0f2b48; border: 1px solid #1a365d; border-radius: 8px; padding: 20px;">
+            <span style="background: #00e6a8; color: black; padding: 2px 8px; border-radius: 50%; font-weight: bold; font-size: 0.8rem;">2</span>
+            <div style="font-size: 30px; margin: 10px 0;">🛒</div>
+            <h3 style="font-size: 1.05rem; margin-bottom: 8px;">Consumer Complaints</h3>
+            <p style="color: #a0aec0; font-size: 0.85rem; line-height: 1.4;">General steps for raising a consumer court complaint and managing documentation.</p>
+          </div>
+
+          <div style="background: #0f2b48; border: 1px solid #1a365d; border-radius: 8px; padding: 20px;">
+            <span style="background: #00e6a8; color: black; padding: 2px 8px; border-radius: 50%; font-weight: bold; font-size: 0.8rem;">3</span>
+            <div style="font-size: 30px; margin: 10px 0;">📄</div>
+            <h3 style="font-size: 1.05rem; margin-bottom: 8px;">Legal Documentation</h3>
+            <p style="color: #a0aec0; font-size: 0.85rem; line-height: 1.4;">Understand essential affidavits, contracts, and legal documentation procedures.</p>
+          </div>
+
+          <div style="background: #0f2b48; border: 1px solid #00e6a8; border-radius: 8px; padding: 20px;">
+            <span style="background: #00e6a8; color: black; padding: 2px 8px; border-radius: 50%; font-weight: bold; font-size: 0.8rem;">4</span>
+            <div style="font-size: 30px; margin: 10px 0;">🌐</div>
+            <h3 style="font-size: 1.05rem; margin-bottom: 8px;">Online Support</h3>
+            <p style="color: #a0aec0; font-size: 0.85rem; line-height: 1.4;">Explore digital legal resources, portals, and emergency support directories.</p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </div>
+
+  <!-- ==================== 2. SIGN IN PAGE (SIRF SIGN IN CLICK KRNE PAR AYEGA) ==================== -->
+  <div id="page-signin" class="view-page" style="padding: 60px 20px;">
+    <section style="max-width: 380px; margin: 0 auto; background: #0f2b48; padding: 35px; border-radius: 12px; border: 1px solid #1a365d;">
+      <div style="text-align: center; margin-bottom: 25px;">
+        <h2 style="color: #00e6a8; margin-bottom: 5px;">Sign In</h2>
+        <p style="color: #a0aec0; font-size: 0.85rem;">Sign in to access your account</p>
+      </div>
+
+      <form onsubmit="handleSignInSubmit(event)" style="display: flex; flex-direction: column; gap: 18px;">
+        <div>
+          <label style="font-size: 0.85rem; color: #cbd5e0;">Email / Phone</label>
+          <input type="text" placeholder="Enter email or phone" required style="width: 100%; padding: 12px; margin-top: 6px; border-radius: 6px; border: 1px solid #1a365d; background: #0a192f; color: white; box-sizing: border-box;">
+        </div>
+
+        <div>
+          <label style="font-size: 0.85rem; color: #cbd5e0;">Password</label>
+          <input type="password" placeholder="Enter password" required style="width: 100%; padding: 12px; margin-top: 6px; border-radius: 6px; border: 1px solid #1a365d; background: #0a192f; color: white; box-sizing: border-box;">
+        </div>
+
+        <button type="submit" style="background: #00e6a8; color: #0a192f; border: none; padding: 14px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 1rem; margin-top: 10px;">Sign In</button>
+      </form>
+    </section>
+  </div>
+
+  <!-- ==================== 3. NEXT PAGE (SIGN IN PROCESS KE BAAD KHULE GA) ==================== -->
+  <div id="page-dashboard" class="view-page" style="padding: 60px 20px; text-align: center;">
+    <section style="max-width: 800px; margin: 0 auto; background: #0f2b48; padding: 40px; border-radius: 12px; border: 1px solid #00e6a8;">
+      <div style="font-size: 60px; margin-bottom: 15px;">🎉</div>
+      <h1 style="color: #00e6a8; margin-bottom: 10px;">Welcome to Justice Now Dashboard!</h1>
+      <p style="color: #cbd5e0; font-size: 1.1rem;">Aap ka Sign In kamyab ho gaya hai.</p>
+      <button onclick="showPage('landing')" style="margin-top: 20px; background: #ff6600; color: white; border: none; padding: 10px 22px; border-radius: 6px; cursor: pointer; font-weight: bold;">Logout</button>
+    </section>
+  </div>
+
+  <!-- ==================== 4. PRIVACY POLICY PAGE ==================== -->
+  <div id="page-privacy" class="view-page" style="max-width: 800px; margin: 40px auto; padding: 30px; background: #ffffff; color: #333; border-radius: 8px;">
+    <h2>Privacy Policy</h2>
+    <p style="color: #555; line-height: 1.6; margin-top: 15px;">At Justice Now, accessible from our website, one of our main priorities is the privacy of our visitors.</p>
+  </div>
+
+  <!-- ==================== 5. TERMS & CONDITIONS PAGE ==================== -->
+  <div id="page-terms" class="view-page" style="max-width: 800px; margin: 40px auto; padding: 30px; background: #ffffff; color: #333; border-radius: 8px;">
+    <h2>Terms & Conditions</h2>
+    <p style="color: #555; line-height: 1.6; margin-top: 15px;">Welcome to Justice Now! These terms and conditions outline the rules and regulations for the use of Justice Now's Website.</p>
+  </div>
+
+  <!-- ==================== 6. CONTACT US PAGE ==================== -->
+  <div id="page-contact" class="view-page" style="max-width: 800px; margin: 40px auto; padding: 30px; background: #ffffff; color: #333; border-radius: 8px;">
+    <h2>Contact Us</h2>
+    <p style="color: #555; line-height: 1.6; margin-top: 15px;">If you have any questions or concerns, feel free to reach out to us:</p>
+    <p style="margin-top: 10px;"><strong>Email:</strong> amir.fj001@gmail.com</p>
+    <p><strong>Location:</strong> Pakistan</p>
+  </div>
+
+  <!-- FOOTER -->
+  <footer style="text-align: center; margin-top: 60px; padding: 20px 0; font-size: 0.85rem; color: #ffffff; border-top: 1px solid #1a365d;">
+    <a href="javascript:void(0)" onclick="showPage('privacy')" style="color: #ffffff; margin: 0 10px; text-decoration: none;">Privacy Policy</a> |
+    <a href="javascript:void(0)" onclick="showPage('terms')" style="color: #ffffff; margin: 0 10px; text-decoration: none;">Terms & Conditions</a> |
+    <a href="javascript:void(0)" onclick="showPage('contact')" style="color: #ffffff; margin: 0 10px; text-decoration: none;">Contact Us</a>
+    <span style="color: #718096; margin-left: 15px;">© Justice Now</span>
+  </footer>
+
+  <!-- SCRIPT FOR SWITCHING PAGES -->
+  <script>
+    function showPage(pageId) {
+      // 1. Saare pages hide kar do
+      var pages = document.querySelectorAll('.view-page');
+      pages.forEach(function(p) {
+        p.style.display = 'none';
+      });
+
+      // 2. Sirf select kia hua page show karo
+      var target = document.getElementById('page-' + pageId);
+      if (target) {
+        target.style.display = 'block';
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function handleSignInSubmit(event) {
+      event.preventDefault();
+      // Sign In submit hone par next page (Dashboard) par jayega
+      showPage('dashboard');
+    }
+  </script>
+</body>
+</html>
 <!-- =========================
      TOP HEADER
 ========================= -->
@@ -245,111 +406,7 @@ v<!DOCTYPE html>
     </div>
 
 </section>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Justice Now</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
 
-  <!-- Main App Container -->
-  <main id="app-container">
-
-    <!-- Auth / Sign-in Card Section -->
-    <section class="auth-card">
-      <div class="logo-title">
-        <h2>Justice Now</h2>
-        <p class="tagline">Your Rights. Your Voice. Your Justice.</p>
-      </div>
-
-      <div class="form-header">
-        <h3 id="form-title">Sign In</h3>
-      </div>
-
-      <form id="authForm">
-        <div class="input-group" id="nameGroup" style="display: none;">
-          <label>Full Name</label>
-          <input type="text" placeholder="Enter your full name">
-        </div>
-
-        <div class="input-group">
-          <label>Email / Phone</label>
-          <input type="text" placeholder="Enter email or phone">
-        </div>
-
-        <div class="input-group">
-          <label>Password</label>
-          <input type="password" placeholder="Enter password">
-        </div>
-
-        <div class="forgot-pass" id="forgotLink">
-          <a href="#">Forgot Password?</a>
-        </div>
-
-        <button type="submit" class="btn-submit" id="submitBtn">Sign In</button>
-      </form>
-    </section>
-
-    <!-- Main Home Content (About + Articles) -->
-    <div id="home-content">
-      <!-- About Section -->
-      <div class="about-section">
-        <h2>About Justice Now</h2>
-        <p>
-          Welcome to <strong>Justice Now</strong>. Our platform is dedicated to providing quick, easy, and accessible guidance and legal support resources for everyone. We aim to empower individuals by connecting them with essential information and services seamlessly.
-        </p>
-      </div>
-
-      <!-- Legal Articles Section -->
-      <section style="max-width: 800px; margin: 30px auto; padding: 25px; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-        <h2 style="color: #0a192f; border-bottom: 2px solid #ff6600; padding-bottom: 8px;">Legal Guides & Consumer Awareness</h2>
-        
-        <article style="margin-top: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
-          <h3 style="color: #0a192f;">1. Fundamental Constitutional Rights</h3>
-          <p style="color: #555; line-height: 1.6;">
-            Every citizen is entitled to fundamental constitutional rights including protection of law, fair trial, freedom of speech, and equal opportunity.
-          </p>
-        </article>
-
-        <article style="margin-top: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
-          <h3 style="color: #0a192f;">2. How to File a Consumer Rights Complaint</h3>
-          <p style="color: #555; line-height: 1.6;">
-            If a buyer receives defective goods or substandard services, consumer protection courts offer a straightforward legal remedy.
-          </p>
-        </article>
-
-        <article style="margin-top: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
-          <h3 style="color: #0a192f;">3. Understanding Legal Documentation & Affidavits</h3>
-          <p style="color: #555; line-height: 1.6;">
-            Proper legal documentation is critical for property, employment, and dispute resolutions.
-          </p>
-        </article>
-
-        <article style="margin-top: 20px;">
-          <h3 style="color: #0a192f;">4. Digital Legal Resources & Support Online</h3>
-          <p style="color: #555; line-height: 1.6;">
-            Accessing legal assistance digitally streamlines procedural awareness through clear documentation checklists.
-          </p>
-        </article>
-      </section>
-    </div>
-
-  </main>
-
-  <!-- Clean Footer Links -->
-  <footer style="text-align: center; margin-top: 30px; padding-bottom: 20px; font-size: 0.85rem; color: #ffffff;">
-    <a href="index.html" style="color: #ffffff; margin: 0 10px; text-decoration: underline;">Home</a> |
-    <a href="privacy.html" style="color: #ffffff; margin: 0 10px; text-decoration: underline;">Privacy Policy</a> |
-    <a href="terms.html" style="color: #ffffff; margin: 0 10px; text-decoration: underline;">Terms & Conditions</a> |
-    <a href="contact.html" style="color: #ffffff; margin: 0 10px; text-decoration: underline;">Contact Us</a>
-  </footer>
-
-  <script src="script.js"></script>
-</body>
-</html>
 
 
 <!-- =========================
@@ -1806,33 +1863,54 @@ v<!DOCTYPE html>
                         🔄 Refresh Dashboard
                     </button>
 
- <!-- 10 Free Legal Aids -->
- <div class="hub-item">
+ <!-- =========================================================
+     10. FREE LEGAL HELP
+========================================================= -->
 
-                <button
-                    class="hub-header"
-                    type="button"
-                    <span data-i18n="">
-                        10. 📊 Free Legal Help
-                    </span>
+<div class="hub-item">
 
-                    <span class="help-arrow">⌄</span>
-                </button>
+    <button
+        class="hub-header"
+        id="freeLegalHelpHeader"
+        type="button"
+    >
+
+        <span>
+            10. 🆘 Free Legal Help
+        </span>
+
+        <span class="hub-arrow">
+            ⌄
+        </span>
+
+    </button>
 
 
+    <div
+        id="freeLegalHelpContent"
+        class="hub-content hidden"
+    >
 
+        <h2>
+            Free Legal Aid
+        </h2>
 
- <div class="hub-content hidden"></div>
+        <p>
+            Find free legal assistance and verified
+            legal-aid resources.
+        </p>
 
-        <div>
-            <h2>Free Legal Aid</h2>
-
-            <p>
-                Find free legal assistance in Pakistan
-            </p>
-        </div>
+        <button
+            id="openFreeLegalAidButton"
+            class="main-button"
+            type="button"
+        >
+            ⚖️ Open Free Legal Aid Directory
+        </button>
 
     </div>
+
+</div>
 
 
     <div class="legal-aid-container">
@@ -2430,7 +2508,278 @@ v<!DOCTYPE html>
     </div>
 
 </section>
+<!-- =========================================================
+     PRIVACY POLICY PAGE
+========================================================= -->
 
+<section id="privacyPolicyPage" class="page info-page">
+
+    <div class="info-container">
+
+        <button
+            type="button"
+            class="info-back-button"
+            data-info-back="about"
+        >
+            ← Back
+        </button>
+
+        <div class="info-icon">
+            🔐
+        </div>
+
+        <h1>Privacy Policy</h1>
+
+        <p>
+            Justice Now respects your privacy and is designed
+            to help you control your personal information.
+        </p>
+
+        <div class="info-card">
+
+            <h2>1. Information</h2>
+
+            <p>
+                The app may use information that you provide,
+                such as your name, contact information, case
+                information and files you choose to store.
+            </p>
+
+        </div>
+
+        <div class="info-card">
+
+            <h2>2. Location</h2>
+
+            <p>
+                Location access is requested only when a feature
+                requires it, such as location sharing or emergency
+                assistance.
+            </p>
+
+        </div>
+
+        <div class="info-card">
+
+            <h2>3. Evidence</h2>
+
+            <p>
+                Evidence uploaded to the app should be treated as
+                sensitive information. A production version should
+                use secure authentication, encryption and protected
+                server storage.
+            </p>
+
+        </div>
+
+        <div class="info-card">
+
+            <h2>4. User Control</h2>
+
+            <p>
+                Users should be able to manage permissions,
+                privacy settings and stored information through
+                the application.
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     TERMS & CONDITIONS PAGE
+========================================================= -->
+
+<section id="termsPage" class="page info-page">
+
+    <div class="info-container">
+
+        <button
+            type="button"
+            class="info-back-button"
+            data-info-back="about"
+        >
+            ← Back
+        </button>
+
+        <div class="info-icon">
+            📋
+        </div>
+
+        <h1>Terms & Conditions</h1>
+
+        <div class="info-card">
+
+            <h2>Use of the App</h2>
+
+            <p>
+                Justice Now provides safety tools, legal information,
+                case organization features and support resources.
+            </p>
+
+        </div>
+
+        <div class="info-card">
+
+            <h2>General Information</h2>
+
+            <p>
+                Legal guides and AI-generated information are
+                general information only and do not replace a
+                qualified lawyer, court, police or emergency service.
+            </p>
+
+        </div>
+
+        <div class="info-card">
+
+            <h2>Emergency Situations</h2>
+
+            <p>
+                In an immediate emergency, contact the appropriate
+                emergency service. Do not rely only on the application.
+            </p>
+
+        </div>
+
+        <div class="info-card">
+
+            <h2>User Responsibility</h2>
+
+            <p>
+                Users are responsible for the information and files
+                they choose to enter or upload into the application.
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     CONTACT PAGE
+========================================================= -->
+
+<section id="contactPage" class="page info-page">
+
+    <div class="info-container">
+
+        <button
+            type="button"
+            class="info-back-button"
+            data-info-back="about"
+        >
+            ← Back
+        </button>
+
+        <div class="info-icon">
+            📞
+        </div>
+
+        <h1>Contact Us</h1>
+
+        <p>
+            If you need help with the Justice Now application,
+            you can use the support options below.
+        </p>
+
+        <div class="contact-info-card">
+
+            <div class="contact-info-icon">
+                💬
+            </div>
+
+            <div>
+                <h3>Live Chat</h3>
+
+                <p>
+                    Use the Live Chat feature inside Justice Now.
+                </p>
+            </div>
+
+        </div>
+
+        <div class="contact-info-card">
+
+            <div class="contact-info-icon">
+                🆘
+            </div>
+
+            <div>
+                <h3>Emergency Support</h3>
+
+                <p>
+                    For urgent situations, use the emergency
+                    assistance section of the app.
+                </p>
+            </div>
+
+        </div>
+
+        <div class="contact-info-card">
+
+            <div class="contact-info-icon">
+                ⚙️
+            </div>
+
+            <div>
+                <h3>App Support</h3>
+
+                <p>
+                    Use Settings → Help & Support to report
+                    a problem or request assistance.
+                </p>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     LEGAL GUIDE DETAIL PAGE
+========================================================= -->
+
+<section id="legalGuideDetailPage" class="page info-page">
+
+    <div class="info-container">
+
+        <button
+            type="button"
+            id="legalGuideBackButton"
+            class="info-back-button"
+        >
+            ← Back
+        </button>
+
+        <div
+            id="legalGuideDetailIcon"
+            class="info-icon"
+        >
+            ⚖️
+        </div>
+
+        <h1 id="legalGuideDetailTitle">
+            Legal Guide
+        </h1>
+
+        <p id="legalGuideDetailIntro"></p>
+
+        <div
+            id="legalGuideDetailContent"
+            class="info-card"
+        ></div>
+
+    </div>
+
+</section>
 
 
 <script src="script.js"></script>

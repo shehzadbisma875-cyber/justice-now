@@ -5381,38 +5381,630 @@ changeLanguage(
 );
 
 
-/* ==========================================
-   INITIAL PAGE
-========================================== */
+/* =========================================================
+   JUSTICE NOW - ABOUT FIRST PAGE + INFO PAGES
+========================================================= */
 
-showPage("signin");
-// Sign in validation logic
-const signinForm = document.getElementById('signinForm');
-const signinMessage = document.getElementById('signinMessage');
+(function () {
 
-if (signinForm) {
-    signinForm.addEventListener('submit', function(e) {
-        e.preventDefault();
+    function openAboutPage(pageId) {
 
-        const email = document.querySelector('#signinForm input[type="email"]').value;
-        const password = document.querySelector('#signinForm input[type="password"]').value;
+        document.querySelectorAll(".page").forEach(function (page) {
+            page.classList.remove("active");
+        });
 
-        if (email !== "user@example.com" || password !== "123456") {
-            signinMessage.textContent = "Invalid email or password";
-            signinMessage.style.color = "red";
-            signinMessage.style.marginTop = "10px";
-        } else {
-            signinMessage.textContent = "Sign in successful!";
-            signinMessage.style.color = "green";
-            signinMessage.style.marginTop = "10px";
+        const aboutPage = document.getElementById("aboutIntroPage");
+
+        if (aboutPage) {
+            aboutPage.classList.remove("hidden");
+            aboutPage.classList.add("active");
         }
-    });
-}
-// URL Hash check to show proper section on page load
-window.addEventListener("DOMContentLoaded", function () {
-    if (window.location.hash === "#signin" || window.location.hash === "") {
-        if (typeof showPage === "function") {
-            showPage("signin");
+
+        const selectedPage = document.getElementById(pageId);
+
+        if (selectedPage) {
+            selectedPage.classList.remove("hidden");
+            selectedPage.classList.add("active");
         }
+
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
     }
-});
+
+
+    function showAboutFirstPage() {
+
+        document.querySelectorAll(".page").forEach(function (page) {
+            page.classList.remove("active");
+        });
+
+        const aboutPage =
+            document.getElementById("aboutIntroPage");
+
+        if (aboutPage) {
+            aboutPage.classList.add("active");
+        }
+
+        const appHeader =
+            document.getElementById("appHeader");
+
+        if (appHeader) {
+            appHeader.classList.add("hidden");
+        }
+
+        window.scrollTo(0, 0);
+    }
+
+
+    /* =====================================================
+       FIRST PAGE -> SIGN IN
+    ===================================================== */
+
+    const aboutSignInButton =
+        document.getElementById("aboutSignInButton");
+
+    if (aboutSignInButton) {
+
+        aboutSignInButton.addEventListener("click", function () {
+
+            document
+                .querySelectorAll(".page")
+                .forEach(function (page) {
+                    page.classList.remove("active");
+                });
+
+            const aboutPage =
+                document.getElementById("aboutIntroPage");
+
+            if (aboutPage) {
+                aboutPage.classList.remove("active");
+            }
+
+            const signinPage =
+                document.getElementById("signinPage");
+
+            if (signinPage) {
+                signinPage.classList.add("active");
+            }
+
+            window.scrollTo(0, 0);
+
+        });
+    }
+
+
+    /* =====================================================
+       PRIVACY
+    ===================================================== */
+
+    function openPrivacy() {
+
+        document
+            .querySelectorAll(".page")
+            .forEach(function (page) {
+                page.classList.remove("active");
+            });
+
+        document
+            .getElementById("privacyPolicyPage")
+            ?.classList.add("active");
+
+        window.scrollTo(0, 0);
+    }
+
+
+    [
+        "privacyTopButton",
+        "privacyFooterButton"
+    ].forEach(function (id) {
+
+        const button = document.getElementById(id);
+
+        if (button) {
+            button.addEventListener("click", openPrivacy);
+        }
+
+    });
+
+
+    /* =====================================================
+       TERMS
+    ===================================================== */
+
+    function openTerms() {
+
+        document
+            .querySelectorAll(".page")
+            .forEach(function (page) {
+                page.classList.remove("active");
+            });
+
+        document
+            .getElementById("termsPage")
+            ?.classList.add("active");
+
+        window.scrollTo(0, 0);
+    }
+
+
+    [
+        "termsTopButton",
+        "termsFooterButton"
+    ].forEach(function (id) {
+
+        const button = document.getElementById(id);
+
+        if (button) {
+            button.addEventListener("click", openTerms);
+        }
+
+    });
+
+
+    /* =====================================================
+       CONTACT
+    ===================================================== */
+
+    function openContact() {
+
+        document
+            .querySelectorAll(".page")
+            .forEach(function (page) {
+                page.classList.remove("active");
+            });
+
+        document
+            .getElementById("contactPage")
+            ?.classList.add("active");
+
+        window.scrollTo(0, 0);
+    }
+
+
+    [
+        "contactTopButton",
+        "contactFooterButton"
+    ].forEach(function (id) {
+
+        const button = document.getElementById(id);
+
+        if (button) {
+            button.addEventListener("click", openContact);
+        }
+
+    });
+
+
+    /* =====================================================
+       BACK TO ABOUT
+    ===================================================== */
+
+    document
+        .querySelectorAll("[data-info-back='about']")
+        .forEach(function (button) {
+
+            button.addEventListener("click", function () {
+
+                showAboutFirstPage();
+
+            });
+
+        });
+
+
+    /* =====================================================
+       LEGAL GUIDE DATA
+    ===================================================== */
+
+    const legalGuides = {
+
+        rights: {
+
+            icon: "⚖️",
+
+            title:
+                "Fundamental Constitutional Rights",
+
+            intro:
+                "Learn about basic constitutional rights and protections in simple language.",
+
+            content: `
+                <h2>Important Rights</h2>
+
+                <p>
+                    Constitutional rights provide important protections
+                    to people. These may include equality, dignity,
+                    freedom and protection under the law.
+                </p>
+
+                <h2>Why Rights Matter</h2>
+
+                <p>
+                    Knowing your basic rights can help you understand
+                    what protections may be available to you.
+                </p>
+
+                <h2>Important Note</h2>
+
+                <p>
+                    This section provides general educational
+                    information only. For a specific legal matter,
+                    consult a qualified lawyer.
+                </p>
+            `
+        },
+
+
+        consumer: {
+
+            icon: "🛒",
+
+            title:
+                "How to File Consumer Rights Complaint",
+
+            intro:
+                "Understand the general process of preparing and submitting a consumer complaint.",
+
+            content: `
+                <h2>Step 1 — Keep Your Documents</h2>
+
+                <p>
+                    Keep receipts, invoices, warranty documents,
+                    messages and other relevant records.
+                </p>
+
+                <h2>Step 2 — Describe the Problem</h2>
+
+                <p>
+                    Clearly write what product or service was involved,
+                    what happened and what resolution you are requesting.
+                </p>
+
+                <h2>Step 3 — Submit Through the Appropriate Channel</h2>
+
+                <p>
+                    Consumer complaints should be submitted through
+                    the relevant consumer-protection authority or
+                    forum applicable to your location.
+                </p>
+
+                <h2>Important</h2>
+
+                <p>
+                    Procedures can differ by province and location.
+                    Confirm the current requirements before submitting.
+                </p>
+            `
+        },
+
+
+        documents: {
+
+            icon: "📄",
+
+            title:
+                "Understanding Legal Documentation & Advice",
+
+            intro:
+                "Learn why legal documents should be read carefully and when professional advice may be useful.",
+
+            content: `
+                <h2>Common Documents</h2>
+
+                <p>
+                    Legal matters may involve applications,
+                    notices, agreements, complaints, affidavits
+                    and other documents.
+                </p>
+
+                <h2>Read Carefully</h2>
+
+                <p>
+                    Check names, dates, signatures, deadlines and
+                    important terms before submitting or signing
+                    a legal document.
+                </p>
+
+                <h2>Professional Advice</h2>
+
+                <p>
+                    If you do not understand a legal document or
+                    the consequences of signing it, consider
+                    consulting a qualified lawyer.
+                </p>
+            `
+        },
+
+
+        digital: {
+
+            icon: "🌐",
+
+            title:
+                "Digital Legal Resources & Support",
+
+            intro:
+                "Find useful digital resources and support options through Justice Now.",
+
+            content: `
+                <h2>Justice Now Resources</h2>
+
+                <p>
+                    Justice Now can organize legal information,
+                    emergency resources, case information and
+                    support contacts in one place.
+                </p>
+
+                <h2>Emergency Assistance</h2>
+
+                <p>
+                    For urgent situations, use the emergency
+                    assistance features of the application.
+                </p>
+
+                <h2>Free Legal Aid</h2>
+
+                <p>
+                    Use Justice Hub → Free Legal Help to access
+                    the legal-aid directory and available verified
+                    contacts.
+                </p>
+
+                <h2>Important Note</h2>
+
+                <p>
+                    Always confirm that a contact or service is
+                    currently available before relying on it.
+                </p>
+            `
+        }
+
+    };
+
+
+    /* =====================================================
+       OPEN GUIDE
+    ===================================================== */
+
+    function openLegalGuide(type) {
+
+        const guide = legalGuides[type];
+
+        if (!guide) {
+            return;
+        }
+
+        document
+            .querySelectorAll(".page")
+            .forEach(function (page) {
+                page.classList.remove("active");
+            });
+
+
+        const icon =
+            document.getElementById(
+                "legalGuideDetailIcon"
+            );
+
+        const title =
+            document.getElementById(
+                "legalGuideDetailTitle"
+            );
+
+        const intro =
+            document.getElementById(
+                "legalGuideDetailIntro"
+            );
+
+        const content =
+            document.getElementById(
+                "legalGuideDetailContent"
+            );
+
+
+        if (icon) {
+            icon.textContent = guide.icon;
+        }
+
+        if (title) {
+            title.textContent = guide.title;
+        }
+
+        if (intro) {
+            intro.textContent = guide.intro;
+        }
+
+        if (content) {
+            content.innerHTML = guide.content;
+        }
+
+
+        const detailPage =
+            document.getElementById(
+                "legalGuideDetailPage"
+            );
+
+        if (detailPage) {
+            detailPage.classList.add("active");
+        }
+
+        window.scrollTo(0, 0);
+    }
+
+
+    /* =====================================================
+       GUIDE BUTTONS
+    ===================================================== */
+
+    const guideRightsButton =
+        document.getElementById("guideRightsButton");
+
+    if (guideRightsButton) {
+        guideRightsButton.addEventListener(
+            "click",
+            function () {
+                openLegalGuide("rights");
+            }
+        );
+    }
+
+
+    const guideConsumerButton =
+        document.getElementById("guideConsumerButton");
+
+    if (guideConsumerButton) {
+        guideConsumerButton.addEventListener(
+            "click",
+            function () {
+                openLegalGuide("consumer");
+            }
+        );
+    }
+
+
+    const guideDocumentsButton =
+        document.getElementById("guideDocumentsButton");
+
+    if (guideDocumentsButton) {
+        guideDocumentsButton.addEventListener(
+            "click",
+            function () {
+                openLegalGuide("documents");
+            }
+        );
+    }
+
+
+    const guideDigitalButton =
+        document.getElementById("guideDigitalButton");
+
+    if (guideDigitalButton) {
+        guideDigitalButton.addEventListener(
+            "click",
+            function () {
+                openLegalGuide("digital");
+            }
+        );
+    }
+
+
+    /* =====================================================
+       GUIDE BACK
+    ===================================================== */
+
+    const legalGuideBackButton =
+        document.getElementById(
+            "legalGuideBackButton"
+        );
+
+    if (legalGuideBackButton) {
+
+        legalGuideBackButton.addEventListener(
+            "click",
+            function () {
+
+                showAboutFirstPage();
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       FREE LEGAL HELP
+    ===================================================== */
+
+    const freeLegalHelpHeader =
+        document.getElementById(
+            "freeLegalHelpHeader"
+        );
+
+    const freeLegalHelpContent =
+        document.getElementById(
+            "freeLegalHelpContent"
+        );
+
+    if (
+        freeLegalHelpHeader &&
+        freeLegalHelpContent
+    ) {
+
+        freeLegalHelpHeader.addEventListener(
+            "click",
+            function () {
+
+                freeLegalHelpContent.classList.toggle(
+                    "hidden"
+                );
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       OPEN FREE LEGAL AID DIRECTORY
+    ===================================================== */
+
+    const openFreeLegalAidButton =
+        document.getElementById(
+            "openFreeLegalAidButton"
+        );
+
+    if (openFreeLegalAidButton) {
+
+        openFreeLegalAidButton.addEventListener(
+            "click",
+            function () {
+
+                /*
+                   Aap ke existing Free Legal Aid page ko
+                   yahan open kiya jayega.
+                */
+
+                if (
+                    typeof openFreeLegalAid ===
+                    "function"
+                ) {
+
+                    openFreeLegalAid();
+
+                } else {
+
+                    alert(
+                        "Free Legal Aid directory is ready to connect."
+                    );
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       START WITH ABOUT PAGE
+    ===================================================== */
+
+    document
+        .querySelectorAll(".page")
+        .forEach(function (page) {
+            page.classList.remove("active");
+        });
+
+    const aboutIntro =
+        document.getElementById("aboutIntroPage");
+
+    if (aboutIntro) {
+
+        aboutIntro.classList.add("active");
+
+    }
+
+})();
+  
