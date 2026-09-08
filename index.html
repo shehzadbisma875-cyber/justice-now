@@ -424,33 +424,7 @@
         <p id="signinMessage"></p>
 
     </div>
-// Hide error msg when switching pages
-      var errorBox = document.getElementById('error-msg');
-      if (errorBox) errorBox.style.display = 'none';
 
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function handleSignInSubmit(event) {
-      event.preventDefault();
-
-      var email = document.getElementById('email-input').value;
-      var password = document.getElementById('password-input').value;
-      var errorBox = document.getElementById('error-msg');
-
-      // Simple validation check:
-      // Agar Email 'user@gmail.com' aur Password '123456' hoga tab hi Next Dashboard Page khulega.
-      if (email === 'user@gmail.com' && password === '123456') {
-        errorBox.style.display = 'none';
-        showPage('dashboard');
-      } else {
-        // Ghalt detail par Error message dikhayega
-        errorBox.style.display = 'block';
-      }
-    }
-    </script>
-</body>
-</html>
 </section>
 
 
