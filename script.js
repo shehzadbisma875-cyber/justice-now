@@ -5381,531 +5381,103 @@ changeLanguage(
 );
 
 
-/* =========================================================
-   JUSTICE NOW - ABOUT FIRST PAGE + INFO PAGES
-========================================================= */
 
-(function () {
+/* =====================================================
+   JUSTICE NOW
+   FIRST PAGE + ABOUT NAVIGATION
+===================================================== */
 
-    function openAboutPage(pageId) {
+document.addEventListener("DOMContentLoaded", function () {
 
-        document.querySelectorAll(".page").forEach(function (page) {
-            page.classList.remove("active");
-        });
+    const aboutPage =
+        document.getElementById("aboutIntroPage");
 
-        const aboutPage = document.getElementById("aboutIntroPage");
 
+    /* =================================================
+       FUNCTION: SHOW ONLY ONE NORMAL PAGE
+    ================================================= */
+
+    function openPage(pageId) {
+
+        /* Hide About page */
         if (aboutPage) {
-            aboutPage.classList.remove("hidden");
-            aboutPage.classList.add("active");
+            aboutPage.classList.remove("active");
         }
 
-        const selectedPage = document.getElementById(pageId);
+
+        /* Hide ALL normal pages */
+        document
+            .querySelectorAll(".page")
+            .forEach(function (page) {
+
+                page.classList.remove("active");
+
+            });
+
+
+        /* Show selected page */
+        const selectedPage =
+            document.getElementById(pageId);
 
         if (selectedPage) {
-            selectedPage.classList.remove("hidden");
+
             selectedPage.classList.add("active");
+
         }
 
-        window.scrollTo({
-            top: 0,
-            behavior: "smooth"
-        });
+
+        window.scrollTo(0, 0);
+
     }
 
 
-    function showAboutFirstPage() {
+    /* =================================================
+       FUNCTION: SHOW ABOUT PAGE ONLY
+    ================================================= */
 
-        document.querySelectorAll(".page").forEach(function (page) {
-            page.classList.remove("active");
-        });
+    function openAboutPage() {
 
-        const aboutPage =
-            document.getElementById("aboutIntroPage");
+        /* Hide all normal pages */
+
+        document
+            .querySelectorAll(".page")
+            .forEach(function (page) {
+
+                page.classList.remove("active");
+
+            });
+
+
+        /* Show About */
 
         if (aboutPage) {
+
             aboutPage.classList.add("active");
+
         }
 
-        const appHeader =
-            document.getElementById("appHeader");
-
-        if (appHeader) {
-            appHeader.classList.add("hidden");
-        }
 
         window.scrollTo(0, 0);
+
     }
 
 
-    /* =====================================================
-       FIRST PAGE -> SIGN IN
-    ===================================================== */
-
-    const aboutSignInButton =
-        document.getElementById("aboutSignInButton");
-
-    if (aboutSignInButton) {
-
-        aboutSignInButton.addEventListener("click", function () {
-
-            document
-                .querySelectorAll(".page")
-                .forEach(function (page) {
-                    page.classList.remove("active");
-                });
-
-            const aboutPage =
-                document.getElementById("aboutIntroPage");
-
-            if (aboutPage) {
-                aboutPage.classList.remove("active");
-            }
-
-            const signinPage =
-                document.getElementById("signinPage");
-
-            if (signinPage) {
-                signinPage.classList.add("active");
-            }
-
-            window.scrollTo(0, 0);
-
-        });
-    }
-
-
-    /* =====================================================
-       PRIVACY
-    ===================================================== */
-
-    function openPrivacy() {
-
-        document
-            .querySelectorAll(".page")
-            .forEach(function (page) {
-                page.classList.remove("active");
-            });
-
-        document
-            .getElementById("privacyPolicyPage")
-            ?.classList.add("active");
-
-        window.scrollTo(0, 0);
-    }
-
-
-    [
-        "privacyTopButton",
-        "privacyFooterButton"
-    ].forEach(function (id) {
-
-        const button = document.getElementById(id);
-
-        if (button) {
-            button.addEventListener("click", openPrivacy);
-        }
-
-    });
-
-
-    /* =====================================================
-       TERMS
-    ===================================================== */
-
-    function openTerms() {
-
-        document
-            .querySelectorAll(".page")
-            .forEach(function (page) {
-                page.classList.remove("active");
-            });
-
-        document
-            .getElementById("termsPage")
-            ?.classList.add("active");
-
-        window.scrollTo(0, 0);
-    }
-
-
-    [
-        "termsTopButton",
-        "termsFooterButton"
-    ].forEach(function (id) {
-
-        const button = document.getElementById(id);
-
-        if (button) {
-            button.addEventListener("click", openTerms);
-        }
-
-    });
-
-
-    /* =====================================================
-       CONTACT
-    ===================================================== */
-
-    function openContact() {
-
-        document
-            .querySelectorAll(".page")
-            .forEach(function (page) {
-                page.classList.remove("active");
-            });
-
-        document
-            .getElementById("contactPage")
-            ?.classList.add("active");
-
-        window.scrollTo(0, 0);
-    }
-
-
-    [
-        "contactTopButton",
-        "contactFooterButton"
-    ].forEach(function (id) {
-
-        const button = document.getElementById(id);
-
-        if (button) {
-            button.addEventListener("click", openContact);
-        }
-
-    });
-
-
-    /* =====================================================
-       BACK TO ABOUT
-    ===================================================== */
-
-    document
-        .querySelectorAll("[data-info-back='about']")
-        .forEach(function (button) {
-
-            button.addEventListener("click", function () {
-
-                showAboutFirstPage();
-
-            });
-
-        });
-
-
-    /* =====================================================
-       LEGAL GUIDE DATA
-    ===================================================== */
-
-    const legalGuides = {
-
-        rights: {
-
-            icon: "⚖️",
-
-            title:
-                "Fundamental Constitutional Rights",
-
-            intro:
-                "Learn about basic constitutional rights and protections in simple language.",
-
-            content: `
-                <h2>Important Rights</h2>
-
-                <p>
-                    Constitutional rights provide important protections
-                    to people. These may include equality, dignity,
-                    freedom and protection under the law.
-                </p>
-
-                <h2>Why Rights Matter</h2>
-
-                <p>
-                    Knowing your basic rights can help you understand
-                    what protections may be available to you.
-                </p>
-
-                <h2>Important Note</h2>
-
-                <p>
-                    This section provides general educational
-                    information only. For a specific legal matter,
-                    consult a qualified lawyer.
-                </p>
-            `
-        },
-
-
-        consumer: {
-
-            icon: "🛒",
-
-            title:
-                "How to File Consumer Rights Complaint",
-
-            intro:
-                "Understand the general process of preparing and submitting a consumer complaint.",
-
-            content: `
-                <h2>Step 1 — Keep Your Documents</h2>
-
-                <p>
-                    Keep receipts, invoices, warranty documents,
-                    messages and other relevant records.
-                </p>
-
-                <h2>Step 2 — Describe the Problem</h2>
-
-                <p>
-                    Clearly write what product or service was involved,
-                    what happened and what resolution you are requesting.
-                </p>
-
-                <h2>Step 3 — Submit Through the Appropriate Channel</h2>
-
-                <p>
-                    Consumer complaints should be submitted through
-                    the relevant consumer-protection authority or
-                    forum applicable to your location.
-                </p>
-
-                <h2>Important</h2>
-
-                <p>
-                    Procedures can differ by province and location.
-                    Confirm the current requirements before submitting.
-                </p>
-            `
-        },
-
-
-        documents: {
-
-            icon: "📄",
-
-            title:
-                "Understanding Legal Documentation & Advice",
-
-            intro:
-                "Learn why legal documents should be read carefully and when professional advice may be useful.",
-
-            content: `
-                <h2>Common Documents</h2>
-
-                <p>
-                    Legal matters may involve applications,
-                    notices, agreements, complaints, affidavits
-                    and other documents.
-                </p>
-
-                <h2>Read Carefully</h2>
-
-                <p>
-                    Check names, dates, signatures, deadlines and
-                    important terms before submitting or signing
-                    a legal document.
-                </p>
-
-                <h2>Professional Advice</h2>
-
-                <p>
-                    If you do not understand a legal document or
-                    the consequences of signing it, consider
-                    consulting a qualified lawyer.
-                </p>
-            `
-        },
-
-
-        digital: {
-
-            icon: "🌐",
-
-            title:
-                "Digital Legal Resources & Support",
-
-            intro:
-                "Find useful digital resources and support options through Justice Now.",
-
-            content: `
-                <h2>Justice Now Resources</h2>
-
-                <p>
-                    Justice Now can organize legal information,
-                    emergency resources, case information and
-                    support contacts in one place.
-                </p>
-
-                <h2>Emergency Assistance</h2>
-
-                <p>
-                    For urgent situations, use the emergency
-                    assistance features of the application.
-                </p>
-
-                <h2>Free Legal Aid</h2>
-
-                <p>
-                    Use Justice Hub → Free Legal Help to access
-                    the legal-aid directory and available verified
-                    contacts.
-                </p>
-
-                <h2>Important Note</h2>
-
-                <p>
-                    Always confirm that a contact or service is
-                    currently available before relying on it.
-                </p>
-            `
-        }
-
-    };
-
-
-    /* =====================================================
-       OPEN GUIDE
-    ===================================================== */
-
-    function openLegalGuide(type) {
-
-        const guide = legalGuides[type];
-
-        if (!guide) {
-            return;
-        }
-
-        document
-            .querySelectorAll(".page")
-            .forEach(function (page) {
-                page.classList.remove("active");
-            });
-
-
-        const icon =
-            document.getElementById(
-                "legalGuideDetailIcon"
-            );
-
-        const title =
-            document.getElementById(
-                "legalGuideDetailTitle"
-            );
-
-        const intro =
-            document.getElementById(
-                "legalGuideDetailIntro"
-            );
-
-        const content =
-            document.getElementById(
-                "legalGuideDetailContent"
-            );
-
-
-        if (icon) {
-            icon.textContent = guide.icon;
-        }
-
-        if (title) {
-            title.textContent = guide.title;
-        }
-
-        if (intro) {
-            intro.textContent = guide.intro;
-        }
-
-        if (content) {
-            content.innerHTML = guide.content;
-        }
-
-
-        const detailPage =
-            document.getElementById(
-                "legalGuideDetailPage"
-            );
-
-        if (detailPage) {
-            detailPage.classList.add("active");
-        }
-
-        window.scrollTo(0, 0);
-    }
-
-
-    /* =====================================================
-       GUIDE BUTTONS
-    ===================================================== */
-
-    const guideRightsButton =
-        document.getElementById("guideRightsButton");
-
-    if (guideRightsButton) {
-        guideRightsButton.addEventListener(
-            "click",
-            function () {
-                openLegalGuide("rights");
-            }
-        );
-    }
-
-
-    const guideConsumerButton =
-        document.getElementById("guideConsumerButton");
-
-    if (guideConsumerButton) {
-        guideConsumerButton.addEventListener(
-            "click",
-            function () {
-                openLegalGuide("consumer");
-            }
-        );
-    }
-
-
-    const guideDocumentsButton =
-        document.getElementById("guideDocumentsButton");
-
-    if (guideDocumentsButton) {
-        guideDocumentsButton.addEventListener(
-            "click",
-            function () {
-                openLegalGuide("documents");
-            }
-        );
-    }
-
-
-    const guideDigitalButton =
-        document.getElementById("guideDigitalButton");
-
-    if (guideDigitalButton) {
-        guideDigitalButton.addEventListener(
-            "click",
-            function () {
-                openLegalGuide("digital");
-            }
-        );
-    }
-
-
-    /* =====================================================
-       GUIDE BACK
-    ===================================================== */
-
-    const legalGuideBackButton =
+    /* =================================================
+       SIGN IN
+    ================================================= */
+
+    const signInButton =
         document.getElementById(
-            "legalGuideBackButton"
+            "aboutSignInButton"
         );
 
-    if (legalGuideBackButton) {
+    if (signInButton) {
 
-        legalGuideBackButton.addEventListener(
+        signInButton.addEventListener(
             "click",
             function () {
 
-                showAboutFirstPage();
+                openPage("signinPage");
 
             }
         );
@@ -5913,31 +5485,23 @@ changeLanguage(
     }
 
 
-    /* =====================================================
-       FREE LEGAL HELP
-    ===================================================== */
+    /* =================================================
+       PRIVACY POLICY
+    ================================================= */
 
-    const freeLegalHelpHeader =
+    const privacyButton =
         document.getElementById(
-            "freeLegalHelpHeader"
+            "aboutPrivacyButton"
         );
 
-    const freeLegalHelpContent =
-        document.getElementById(
-            "freeLegalHelpContent"
-        );
+    if (privacyButton) {
 
-    if (
-        freeLegalHelpHeader &&
-        freeLegalHelpContent
-    ) {
-
-        freeLegalHelpHeader.addEventListener(
+        privacyButton.addEventListener(
             "click",
             function () {
 
-                freeLegalHelpContent.classList.toggle(
-                    "hidden"
+                openPage(
+                    "privacyPolicyPage"
                 );
 
             }
@@ -5946,40 +5510,22 @@ changeLanguage(
     }
 
 
-    /* =====================================================
-       OPEN FREE LEGAL AID DIRECTORY
-    ===================================================== */
+    /* =================================================
+       TERMS
+    ================================================= */
 
-    const openFreeLegalAidButton =
+    const termsButton =
         document.getElementById(
-            "openFreeLegalAidButton"
+            "aboutTermsButton"
         );
 
-    if (openFreeLegalAidButton) {
+    if (termsButton) {
 
-        openFreeLegalAidButton.addEventListener(
+        termsButton.addEventListener(
             "click",
             function () {
 
-                /*
-                   Aap ke existing Free Legal Aid page ko
-                   yahan open kiya jayega.
-                */
-
-                if (
-                    typeof openFreeLegalAid ===
-                    "function"
-                ) {
-
-                    openFreeLegalAid();
-
-                } else {
-
-                    alert(
-                        "Free Legal Aid directory is ready to connect."
-                    );
-
-                }
+                openPage("termsPage");
 
             }
         );
@@ -5987,24 +5533,1524 @@ changeLanguage(
     }
 
 
-    /* =====================================================
-       START WITH ABOUT PAGE
-    ===================================================== */
+    /* =================================================
+       CONTACT US
+    ================================================= */
 
-    document
-        .querySelectorAll(".page")
-        .forEach(function (page) {
-            page.classList.remove("active");
-        });
+    const contactButton =
+        document.getElementById(
+            "aboutContactButton"
+        );
 
-    const aboutIntro =
-        document.getElementById("aboutIntroPage");
+    if (contactButton) {
 
-    if (aboutIntro) {
+        contactButton.addEventListener(
+            "click",
+            function () {
 
-        aboutIntro.classList.add("active");
+                openPage("contactPage");
+
+            }
+        );
 
     }
 
-})();
-  
+
+    /* =================================================
+       FEEDBACK
+    ================================================= */
+
+    const feedbackButton =
+        document.getElementById(
+            "aboutFeedbackButton"
+        );
+
+    if (feedbackButton) {
+
+        feedbackButton.addEventListener(
+            "click",
+            function () {
+
+                openPage("feedbackPage");
+
+            }
+        );
+
+    }
+
+
+    /* =================================================
+       BACK FROM FEEDBACK
+    ================================================= */
+
+    const feedbackBack =
+        document.getElementById(
+            "feedbackBackButton"
+        );
+
+    if (feedbackBack) {
+
+        feedbackBack.addEventListener(
+            "click",
+            function () {
+
+                openAboutPage();
+
+            }
+        );
+
+    }
+
+
+    /* =================================================
+       BACK FROM PRIVACY
+    ================================================= */
+
+    const privacyBack =
+        document.getElementById(
+            "privacyBackButton"
+        );
+
+    if (privacyBack) {
+
+        privacyBack.addEventListener(
+            "click",
+            function () {
+
+                openAboutPage();
+
+            }
+        );
+
+    }
+
+
+    /* =================================================
+       BACK FROM TERMS
+    ================================================= */
+
+    const termsBack =
+        document.getElementById(
+            "termsBackButton"
+        );
+
+    if (termsBack) {
+
+        termsBack.addEventListener(
+            "click",
+            function () {
+
+                openAboutPage();
+
+            }
+        );
+
+    }
+
+
+    /* =================================================
+       BACK FROM CONTACT
+    ================================================= */
+
+    const contactBack =
+        document.getElementById(
+            "contactBackButton"
+        );
+
+    if (contactBack) {
+
+        contactBack.addEventListener(
+            "click",
+            function () {
+
+                openAboutPage();
+
+            }
+        );
+
+    }
+
+
+    /* =================================================
+       CONTACT → FEEDBACK
+    ================================================= */
+
+    const contactFeedback =
+        document.getElementById(
+            "contactFeedbackButton"
+        );
+
+    if (contactFeedback) {
+
+        contactFeedback.addEventListener(
+            "click",
+            function () {
+
+                openPage("feedbackPage");
+
+            }
+        );
+
+    }
+
+
+    /* =================================================
+       SEND FEEDBACK
+    ================================================= */
+
+    const submitFeedback =
+        document.getElementById(
+            "submitFeedbackButton"
+        );
+
+    if (submitFeedback) {
+
+        submitFeedback.addEventListener(
+            "click",
+            function () {
+
+                const name =
+                    document.getElementById(
+                        "feedbackName"
+                    ).value.trim();
+
+
+                const email =
+                    document.getElementById(
+                        "feedbackEmail"
+                    ).value.trim();
+
+
+                const message =
+                    document.getElementById(
+                        "feedbackMessage"
+                    ).value.trim();
+
+
+                const status =
+                    document.getElementById(
+                        "feedbackStatus"
+                    );
+
+
+                if (!message) {
+
+                    status.textContent =
+                        "Please write your feedback message.";
+
+                    return;
+
+                }
+
+
+                const oldFeedback =
+                    JSON.parse(
+                        localStorage.getItem(
+                            "justiceFeedback"
+                        ) || "[]"
+                    );
+
+
+                oldFeedback.push({
+
+                    name: name,
+
+                    email: email,
+
+                    message: message,
+
+                    date:
+                        new Date().toLocaleString()
+
+                });
+
+
+                localStorage.setItem(
+                    "justiceFeedback",
+                    JSON.stringify(oldFeedback)
+                );
+
+
+                status.textContent =
+                    "Thank you! Your feedback has been saved.";
+
+
+                document.getElementById(
+                    "feedbackName"
+                ).value = "";
+
+
+                document.getElementById(
+                    "feedbackEmail"
+                ).value = "";
+
+
+                document.getElementById(
+                    "feedbackMessage"
+                ).value = "";
+
+            }
+        );
+
+    }
+
+
+    /* =================================================
+       VERY IMPORTANT:
+       WHEN APP OPENS → ONLY ABOUT PAGE
+    ================================================= */
+
+    openAboutPage();
+
+});
+/* =====================================================
+   JUSTICE NOW PAGE NAVIGATION
+===================================================== */
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const allPages = document.querySelectorAll(
+        ".page, #aboutIntroPage"
+    );
+
+    /* -----------------------------------------------
+       SHOW ONLY ONE PAGE
+    ----------------------------------------------- */
+
+    function showOnly(pageId) {
+
+        allPages.forEach(function (page) {
+            page.classList.remove("active");
+            page.style.display = "none";
+        });
+
+        const page = document.getElementById(pageId);
+
+        if (page) {
+            page.classList.add("active");
+
+            if (pageId === "aboutIntroPage") {
+                page.style.display = "flex";
+            } else {
+                page.style.display = "block";
+            }
+        }
+
+        window.scrollTo(0, 0);
+    }
+
+
+    /* -----------------------------------------------
+       FIRST PAGE
+       APP OPEN → ONLY ABOUT PAGE
+    ----------------------------------------------- */
+
+    showOnly("aboutIntroPage");
+
+
+    /* -----------------------------------------------
+       SIGN IN
+    ----------------------------------------------- */
+
+    const signInButton =
+        document.getElementById("aboutSignInButton");
+
+    if (signInButton) {
+
+        signInButton.onclick = function () {
+
+            showOnly("signinPage");
+
+        };
+    }
+
+
+    /* -----------------------------------------------
+       PRIVACY POLICY
+    ----------------------------------------------- */
+
+    const privacyButton =
+        document.getElementById("aboutPrivacyButton");
+
+    if (privacyButton) {
+
+        privacyButton.onclick = function () {
+
+            showOnly("privacyPolicyPage");
+
+        };
+    }
+
+
+    /* -----------------------------------------------
+       TERMS
+    ----------------------------------------------- */
+
+    const termsButton =
+        document.getElementById("aboutTermsButton");
+
+    if (termsButton) {
+
+        termsButton.onclick = function () {
+
+            showOnly("termsPage");
+
+        };
+    }
+
+
+    /* -----------------------------------------------
+       CONTACT US
+    ----------------------------------------------- */
+
+    const contactButton =
+        document.getElementById("aboutContactButton");
+
+    if (contactButton) {
+
+        contactButton.onclick = function () {
+
+            showOnly("contactPage");
+
+        };
+    }
+
+
+    /* -----------------------------------------------
+       FEEDBACK
+    ----------------------------------------------- */
+
+    const feedbackButton =
+        document.getElementById("aboutFeedbackButton");
+
+    if (feedbackButton) {
+
+        feedbackButton.onclick = function () {
+
+            showOnly("feedbackPage");
+
+        };
+    }
+
+
+    /* -----------------------------------------------
+       BACK → ABOUT
+    ----------------------------------------------- */
+
+    const feedbackBack =
+        document.getElementById("feedbackBackButton");
+
+    if (feedbackBack) {
+
+        feedbackBack.onclick = function () {
+
+            showOnly("aboutIntroPage");
+
+        };
+    }
+
+
+    const privacyBack =
+        document.getElementById("privacyBackButton");
+
+    if (privacyBack) {
+
+        privacyBack.onclick = function () {
+
+            showOnly("aboutIntroPage");
+
+        };
+    }
+
+
+    const termsBack =
+        document.getElementById("termsBackButton");
+
+    if (termsBack) {
+
+        termsBack.onclick = function () {
+
+            showOnly("aboutIntroPage");
+
+        };
+    }
+
+
+    const contactBack =
+        document.getElementById("contactBackButton");
+
+    if (contactBack) {
+
+        contactBack.onclick = function () {
+
+            showOnly("aboutIntroPage");
+
+        };
+    }
+
+
+    /* -----------------------------------------------
+       CONTACT → FEEDBACK
+    ----------------------------------------------- */
+
+    const contactFeedback =
+        document.getElementById("contactFeedbackButton");
+
+    if (contactFeedback) {
+
+        contactFeedback.onclick = function () {
+
+            showOnly("feedbackPage");
+
+        };
+    }
+
+
+});
+/* =========================================================
+   JUSTICE NOW - FIXED AUTHENTICATION SYSTEM
+   Sign In + Sign Up + Forgot Password + Validation
+   ========================================================= */
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    /* ---------------------------------------------------------
+       1. FIX SIGN-IN CARD POSITION
+       --------------------------------------------------------- */
+
+    const signinPage = document.getElementById("signinPage");
+
+    if (signinPage) {
+
+        const authCard =
+            document.querySelector("#signinPage + .auth-card");
+
+        if (authCard) {
+            signinPage.appendChild(authCard);
+        }
+    }
+
+
+    /* ---------------------------------------------------------
+       2. CREATE SIGN-UP PAGE
+       --------------------------------------------------------- */
+
+    if (!document.getElementById("signupPage")) {
+
+        const signupPage = document.createElement("section");
+
+        signupPage.id = "signupPage";
+        signupPage.className = "page auth-page";
+
+        signupPage.innerHTML = `
+            <div class="auth-card">
+
+                <button
+                    type="button"
+                    class="simple-back"
+                    id="signupBackButton">
+                    ← Back to Sign In
+                </button>
+
+                <div class="justice-logo">
+                    <div class="justice-symbol">⚖️</div>
+                </div>
+
+                <h1>Justice Now</h1>
+
+                <p class="tagline">
+                    Your Rights. Your Voice. Your Justice.
+                </p>
+
+                <h2>Create Account</h2>
+
+                <form id="signupForm">
+
+                    <label>Full Name</label>
+
+                    <input
+                        type="text"
+                        id="signupName"
+                        placeholder="Enter your full name"
+                        required
+                    >
+
+                    <label>Email</label>
+
+                    <input
+                        type="email"
+                        id="signupEmail"
+                        placeholder="Enter your email"
+                        required
+                    >
+
+                    <label>Password</label>
+
+                    <input
+                        type="password"
+                        id="signupPassword"
+                        placeholder="Create password"
+                        minlength="6"
+                        required
+                    >
+
+                    <label>Confirm Password</label>
+
+                    <input
+                        type="password"
+                        id="signupConfirmPassword"
+                        placeholder="Confirm password"
+                        minlength="6"
+                        required
+                    >
+
+                    <button
+                        type="submit"
+                        class="main-button">
+                        Create Account
+                    </button>
+
+                </form>
+
+                <p id="signupMessage"></p>
+
+            </div>
+        `;
+
+        document.body.appendChild(signupPage);
+    }
+
+
+    /* ---------------------------------------------------------
+       3. ADD SIGN-UP BUTTON TO SIGN-IN PAGE
+       --------------------------------------------------------- */
+
+    const signinCard =
+        document.querySelector("#signinPage .auth-card");
+
+    if (
+        signinCard &&
+        !document.getElementById("signupButton")
+    ) {
+
+        const signupButton =
+            document.createElement("button");
+
+        signupButton.type = "button";
+        signupButton.id = "signupButton";
+        signupButton.className = "text-button";
+
+        signupButton.textContent =
+            "Don't have an account? Sign Up";
+
+        const signinMessage =
+            document.getElementById("signinMessage");
+
+        if (signinMessage) {
+            signinMessage.after(signupButton);
+        } else {
+            signinCard.appendChild(signupButton);
+        }
+    }
+
+
+    /* ---------------------------------------------------------
+       4. PAGE NAVIGATION
+       --------------------------------------------------------- */
+
+    function openAuthPage(pageId) {
+
+        document
+            .querySelectorAll(".page, #aboutIntroPage")
+            .forEach(function (page) {
+
+                page.classList.remove("active");
+
+                page.style.display = "none";
+            });
+
+
+        const selected =
+            document.getElementById(pageId);
+
+        if (selected) {
+
+            selected.classList.add("active");
+
+            selected.style.display =
+                "flex";
+
+            window.scrollTo(0, 0);
+        }
+
+
+        const header =
+            document.getElementById("appHeader");
+
+        if (header) {
+            header.classList.add("hidden");
+        }
+    }
+
+
+    /* ---------------------------------------------------------
+       5. SIGN IN BUTTON FROM ABOUT PAGE
+       --------------------------------------------------------- */
+
+    const aboutSignIn =
+        document.getElementById("aboutSignInButton");
+
+    if (aboutSignIn) {
+
+        aboutSignIn.onclick = function () {
+
+            openAuthPage("signinPage");
+
+        };
+    }
+
+
+    /* ---------------------------------------------------------
+       6. SIGN UP BUTTON
+       --------------------------------------------------------- */
+
+    const signupButton =
+        document.getElementById("signupButton");
+
+    if (signupButton) {
+
+        signupButton.onclick = function () {
+
+            openAuthPage("signupPage");
+
+        };
+    }
+
+
+    /* ---------------------------------------------------------
+       7. BACK TO SIGN IN
+       --------------------------------------------------------- */
+
+    const signupBack =
+        document.getElementById("signupBackButton");
+
+    if (signupBack) {
+
+        signupBack.onclick = function () {
+
+            openAuthPage("signinPage");
+
+        };
+    }
+
+
+    /* ---------------------------------------------------------
+       8. SIGN UP SYSTEM
+       --------------------------------------------------------- */
+
+    const signupForm =
+        document.getElementById("signupForm");
+
+    if (signupForm) {
+
+        signupForm.addEventListener(
+            "submit",
+            function (event) {
+
+                event.preventDefault();
+
+                const name =
+                    document
+                        .getElementById("signupName")
+                        .value
+                        .trim();
+
+                const email =
+                    document
+                        .getElementById("signupEmail")
+                        .value
+                        .trim()
+                        .toLowerCase();
+
+                const password =
+                    document
+                        .getElementById("signupPassword")
+                        .value;
+
+                const confirmPassword =
+                    document
+                        .getElementById("signupConfirmPassword")
+                        .value;
+
+                const message =
+                    document.getElementById("signupMessage");
+
+
+                /* Email validation */
+
+                const emailPattern =
+                    /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+
+                if (!emailPattern.test(email)) {
+
+                    message.textContent =
+                        "Please enter a valid email address.";
+
+                    return;
+                }
+
+
+                /* Password length */
+
+                if (password.length < 6) {
+
+                    message.textContent =
+                        "Password must be at least 6 characters.";
+
+                    return;
+                }
+
+
+                /* Password match */
+
+                if (password !== confirmPassword) {
+
+                    message.textContent =
+                        "Passwords do not match.";
+
+                    return;
+                }
+
+
+                /* Get accounts */
+
+                const accounts =
+                    JSON.parse(
+                        localStorage.getItem(
+                            "justiceAccounts"
+                        ) || "[]"
+                    );
+
+
+                /* Duplicate email */
+
+                const existing =
+                    accounts.find(function (account) {
+
+                        return account.email === email;
+
+                    });
+
+
+                if (existing) {
+
+                    message.textContent =
+                        "An account with this email already exists.";
+
+                    return;
+                }
+
+
+                /* Save account */
+
+                accounts.push({
+
+                    name: name,
+                    email: email,
+                    password: password
+
+                });
+
+
+                localStorage.setItem(
+                    "justiceAccounts",
+                    JSON.stringify(accounts)
+                );
+
+
+                message.textContent =
+                    "Account created successfully!";
+
+
+                signupForm.reset();
+
+
+                setTimeout(function () {
+
+                    openAuthPage("signinPage");
+
+                    const signinEmail =
+                        document.getElementById("email");
+
+                    const signinName =
+                        document.getElementById("fullName");
+
+                    if (signinEmail) {
+                        signinEmail.value = email;
+                    }
+
+                    if (signinName) {
+                        signinName.value = name;
+                    }
+
+                }, 900);
+
+            }
+        );
+    }
+
+
+    /* ---------------------------------------------------------
+       9. FIXED SIGN-IN VALIDATION
+       --------------------------------------------------------- */
+
+    const signinForm =
+        document.getElementById("signinForm");
+
+    if (signinForm) {
+
+        document.addEventListener(
+            "submit",
+            function (event) {
+
+                if (event.target !== signinForm) {
+                    return;
+                }
+
+                /*
+                 * Stop the old Sign-In handler
+                 * from running.
+                 */
+
+                event.preventDefault();
+                event.stopImmediatePropagation();
+
+
+                const name =
+                    document
+                        .getElementById("fullName")
+                        .value
+                        .trim();
+
+                const email =
+                    document
+                        .getElementById("email")
+                        .value
+                        .trim()
+                        .toLowerCase();
+
+                const password =
+                    document
+                        .getElementById("password")
+                        .value;
+
+                const message =
+                    document.getElementById(
+                        "signinMessage"
+                    );
+
+
+                /* Empty fields */
+
+                if (!name || !email || !password) {
+
+                    message.textContent =
+                        "Please fill in all fields.";
+
+                    return;
+                }
+
+
+                /* Email validation */
+
+                const emailPattern =
+                    /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+
+                if (!emailPattern.test(email)) {
+
+                    message.textContent =
+                        "Invalid email address. Please enter a valid email.";
+
+                    return;
+                }
+
+
+                /* Get registered accounts */
+
+                const accounts =
+                    JSON.parse(
+                        localStorage.getItem(
+                            "justiceAccounts"
+                        ) || "[]"
+                    );
+
+
+                const account =
+                    accounts.find(function (user) {
+
+                        return user.email === email;
+
+                    });
+
+
+                /* Account doesn't exist */
+
+                if (!account) {
+
+                    message.textContent =
+                        "No account found with this email. Please Sign Up first.";
+
+                    return;
+                }
+
+
+                /* Wrong password */
+
+                if (account.password !== password) {
+
+                    message.textContent =
+                        "Invalid password. Please try again.";
+
+                    return;
+                }
+
+
+                /* Successful login */
+
+                localStorage.setItem(
+                    "justiceUser",
+                    JSON.stringify({
+
+                        name: account.name,
+                        email: account.email
+
+                    })
+                );
+
+
+                message.textContent =
+                    "Sign in successful!";
+
+
+                setTimeout(function () {
+
+                    /*
+                     * Use existing app navigation
+                     */
+
+                    if (typeof showPage === "function") {
+
+                        showPage("welcome");
+
+                    }
+                    else {
+
+                        openAuthPage("welcomePage");
+
+                    }
+
+                }, 700);
+
+            },
+            true
+        );
+    }
+
+
+    /* ---------------------------------------------------------
+       10. GOOGLE SIGN-IN BUTTON
+       --------------------------------------------------------- */
+
+    const signinFormElement =
+        document.getElementById("signinForm");
+
+
+    if (
+        signinFormElement &&
+        !document.getElementById("googleSignInButton")
+    ) {
+
+        const googleButton =
+            document.createElement("button");
+
+        googleButton.type = "button";
+
+        googleButton.id =
+            "googleSignInButton";
+
+        googleButton.className =
+            "google-signin-button";
+
+        googleButton.innerHTML =
+            "🌐 Continue with Google";
+
+
+        const divider =
+            document.createElement("div");
+
+        divider.className =
+            "auth-divider";
+
+        divider.textContent =
+            "OR";
+
+
+        signinFormElement.after(divider);
+
+        divider.after(googleButton);
+
+
+        googleButton.onclick =
+            function () {
+
+                alert(
+                    "Google Sign-In needs Google OAuth configuration. The button is ready, but a Google Client ID must be added to enable real Google account login."
+                );
+
+            };
+    }
+
+
+    /* ---------------------------------------------------------
+       11. FORGOT PASSWORD
+       --------------------------------------------------------- */
+
+    const forgotButton =
+        document.getElementById(
+            "forgotPasswordButton"
+        );
+
+
+    if (forgotButton) {
+
+        forgotButton.onclick =
+            function () {
+
+                openAuthPage(
+                    "forgotPage"
+                );
+
+            };
+    }
+
+
+    /* ---------------------------------------------------------
+       12. FORGOT PASSWORD BACK
+       --------------------------------------------------------- */
+
+    const forgotBack =
+        document.getElementById(
+            "forgotBackButton"
+        );
+
+
+    if (forgotBack) {
+
+        forgotBack.onclick =
+            function () {
+
+                openAuthPage(
+                    "signinPage"
+                );
+
+            };
+    }
+
+
+    /* ---------------------------------------------------------
+       13. RESET PASSWORD
+       --------------------------------------------------------- */
+
+    const resetButton =
+        document.getElementById(
+            "resetPasswordButton"
+        );
+
+
+    if (resetButton) {
+
+        resetButton.onclick =
+            function () {
+
+                const email =
+                    document
+                        .getElementById("resetEmail")
+                        .value
+                        .trim()
+                        .toLowerCase();
+
+                const newPassword =
+                    document
+                        .getElementById("newPassword")
+                        .value;
+
+                const confirmPassword =
+                    document
+                        .getElementById("confirmPassword")
+                        .value;
+
+                const message =
+                    document.getElementById(
+                        "resetMessage"
+                    );
+
+
+                const emailPattern =
+                    /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+
+                if (!emailPattern.test(email)) {
+
+                    message.textContent =
+                        "Please enter a valid email address.";
+
+                    return;
+                }
+
+
+                if (newPassword.length < 6) {
+
+                    message.textContent =
+                        "Password must be at least 6 characters.";
+
+                    return;
+                }
+
+
+                if (newPassword !== confirmPassword) {
+
+                    message.textContent =
+                        "Passwords do not match.";
+
+                    return;
+                }
+
+
+                const accounts =
+                    JSON.parse(
+                        localStorage.getItem(
+                            "justiceAccounts"
+                        ) || "[]"
+                    );
+
+
+                const index =
+                    accounts.findIndex(
+                        function (account) {
+
+                            return account.email === email;
+
+                        }
+                    );
+
+
+                if (index === -1) {
+
+                    message.textContent =
+                        "No account found with this email.";
+
+                    return;
+                }
+
+
+                accounts[index].password =
+                    newPassword;
+
+
+                localStorage.setItem(
+                    "justiceAccounts",
+                    JSON.stringify(accounts)
+                );
+
+
+                message.textContent =
+                    "Password reset successfully!";
+
+
+                setTimeout(function () {
+
+                    openAuthPage(
+                        "signinPage"
+                    );
+
+                }, 900);
+
+            };
+    }
+
+});
+/* =====================================================
+   FINAL PAGE SEPARATION FIX
+   ONLY ONE PAGE CAN BE VISIBLE
+===================================================== */
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const pageIds = [
+        "aboutIntroPage",
+        "feedbackPage",
+        "signinPage",
+        "forgotPage",
+        "welcomePage",
+        "homePage",
+        "dangerPage",
+        "reportPage",
+        "myCasePage",
+        "evidencePage",
+        "aiGuidesPage",
+        "justiceHubPage",
+        "liveChatPage",
+        "settingsPage",
+        "privacyPolicyPage",
+        "termsPage",
+        "contactPage"
+    ];
+
+    function showOnlyPage(id) {
+
+        pageIds.forEach(function (pageId) {
+
+            const page =
+                document.getElementById(pageId);
+
+            if (!page) return;
+
+            page.classList.remove("active");
+
+            page.style.display = "none";
+        });
+
+
+        const selected =
+            document.getElementById(id);
+
+        if (!selected) return;
+
+
+        selected.classList.add("active");
+
+
+        if (id === "aboutIntroPage") {
+
+            selected.style.display = "flex";
+
+        }
+        else if (
+            id === "signinPage" ||
+            id === "forgotPage"
+        ) {
+
+            selected.style.display = "flex";
+
+        }
+        else {
+
+            selected.style.display = "block";
+
+        }
+
+
+        window.scrollTo({
+            top: 0,
+            behavior: "auto"
+        });
+    }
+
+
+    /* -----------------------------------------
+       FIRST OPEN → ONLY ABOUT
+    ----------------------------------------- */
+
+    showOnlyPage("aboutIntroPage");
+
+
+    /* -----------------------------------------
+       ABOUT → SIGN IN
+    ----------------------------------------- */
+
+    const signIn =
+        document.getElementById(
+            "aboutSignInButton"
+        );
+
+    if (signIn) {
+
+        signIn.onclick = function () {
+
+            showOnlyPage("signinPage");
+
+        };
+    }
+
+
+    /* -----------------------------------------
+       ABOUT → PRIVACY
+    ----------------------------------------- */
+
+    const privacy =
+        document.getElementById(
+            "aboutPrivacyButton"
+        );
+
+    if (privacy) {
+
+        privacy.onclick = function () {
+
+            showOnlyPage(
+                "privacyPolicyPage"
+            );
+
+        };
+    }
+
+
+    /* -----------------------------------------
+       ABOUT → TERMS
+    ----------------------------------------- */
+
+    const terms =
+        document.getElementById(
+            "aboutTermsButton"
+        );
+
+    if (terms) {
+
+        terms.onclick = function () {
+
+            showOnlyPage("termsPage");
+
+        };
+    }
+
+
+    /* -----------------------------------------
+       ABOUT → CONTACT
+    ----------------------------------------- */
+
+    const contact =
+        document.getElementById(
+            "aboutContactButton"
+        );
+
+    if (contact) {
+
+        contact.onclick = function () {
+
+            showOnlyPage("contactPage");
+
+        };
+    }
+
+
+    /* -----------------------------------------
+       ABOUT → FEEDBACK
+    ----------------------------------------- */
+
+    const feedback =
+        document.getElementById(
+            "aboutFeedbackButton"
+        );
+
+    if (feedback) {
+
+        feedback.onclick = function () {
+
+            showOnlyPage("feedbackPage");
+
+        };
+    }
+
+
+    /* -----------------------------------------
+       BACK TO ABOUT
+    ----------------------------------------- */
+
+    const backButtons = [
+        "feedbackBackButton",
+        "privacyBackButton",
+        "termsBackButton",
+        "contactBackButton"
+    ];
+
+    backButtons.forEach(function (id) {
+
+        const button =
+            document.getElementById(id);
+
+        if (button) {
+
+            button.onclick = function () {
+
+                showOnlyPage(
+                    "aboutIntroPage"
+                );
+
+            };
+        }
+    });
+
+
+    /* -----------------------------------------
+       FORGOT PASSWORD
+    ----------------------------------------- */
+
+    const forgot =
+        document.getElementById(
+            "forgotPasswordButton"
+        );
+
+    if (forgot) {
+
+        forgot.onclick = function () {
+
+            showOnlyPage("forgotPage");
+
+        };
+    }
+
+
+    /* -----------------------------------------
+       FORGOT → SIGN IN
+    ----------------------------------------- */
+
+    const forgotBack =
+        document.getElementById(
+            "forgotBackButton"
+        );
+
+    if (forgotBack) {
+
+        forgotBack.onclick = function () {
+
+            showOnlyPage("signinPage");
+
+        };
+    }
+
+
+    /* -----------------------------------------
+       SIGN IN → SIGN UP
+    ----------------------------------------- */
+
+    const signup =
+        document.getElementById(
+            "signupButton"
+        );
+
+    if (signup) {
+
+        signup.onclick = function () {
+
+            /*
+             * signupPage should be a separate
+             * section if you have it.
+             */
+
+            showOnlyPage("signupPage");
+
+        };
+    }
+
+});
