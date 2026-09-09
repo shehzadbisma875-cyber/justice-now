@@ -7054,3 +7054,20 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 });
+document.addEventListener("DOMContentLoaded", function () {
+
+    const googleButton = document.getElementById("googleSignInButton");
+
+    if (googleButton) {
+        googleButton.addEventListener("click", function () {
+
+            // Google open hoga
+            window.open(
+                "https://accounts.google.com/",
+                "_blank"
+            );
+
+        });
+    }
+
+});

@@ -516,70 +516,7 @@
         >
             🌐 Continue with Google
         </button>
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-  import {
-    getAuth,
-    GoogleAuthProvider,
-    signInWithPopup
-  } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT.firebasestorage.app",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const provider = new GoogleAuthProvider();
-
-  const googleButton = document.getElementById("googleSignInButton");
-
-  if (googleButton) {
-    googleButton.addEventListener("click", async function () {
-      try {
-        googleButton.disabled = true;
-        googleButton.textContent = "Signing in...";
-
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-
-        localStorage.setItem("justiceUser", JSON.stringify({
-          name: user.displayName || "Google User",
-          email: user.email || "",
-          photo: user.photoURL || "",
-          provider: "google"
-        }));
-
-        // Apne existing home page ko open karo
-        if (typeof showPage === "function") {
-          showPage("welcome");
-        } else {
-          document.querySelectorAll(".page").forEach(page => {
-            page.classList.remove("active");
-          });
-
-          const homePage = document.getElementById("welcomePage");
-          if (homePage) {
-            homePage.classList.add("active");
-          }
-        }
-
-      } catch (error) {
-        console.error("Google Sign-In Error:", error);
-
-        alert("Google Sign-In failed. Please try again.");
-
-        googleButton.disabled = false;
-        googleButton.textContent = "🌐 Continue with Google";
-      }
-    });
-  }
-</script>
     </div>
 
 </section>
