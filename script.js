@@ -7057,3 +7057,42 @@ document.addEventListener("DOMContentLoaded", function () {
 function openGoogle() {
     window.location.href = "https://accounts.google.com/";
 }
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { 
+  getAuth, 
+  signInWithPopup, 
+  GoogleAuthProvider 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+// آپ کے فائر بیس پروجیکٹ کی کنفیگریشن
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "justice-now-406e9.firebaseapp.com",
+  projectId: "justice-now-406e9",
+  storageBucket: "justice-now-406e9.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+// Google Sign-In Button Event Listener
+const googleBtn = document.getElementById("googleBtn");
+
+if (googleBtn) {
+  googleBtn.addEventListener("click", () => {
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        const user = result.user;
+        console.log("Logged in User:", user);
+        alert("Welcome " + user.displayName + "!");
+      })
+      .catch((error) => {
+        console.error("Sign-in Error:", error.message);
+        alert("Error during Sign-in: " + error.message);
+      });
+  });
+}
