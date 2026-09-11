@@ -1,38 +1,42 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { 
-  getAuth, 
-  signOut, 
-  onAuthStateChanged 
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+<!-- dashboard.html کا اپنا باڈی کا سامان اور ڈیزائن یہاں رہے گا -->
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDqR4opYs45_yVoWV28vXmLLWYKbAKkrKw",
-  authDomain: "justice-now-406e9.firebaseapp.com",
-  projectId: "justice-now-406e9",
-  storageBucket: "justice-now-406e9.firebasestorage.app",
-  messagingSenderId: "651828513296",
-  appId: "1:651828513296:web:41f7491a9e92fddb641895"
-};
+<!-- اسکرپٹ کوڈ کو لازمی ان ٹیگز کے اندر رکھیں -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { 
+    getAuth, 
+    signOut, 
+    onAuthStateChanged 
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+  const firebaseConfig = {
+    apiKey: "AIzaSyDqR4opYs45_yVoWV28vXmLLWYKbAKkrKw",
+    authDomain: "justice-now-406e9.firebaseapp.com",
+    projectId: "justice-now-406e9",
+    storageBucket: "justice-now-406e9.firebasestorage.app",
+    messagingSenderId: "651828513296",
+    appId: "1:651828513296:web:41f7491a9e92fddb641895"
+  };
 
-// چیک کریں کہ یوزر لاگ ان ہے یا نہیں
-onAuthStateChanged(auth, (user) => {
-  if (!user) {
-    // اگر لاگ ان نہیں ہے تو واپس لاگ ان پیج پر بھیج دیں
-    window.location.href = "index.html";
-  } else {
-    console.log("Welcome to Dashboard:", user.displayName);
-  }
-});
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
 
-// اگر لاگ آؤٹ بٹن موجود ہو
-const logoutBtn = document.getElementById("logoutBtn");
-if (logoutBtn) {
-  logoutBtn.addEventListener("click", () => {
-    signOut(auth).then(() => {
+  // سیشن چیک کریں
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
       window.location.href = "index.html";
-    });
+    } else {
+      console.log("Welcome to Dashboard:", user.displayName);
+    }
   });
-}
+
+  // لاگ آؤٹ بٹن کا کوڈ
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      signOut(auth).then(() => {
+        window.location.href = "index.html";
+      });
+    });
+  }
+</script>
