@@ -17,15 +17,17 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// Check authentication on Dashboard
+// چیک کریں کہ یوزر لاگ ان ہے یا نہیں
 onAuthStateChanged(auth, (user) => {
   if (!user) {
-    // If not logged in, send back to login page
+    // اگر لاگ ان نہیں ہے تو واپس لاگ ان پیج پر بھیج دیں
     window.location.href = "index.html";
+  } else {
+    console.log("Welcome to Dashboard:", user.displayName);
   }
 });
 
-// Logout Button Event
+// اگر لاگ آؤٹ بٹن موجود ہو
 const logoutBtn = document.getElementById("logoutBtn");
 if (logoutBtn) {
   logoutBtn.addEventListener("click", () => {
