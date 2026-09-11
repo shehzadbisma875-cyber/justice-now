@@ -7066,12 +7066,12 @@ import {
 
 // آپ کے فائر بیس پروجیکٹ کی کنفیگریشن
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
+  apiKey: "AIzaSyBxxxxxxxxxxxxxxxxxxxxxx", // اصلی API Key
   authDomain: "justice-now-406e9.firebaseapp.com",
   projectId: "justice-now-406e9",
   storageBucket: "justice-now-406e9.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  messagingSenderId: "123456789012", // اصلی Sender ID
+  appId: "1:123456789012:web:abcdef123456" // اصلی App ID
 };
 
 // Initialize Firebase
