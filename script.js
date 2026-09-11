@@ -7054,9 +7054,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 });
-function openGoogle() {
-    window.location.href = "https://accounts.google.com/";
-}
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
   getAuth, 
@@ -7064,14 +7061,14 @@ import {
   GoogleAuthProvider 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-// آپ کے فائر بیس پروجیکٹ کی کنفیگریشن
+// آپ کی تصویر والی اصل فائر بیس کنفیگریشن
 const firebaseConfig = {
-  apiKey: "AIzaSyBxxxxxxxxxxxxxxxxxxxxxx", // اصلی API Key
+  apiKey: "AIzaSyDqR4opYs45_yVoWV28vXmLLWYKbAKkrKw",
   authDomain: "justice-now-406e9.firebaseapp.com",
   projectId: "justice-now-406e9",
-  storageBucket: "justice-now-406e9.appspot.com",
-  messagingSenderId: "123456789012", // اصلی Sender ID
-  appId: "1:123456789012:web:abcdef123456" // اصلی App ID
+  storageBucket: "justice-now-406e9.firebasestorage.app",
+  messagingSenderId: "651828513296",
+  appId: "1:651828513296:web:41f7491a9e92fddb641895"
 };
 
 // Initialize Firebase
@@ -7079,7 +7076,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
-// Google Sign-In Button Event Listener
+// Google Sign-In Event
 const googleBtn = document.getElementById("googleBtn");
 
 if (googleBtn) {
