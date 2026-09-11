@@ -7093,3 +7093,34 @@ if (googleBtn) {
       });
   });
 }
+// Google Sign-In Event Listener
+googleBtn = document.getElementById("googleBtn");
+
+if (googleBtn) {
+  googleBtn.addEventListener("click", () => {
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        const user = result.user;
+        console.log("Logged in User:", user);
+        window.location.href = "dashboard.html";
+      })
+      .catch((error) => {
+        console.error("Sign-in Error:", error.message);
+        alert("Error during Sign-in: " + error.message);
+      });
+  });
+}
+if (googleBtn) {
+  googleBtn.addEventListener("click", () => {
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        const user = result.user;
+        console.log("Logged in User:", user);
+        window.location.href = "dashboard.html";
+      })
+      .catch((error) => {
+        console.error("Sign-in Error:", error.message);
+        alert("Error during Sign-in: " + error.message);
+      });
+  });
+}

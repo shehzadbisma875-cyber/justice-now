@@ -1,0 +1,36 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { 
+  getAuth, 
+  signOut, 
+  onAuthStateChanged 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDqR4opYs45_yVoWV28vXmLLWYKbAKkrKw",
+  authDomain: "justice-now-406e9.firebaseapp.com",
+  projectId: "justice-now-406e9",
+  storageBucket: "justice-now-406e9.firebasestorage.app",
+  messagingSenderId: "651828513296",
+  appId: "1:651828513296:web:41f7491a9e92fddb641895"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+// Check authentication on Dashboard
+onAuthStateChanged(auth, (user) => {
+  if (!user) {
+    // If not logged in, send back to login page
+    window.location.href = "index.html";
+  }
+});
+
+// Logout Button Event
+const logoutBtn = document.getElementById("logoutBtn");
+if (logoutBtn) {
+  logoutBtn.addEventListener("click", () => {
+    signOut(auth).then(() => {
+      window.location.href = "index.html";
+    });
+  });
+}
