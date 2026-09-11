@@ -7093,22 +7093,3 @@ if (googleBtn) {
       });
   });
 }
-// Google Sign-In Event
-const googleBtn = document.getElementById("googleBtn");
-
-if (googleBtn) {
-  googleBtn.addEventListener("click", () => {
-    signInWithPopup(auth, provider)
-      .then((result) => {
-        const user = result.user;
-        console.log("Logged in User:", user);
-        
-        // لاگ ان کے بعد اگلے پیج پر ری ڈائریکٹ (Redirect) کرنے کے لیے:
-        window.location.href = "dashboard.html"; // <-- اپنے اگلے پیج کا نام یہاں لکھیں
-      })
-      .catch((error) => {
-        console.error("Sign-in Error:", error.message);
-        alert("Error during Sign-in: " + error.message);
-      });
-  });
-}
