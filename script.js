@@ -7058,10 +7058,11 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { 
   getAuth, 
   signInWithPopup, 
-  GoogleAuthProvider 
+  GoogleAuthProvider,
+  onAuthStateChanged 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-// آپ کی تصویر والی اصل فائر بیس کنفیگریشن
+// Firebase Configuration
 const firebaseConfig = {
   apiKey: "AIzaSyDqR4opYs45_yVoWV28vXmLLWYKbAKkrKw",
   authDomain: "justice-now-406e9.firebaseapp.com",
@@ -7076,51 +7077,38 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
-// Google Sign-In Event
+// 1. اگر صارف پہلے سے لاگ ان ہے تو خود بخود ڈیش بورڈ پر منتقل کریں
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    console.log("Already signed in, redirecting...");
+    window.location.href = "dashboard.html";
+  }
+});
+
+// 2. گوگل سائن ان کا ایونٹ
 const googleBtn = document.getElementById("googleBtn");
 
 if (googleBtn) {
   googleBtn.addEventListener("click", () => {
     signInWithPopup(auth, provider)
       .then((result) => {
-        const user = result.user;
-        console.log("Logged in User:", user);
-        alert("Welcome " + user.displayName + "!");
+        console.log("Logged in user:", result.user);
+        // سائن ان کامیاب ہوتے ہی اگلے پیج پر ری ڈائریکٹ
+        window.location.href = "dashboard.html";
       })
       .catch((error) => {
         console.error("Sign-in Error:", error.message);
-        alert("Error during Sign-in: " + error.message);
+        alert("Sign-in failed: " + error.message);
       });
   });
 }
-// Google Sign-In Event Listener
-googleBtn = document.getElementById("googleBtn");
 
-if (googleBtn) {
-  googleBtn.addEventListener("click", () => {
-    signInWithPopup(auth, provider)
-      .then((result) => {
-        const user = result.user;
-        console.log("Logged in User:", user);
-        window.location.href = "dashboard.html";
-      })
-      .catch((error) => {
-        console.error("Sign-in Error:", error.message);
-        alert("Error during Sign-in: " + error.message);
-      });
-  });
-}
-if (googleBtn) {
-  googleBtn.addEventListener("click", () => {
-    signInWithPopup(auth, provider)
-      .then((result) => {
-        const user = result.user;
-        console.log("Logged in User:", user);
-        window.location.href = "dashboard.html";
-      })
-      .catch((error) => {
-        console.error("Sign-in Error:", error.message);
-        alert("Error during Sign-in: " + error.message);
-      });
+// 3. اگر آپ کا کوئی عام لاگ ان فارم ہے (Standard Sign-in Form)
+const loginForm = document.getElementById("loginForm"); // فارم کی ID اگر ہو
+if (loginForm) {
+  loginForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    // فارم سبمٹ ہونے پر اگلے پیج پر جانے کا عمل
+    window.location.href = "dashboard.html";
   });
 }
