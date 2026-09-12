@@ -7104,3 +7104,8 @@ if (googleAuthBtn) {
       });
   });
 }
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    window.location.href = "dashboard.html";
+  }
+});
