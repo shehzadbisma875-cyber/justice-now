@@ -7124,11 +7124,12 @@ if (googleBtn) {
       });
   });
 }
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
   getAuth, 
   signInWithPopup, 
-  GoogleAuthProvider,
-  signInWithEmailAndPassword, // ای میل سائن ان کے لیے
+  GoogleAuthProvider, 
+  signInWithEmailAndPassword, 
   onAuthStateChanged 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 // اگلے پیج کا نام یہاں سیٹ کریں
