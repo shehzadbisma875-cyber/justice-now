@@ -7058,11 +7058,10 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { 
   getAuth, 
   signInWithPopup, 
-  GoogleAuthProvider,
-  onAuthStateChanged 
+  GoogleAuthProvider 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-// Firebase Configuration
+// آپ کی تصویر والی اصل فائر بیس کنفیگریشن
 const firebaseConfig = {
   apiKey: "AIzaSyDqR4opYs45_yVoWV28vXmLLWYKbAKkrKw",
   authDomain: "justice-now-406e9.firebaseapp.com",
@@ -7077,38 +7076,93 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
-// 1. اگر صارف پہلے سے لاگ ان ہے تو خود بخود ڈیش بورڈ پر منتقل کریں
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    console.log("Already signed in, redirecting...");
-    window.location.href = "dashboard.html";
-  }
-});
-
-// 2. گوگل سائن ان کا ایونٹ
+// Google Sign-In Event
 const googleBtn = document.getElementById("googleBtn");
 
 if (googleBtn) {
   googleBtn.addEventListener("click", () => {
     signInWithPopup(auth, provider)
       .then((result) => {
-        console.log("Logged in user:", result.user);
-        // سائن ان کامیاب ہوتے ہی اگلے پیج پر ری ڈائریکٹ
+        const user = result.user;
+        console.log("Logged in User:", user);
+        alert("Welcome " + user.displayName + "!");
+      })
+      .catch((error) => {
+        console.error("Sign-in Error:", error.message);
+        alert("Error during Sign-in: " + error.message);
+      });
+  });
+}
+// Google Sign-In Event Listener
+googleBtn = document.getElementById("googleBtn");
+
+if (googleBtn) {
+  googleBtn.addEventListener("click", () => {
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        const user = result.user;
+        console.log("Logged in User:", user);
         window.location.href = "dashboard.html";
       })
       .catch((error) => {
         console.error("Sign-in Error:", error.message);
-        alert("Sign-in failed: " + error.message);
+        alert("Error during Sign-in: " + error.message);
       });
   });
 }
+if (googleBtn) {
+  googleBtn.addEventListener("click", () => {
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        const user = result.user;
+        console.log("Logged in User:", user);
+        window.location.href = "dashboard.html";
+      })
+      .catch((error) => {
+        console.error("Sign-in Error:", error.message);
+        alert("Error during Sign-in: " + error.message);
+      });
+  });
+}
+import { 
+  getAuth, 
+  signInWithPopup, 
+  GoogleAuthProvider,
+  signInWithEmailAndPassword, // ای میل سائن ان کے لیے
+  onAuthStateChanged 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+// اگلے پیج کا نام یہاں سیٹ کریں
+const nextPage = "welcome.html"; 
 
-// 3. اگر آپ کا کوئی عام لاگ ان فارم ہے (Standard Sign-in Form)
-const loginForm = document.getElementById("loginForm"); // فارم کی ID اگر ہو
+// ای میل اور پاس ورڈ سے لاگ ان کا ایونٹ
+const loginForm = document.getElementById("loginForm"); // آپ کے لاگ ان فارم کی ID
+
 if (loginForm) {
   loginForm.addEventListener("submit", (e) => {
     e.preventDefault();
-    // فارم سبمٹ ہونے پر اگلے پیج پر جانے کا عمل
-    window.location.href = "dashboard.html";
+
+    const email = document.getElementById("emailInput").value; // ای میل انپٹ کی ID
+    const password = document.getElementById("passwordInput").value; // پاس ورڈ انپٹ کی ID
+
+    signInWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        // لاگ ان شدہ یوزر کا ڈیٹا کنسول میں شو ہوگا
+        const user = userCredential.user;
+        console.log("Email Logged-in User:", user);
+
+        // اگلے پیج پر منتقل کریں
+        window.location.href = nextPage;
+      })
+      .catch((error) => {
+        console.error("Email Login Error:", error.message);
+        alert("Login Failed: " + error.message);
+      });
   });
 }
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    console.log("Active User Session Found:", user);
+    window.location.href = nextPage;
+  }
+});
+
