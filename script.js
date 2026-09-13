@@ -7058,10 +7058,11 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { 
   getAuth, 
   signInWithPopup, 
-  GoogleAuthProvider 
+  GoogleAuthProvider, 
+  onAuthStateChanged 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-// آپ کی تصویر والی اصل فائر بیس کنفیگریشن
+// Firebase Configuration
 const firebaseConfig = {
   apiKey: "AIzaSyDqR4opYs45_yVoWV28vXmLLWYKbAKkrKw",
   authDomain: "justice-now-406e9.firebaseapp.com",
@@ -7071,56 +7072,31 @@ const firebaseConfig = {
   appId: "1:651828513296:web:41f7491a9e92fddb641895"
 };
 
-// Initialize Firebase
+// Initialize
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
-// Google Sign-In Event
+// 1. اگر صارف پہلے سے لاگ ان ہو تو فوراً اگلے پیج پر بھیج دیں
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    window.location.href = "welcome.html"; // اپنے اگلے پیج کا نام یہاں رکھیں
+  }
+});
+
+// 2. گوگل سائن ان بٹن کا ایونٹ
 const googleBtn = document.getElementById("googleBtn");
 
 if (googleBtn) {
   googleBtn.addEventListener("click", () => {
     signInWithPopup(auth, provider)
       .then((result) => {
-        const user = result.user;
-        console.log("Logged in User:", user);
-        alert("Welcome " + user.displayName + "!");
+        // لاگ ان ہوتے ہی فوری طور پر اگلے پیج پر جائے گا
+        window.location.href = "welcome.html"; 
       })
       .catch((error) => {
         console.error("Sign-in Error:", error.message);
-        alert("Error during Sign-in: " + error.message);
-      });
-  });
-}
-// Google Sign-In Event Listener
-googleBtn = document.getElementById("googleBtn");
-
-if (googleBtn) {
-  googleBtn.addEventListener("click", () => {
-    signInWithPopup(auth, provider)
-      .then((result) => {
-        const user = result.user;
-        console.log("Logged in User:", user);
-        window.location.href = "dashboard.html";
-      })
-      .catch((error) => {
-        console.error("Sign-in Error:", error.message);
-        alert("Error during Sign-in: " + error.message);
-      });
-  });
-}
-if (googleBtn) {
-  googleBtn.addEventListener("click", () => {
-    signInWithPopup(auth, provider)
-      .then((result) => {
-        const user = result.user;
-        console.log("Logged in User:", user);
-        window.location.href = "dashboard.html";
-      })
-      .catch((error) => {
-        console.error("Sign-in Error:", error.message);
-        alert("Error during Sign-in: " + error.message);
+        alert("Google Sign-In failed: " + error.message);
       });
   });
 }
