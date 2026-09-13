@@ -7085,7 +7085,7 @@ onAuthStateChanged(auth, (user) => {
 });
 
 // 2. گوگل سائن ان بٹن کا ایونٹ
-const googleBtn = document.getElementById("googleBtn");
+ googleBtn = document.getElementById("googleBtn");
 
 if (googleBtn) {
   googleBtn.addEventListener("click", () => {
@@ -7097,6 +7097,31 @@ if (googleBtn) {
       .catch((error) => {
         console.error("Sign-in Error:", error.message);
         alert("Google Sign-In failed: " + error.message);
+      });
+  });
+}
+// اگر آپ کے اسلی پیج کا نام home.html یا main.html ہے تو "welcome.html" کی جگہ وہ لکھیں:
+const nextPage = "home.html"; // <-- یہاں اپنی فائل کا صحیح نام لکھیں
+
+// 1. آٹو لاگ ان سیشن Check
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    window.location.href = nextPage;
+  }
+});
+
+// 2. گوگل سائن ان ایونٹ
+const googleBtn = document.getElementById("googleBtn");
+
+if (googleBtn) {
+  googleBtn.addEventListener("click", () => {
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        // لاگ ان ہوتے ہی اسلی پیج پر منتقل کرے گا
+        window.location.href = nextPage;
+      })
+      .catch((error) => {
+        console.error("Sign-in Error:", error.message);
       });
   });
 }
