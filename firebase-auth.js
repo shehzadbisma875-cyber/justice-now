@@ -25,7 +25,8 @@ import {
    ===================================================== */
 
 const firebaseConfig = {
-    apiKey: "AIzaSyDqR4OpVs45_vy0W2WxXmLLYVKbAKKrKw",
+    
+    apiKey: "AIzaSyDqR4opYs45_yVoWV28vXmLLWYKbAKkrKw",
     authDomain: "justice-now-406e9.firebaseapp.com",
     projectId: "justice-now-406e9",
     storageBucket: "justice-now-406e9.firebasestorage.app",
