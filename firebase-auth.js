@@ -45,6 +45,10 @@ const auth = getAuth(app);
 const googleProvider =
     new GoogleAuthProvider();
 
+googleProvider.setCustomParameters({
+    prompt: "select_account"
+});
+
 
 /* =====================================================
    KEEP USER SIGNED IN
@@ -151,9 +155,7 @@ document.addEventListener(
         const emailPattern =
             /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-        if (
-            !emailPattern.test(email)
-        ) {
+        if (!emailPattern.test(email)) {
 
             message.textContent =
                 "Please enter a valid email address.";
@@ -175,9 +177,7 @@ document.addEventListener(
 
         /* Password confirmation */
 
-        if (
-            password !== confirmPassword
-        ) {
+        if (password !== confirmPassword) {
 
             message.textContent =
                 "Passwords do not match.";
@@ -189,8 +189,6 @@ document.addEventListener(
         message.textContent =
             "Creating your account...";
 
-
-        /* Firebase account creation */
 
         createUserWithEmailAndPassword(
             auth,
@@ -205,10 +203,8 @@ document.addEventListener(
                 name
             );
 
-
             message.textContent =
                 "Account created successfully!";
-
 
             form.reset();
 
@@ -246,6 +242,12 @@ document.addEventListener(
 
         .catch(function(error) {
 
+            console.error(
+                "Firebase Sign Up Error:",
+                error
+            );
+
+
             if (
                 error.code ===
                 "auth/email-already-in-use"
@@ -279,9 +281,8 @@ document.addEventListener(
             else {
 
                 message.textContent =
-                    "Account creation failed. Please try again.";
-
-                console.error(error);
+                    "Account creation failed: " +
+                    error.code;
 
             }
 
@@ -357,9 +358,7 @@ document.addEventListener(
         const emailPattern =
             /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-        if (
-            !emailPattern.test(email)
-        ) {
+        if (!emailPattern.test(email)) {
 
             message.textContent =
                 "Invalid email address. Please enter a valid email.";
@@ -371,8 +370,6 @@ document.addEventListener(
         message.textContent =
             "Signing in...";
 
-
-        /* Firebase Sign In */
 
         signInWithEmailAndPassword(
             auth,
@@ -386,7 +383,6 @@ document.addEventListener(
                 result.user,
                 name
             );
-
 
             message.textContent =
                 "Sign in successful!";
@@ -425,6 +421,12 @@ document.addEventListener(
 
         .catch(function(error) {
 
+            console.error(
+                "Firebase Sign In Error:",
+                error
+            );
+
+
             if (
                 error.code ===
                     "auth/invalid-credential" ||
@@ -452,9 +454,8 @@ document.addEventListener(
             else {
 
                 message.textContent =
-                    "Sign in failed. Please try again.";
-
-                console.error(error);
+                    "Sign in failed: " +
+                    error.code;
 
             }
 
@@ -609,6 +610,12 @@ document.addEventListener(
 
                 .catch(function(error) {
 
+                    console.error(
+                        "GOOGLE SIGN-IN ERROR:",
+                        error
+                    );
+
+
                     const message =
                         document.getElementById(
                             "signinMessage"
@@ -637,14 +644,41 @@ document.addEventListener(
 
                         }
 
+                        else if (
+                            error.code ===
+                            "auth/unauthorized-domain"
+                        ) {
+
+                            message.textContent =
+                                "Google Sign-In error: unauthorized domain.";
+
+                        }
+
+                        else if (
+                            error.code ===
+                            "auth/operation-not-allowed"
+                        ) {
+
+                            message.textContent =
+                                "Google Sign-In is not enabled in Firebase.";
+
+                        }
+
+                        else if (
+                            error.code ===
+                            "auth/invalid-oauth-client-id"
+                        ) {
+
+                            message.textContent =
+                                "Google Sign-In error: invalid OAuth client ID.";
+
+                        }
+
                         else {
 
                             message.textContent =
-                                "Google sign in failed. Please try again.";
-
-                            console.error(
-                                error
-                            );
+                                "Google Sign-In error: " +
+                                error.code;
 
                         }
 
@@ -698,7 +732,8 @@ document.addEventListener(
 
 
         const email =
-            emailInput.value
+            emailInput
+                .value
                 .trim()
                 .toLowerCase();
 
@@ -717,9 +752,7 @@ document.addEventListener(
         const emailPattern =
             /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-        if (
-            !emailPattern.test(email)
-        ) {
+        if (!emailPattern.test(email)) {
 
             message.textContent =
                 "Please enter a valid email address.";
@@ -731,8 +764,6 @@ document.addEventListener(
         message.textContent =
             "Sending password reset email...";
 
-
-        /* Firebase password reset */
 
         sendPasswordResetEmail(
             auth,
@@ -747,6 +778,12 @@ document.addEventListener(
         })
 
         .catch(function(error) {
+
+            console.error(
+                "Password Reset Error:",
+                error
+            );
+
 
             if (
                 error.code ===
@@ -771,11 +808,8 @@ document.addEventListener(
             else {
 
                 message.textContent =
-                    "Unable to send reset email. Please try again.";
-
-                console.error(
-                    error
-                );
+                    "Unable to send reset email: " +
+                    error.code;
 
             }
 
