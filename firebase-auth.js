@@ -13,7 +13,9 @@ import {
     GoogleAuthProvider,
     signInWithPopup,
     sendPasswordResetEmail,
-    onAuthStateChanged
+    onAuthStateChanged,
+    setPersistence,
+    browserLocalPersistence
 }
     from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
@@ -37,8 +39,28 @@ const firebaseConfig = {
    ===================================================== */
 
 const app = initializeApp(firebaseConfig);
+
 const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
+
+const googleProvider =
+    new GoogleAuthProvider();
+
+
+/* =====================================================
+   KEEP USER SIGNED IN
+   ===================================================== */
+
+setPersistence(
+    auth,
+    browserLocalPersistence
+).catch(function(error) {
+
+    console.error(
+        "Firebase persistence error:",
+        error
+    );
+
+});
 
 
 /* =====================================================
@@ -54,6 +76,7 @@ function saveJusticeUser(user, name = "") {
             email: user.email || ""
         })
     );
+
 }
 
 
@@ -61,455 +84,724 @@ function saveJusticeUser(user, name = "") {
    SIGN UP
    ===================================================== */
 
-document.addEventListener("submit", function(event) {
+document.addEventListener(
+    "submit",
+    function(event) {
 
-    const form = event.target;
+        const form = event.target;
 
-    if (!form || form.id !== "signupForm") {
-        return;
-    }
+        if (
+            !form ||
+            form.id !== "signupForm"
+        ) {
+            return;
+        }
 
-    event.preventDefault();
-    event.stopImmediatePropagation();
-
-    const name =
-        document.getElementById("signupName").value.trim();
-
-    const email =
-        document.getElementById("signupEmail").value
-        .trim()
-        .toLowerCase();
-
-    const password =
-        document.getElementById("signupPassword").value;
-
-    const confirmPassword =
-        document.getElementById("signupConfirmPassword").value;
-
-    const message =
-        document.getElementById("signupMessage");
+        event.preventDefault();
+        event.stopImmediatePropagation();
 
 
-    if (!name || !email || !password || !confirmPassword) {
+        const name =
+            document
+                .getElementById("signupName")
+                .value
+                .trim();
 
-        message.textContent =
-            "Please fill in all fields.";
+        const email =
+            document
+                .getElementById("signupEmail")
+                .value
+                .trim()
+                .toLowerCase();
 
-        return;
-    }
+        const password =
+            document
+                .getElementById("signupPassword")
+                .value;
 
+        const confirmPassword =
+            document
+                .getElementById("signupConfirmPassword")
+                .value;
 
-    if (password.length < 6) {
-
-        message.textContent =
-            "Password must be at least 6 characters.";
-
-        return;
-    }
-
-
-    if (password !== confirmPassword) {
-
-        message.textContent =
-            "Passwords do not match.";
-
-        return;
-    }
-
-
-    message.textContent =
-        "Creating your account...";
+        const message =
+            document.getElementById(
+                "signupMessage"
+            );
 
 
-    createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-    )
+        /* Empty fields */
 
-    .then(function(result) {
-
-        saveJusticeUser(result.user, name);
-
-        message.textContent =
-            "Account created successfully!";
-
-        form.reset();
-
-
-        setTimeout(function() {
-
-            if (typeof openAuthPage === "function") {
-                openAuthPage("signinPage");
-            }
-            else if (typeof showPage === "function") {
-                showPage("signin");
-            }
-
-        }, 1000);
-
-    })
-
-    .catch(function(error) {
-
-        if (error.code === "auth/email-already-in-use") {
+        if (
+            !name ||
+            !email ||
+            !password ||
+            !confirmPassword
+        ) {
 
             message.textContent =
-                "An account with this email already exists.";
+                "Please fill in all fields.";
 
+            return;
         }
-        else if (error.code === "auth/invalid-email") {
+
+
+        /* Email validation */
+
+        const emailPattern =
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (
+            !emailPattern.test(email)
+        ) {
 
             message.textContent =
                 "Please enter a valid email address.";
 
+            return;
         }
-        else if (error.code === "auth/weak-password") {
+
+
+        /* Password length */
+
+        if (password.length < 6) {
 
             message.textContent =
                 "Password must be at least 6 characters.";
 
-        }
-        else {
-
-            message.textContent =
-                error.message;
+            return;
         }
 
-    });
 
-}, true);
-
-
-/* =====================================================
-   SIGN IN
-   ===================================================== */
-
-document.addEventListener("submit", function(event) {
-
-    const form = event.target;
-
-    if (!form || form.id !== "signinForm") {
-        return;
-    }
-
-    event.preventDefault();
-    event.stopImmediatePropagation();
-
-
-    const name =
-        document.getElementById("fullName").value.trim();
-
-    const email =
-        document.getElementById("email").value
-        .trim()
-        .toLowerCase();
-
-    const password =
-        document.getElementById("password").value;
-
-    const message =
-        document.getElementById("signinMessage");
-
-
-    if (!name || !email || !password) {
-
-        message.textContent =
-            "Please fill in all fields.";
-
-        return;
-    }
-
-
-    message.textContent =
-        "Signing in...";
-
-
-    signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-    )
-
-    .then(function(result) {
-
-        saveJusticeUser(result.user, name);
-
-        message.textContent =
-            "Sign in successful!";
-
-
-        setTimeout(function() {
-
-            if (typeof openAuthPage === "function") {
-                openAuthPage("welcomePage");
-            }
-            else if (typeof showPage === "function") {
-                showPage("welcome");
-            }
-
-        }, 700);
-
-    })
-
-    .catch(function(error) {
+        /* Password confirmation */
 
         if (
-            error.code === "auth/invalid-credential" ||
-            error.code === "auth/wrong-password" ||
-            error.code === "auth/user-not-found"
+            password !== confirmPassword
         ) {
 
             message.textContent =
-                "Invalid email or password. Please try again.";
+                "Passwords do not match.";
 
-        }
-        else if (error.code === "auth/invalid-email") {
-
-            message.textContent =
-                "Please enter a valid email address.";
-
-        }
-        else {
-
-            message.textContent =
-                error.message;
+            return;
         }
 
-    });
 
-}, true);
-
-
-/* =====================================================
-   GOOGLE SIGN IN BUTTON
-   ===================================================== */
-
-document.addEventListener("DOMContentLoaded", function() {
-
-    const signinForm =
-        document.getElementById("signinForm");
-
-    if (!signinForm) {
-        return;
-    }
+        message.textContent =
+            "Creating your account...";
 
 
-    let googleButton =
-        document.getElementById("googleSignInButton");
+        /* Firebase account creation */
 
-
-    if (!googleButton) {
-
-        googleButton =
-            document.createElement("button");
-
-        googleButton.type = "button";
-
-        googleButton.id =
-            "googleSignInButton";
-
-        googleButton.className =
-            "google-signin-button";
-
-        googleButton.innerHTML =
-            "🌐 Continue with Google";
-
-
-        const divider =
-            document.createElement("div");
-
-        divider.className =
-            "auth-divider";
-
-        divider.textContent =
-            "OR";
-
-
-        signinForm.after(divider);
-
-        divider.after(googleButton);
-    }
-
-
-    googleButton.onclick = function(event) {
-
-        event.preventDefault();
-
-        googleButton.disabled = true;
-
-        googleButton.textContent =
-            "Opening Google...";
-
-
-        signInWithPopup(
+        createUserWithEmailAndPassword(
             auth,
-            googleProvider
+            email,
+            password
         )
 
         .then(function(result) {
 
             saveJusticeUser(
                 result.user,
-                result.user.displayName
+                name
             );
 
 
-            const message =
-                document.getElementById(
-                    "signinMessage"
-                );
-
-            if (message) {
-
-                message.textContent =
-                    "Google sign in successful!";
-            }
+            message.textContent =
+                "Account created successfully!";
 
 
-            setTimeout(function() {
+            form.reset();
 
-                if (typeof openAuthPage === "function") {
-                    openAuthPage("welcomePage");
-                }
-                else if (typeof showPage === "function") {
-                    showPage("welcome");
-                }
 
-            }, 700);
+            setTimeout(
+                function() {
+
+                    if (
+                        typeof openAuthPage ===
+                        "function"
+                    ) {
+
+                        openAuthPage(
+                            "signinPage"
+                        );
+
+                    }
+
+                    else if (
+                        typeof showPage ===
+                        "function"
+                    ) {
+
+                        showPage(
+                            "signin"
+                        );
+
+                    }
+
+                },
+                1000
+            );
 
         })
 
         .catch(function(error) {
 
-            const message =
-                document.getElementById(
-                    "signinMessage"
-                );
+            if (
+                error.code ===
+                "auth/email-already-in-use"
+            ) {
 
+                message.textContent =
+                    "An account with this email already exists.";
 
-            if (message) {
-
-                if (
-                    error.code ===
-                    "auth/popup-closed-by-user"
-                ) {
-
-                    message.textContent =
-                        "Google sign in was cancelled.";
-
-                }
-                else {
-
-                    message.textContent =
-                        "Google sign in failed. Please try again.";
-                }
             }
 
+            else if (
+                error.code ===
+                "auth/invalid-email"
+            ) {
 
-            googleButton.disabled = false;
+                message.textContent =
+                    "Please enter a valid email address.";
+
+            }
+
+            else if (
+                error.code ===
+                "auth/weak-password"
+            ) {
+
+                message.textContent =
+                    "Password must be at least 6 characters.";
+
+            }
+
+            else {
+
+                message.textContent =
+                    "Account creation failed. Please try again.";
+
+                console.error(error);
+
+            }
+
+        });
+
+    },
+    true
+);
+
+
+/* =====================================================
+   SIGN IN
+   ===================================================== */
+
+document.addEventListener(
+    "submit",
+    function(event) {
+
+        const form = event.target;
+
+        if (
+            !form ||
+            form.id !== "signinForm"
+        ) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+
+
+        const name =
+            document
+                .getElementById("fullName")
+                .value
+                .trim();
+
+        const email =
+            document
+                .getElementById("email")
+                .value
+                .trim()
+                .toLowerCase();
+
+        const password =
+            document
+                .getElementById("password")
+                .value;
+
+        const message =
+            document.getElementById(
+                "signinMessage"
+            );
+
+
+        /* Empty fields */
+
+        if (
+            !name ||
+            !email ||
+            !password
+        ) {
+
+            message.textContent =
+                "Please fill in all fields.";
+
+            return;
+        }
+
+
+        /* Email validation */
+
+        const emailPattern =
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (
+            !emailPattern.test(email)
+        ) {
+
+            message.textContent =
+                "Invalid email address. Please enter a valid email.";
+
+            return;
+        }
+
+
+        message.textContent =
+            "Signing in...";
+
+
+        /* Firebase Sign In */
+
+        signInWithEmailAndPassword(
+            auth,
+            email,
+            password
+        )
+
+        .then(function(result) {
+
+            saveJusticeUser(
+                result.user,
+                name
+            );
+
+
+            message.textContent =
+                "Sign in successful!";
+
+
+            setTimeout(
+                function() {
+
+                    if (
+                        typeof openAuthPage ===
+                        "function"
+                    ) {
+
+                        openAuthPage(
+                            "welcomePage"
+                        );
+
+                    }
+
+                    else if (
+                        typeof showPage ===
+                        "function"
+                    ) {
+
+                        showPage(
+                            "welcome"
+                        );
+
+                    }
+
+                },
+                700
+            );
+
+        })
+
+        .catch(function(error) {
+
+            if (
+                error.code ===
+                    "auth/invalid-credential" ||
+                error.code ===
+                    "auth/wrong-password" ||
+                error.code ===
+                    "auth/user-not-found"
+            ) {
+
+                message.textContent =
+                    "Invalid email or password. Please try again.";
+
+            }
+
+            else if (
+                error.code ===
+                "auth/invalid-email"
+            ) {
+
+                message.textContent =
+                    "Please enter a valid email address.";
+
+            }
+
+            else {
+
+                message.textContent =
+                    "Sign in failed. Please try again.";
+
+                console.error(error);
+
+            }
+
+        });
+
+    },
+    true
+);
+
+
+/* =====================================================
+   GOOGLE SIGN IN
+   ===================================================== */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function() {
+
+        const signinForm =
+            document.getElementById(
+                "signinForm"
+            );
+
+        if (!signinForm) {
+            return;
+        }
+
+
+        let googleButton =
+            document.getElementById(
+                "googleSignInButton"
+            );
+
+
+        /* Create only ONE Google button */
+
+        if (!googleButton) {
+
+            googleButton =
+                document.createElement(
+                    "button"
+                );
+
+            googleButton.type =
+                "button";
+
+            googleButton.id =
+                "googleSignInButton";
+
+            googleButton.className =
+                "google-signin-button";
 
             googleButton.innerHTML =
                 "🌐 Continue with Google";
 
-        });
 
-    };
+            const divider =
+                document.createElement(
+                    "div"
+                );
 
-});
+            divider.className =
+                "auth-divider";
+
+            divider.textContent =
+                "OR";
+
+
+            signinForm.after(
+                divider
+            );
+
+            divider.after(
+                googleButton
+            );
+
+        }
+
+
+        /* Firebase Google Sign In */
+
+        googleButton.onclick =
+            function(event) {
+
+                event.preventDefault();
+
+
+                googleButton.disabled =
+                    true;
+
+                googleButton.textContent =
+                    "Opening Google...";
+
+
+                signInWithPopup(
+                    auth,
+                    googleProvider
+                )
+
+                .then(function(result) {
+
+                    saveJusticeUser(
+                        result.user,
+                        result.user.displayName
+                    );
+
+
+                    const message =
+                        document.getElementById(
+                            "signinMessage"
+                        );
+
+
+                    if (message) {
+
+                        message.textContent =
+                            "Google sign in successful!";
+
+                    }
+
+
+                    setTimeout(
+                        function() {
+
+                            if (
+                                typeof openAuthPage ===
+                                "function"
+                            ) {
+
+                                openAuthPage(
+                                    "welcomePage"
+                                );
+
+                            }
+
+                            else if (
+                                typeof showPage ===
+                                "function"
+                            ) {
+
+                                showPage(
+                                    "welcome"
+                                );
+
+                            }
+
+                        },
+                        700
+                    );
+
+                })
+
+                .catch(function(error) {
+
+                    const message =
+                        document.getElementById(
+                            "signinMessage"
+                        );
+
+
+                    if (message) {
+
+                        if (
+                            error.code ===
+                            "auth/popup-closed-by-user"
+                        ) {
+
+                            message.textContent =
+                                "Google sign in was cancelled.";
+
+                        }
+
+                        else if (
+                            error.code ===
+                            "auth/popup-blocked"
+                        ) {
+
+                            message.textContent =
+                                "Google sign in popup was blocked. Please allow popups.";
+
+                        }
+
+                        else {
+
+                            message.textContent =
+                                "Google sign in failed. Please try again.";
+
+                            console.error(
+                                error
+                            );
+
+                        }
+
+                    }
+
+
+                    googleButton.disabled =
+                        false;
+
+                    googleButton.innerHTML =
+                        "🌐 Continue with Google";
+
+                });
+
+            };
+
+    }
+);
 
 
 /* =====================================================
    FORGOT PASSWORD
    ===================================================== */
 
-document.addEventListener("click", function(event) {
+document.addEventListener(
+    "click",
+    function(event) {
 
-    const button = event.target.closest(
-        "#resetPasswordButton"
-    );
+        const button =
+            event.target.closest(
+                "#resetPasswordButton"
+            );
 
-    if (!button) {
-        return;
-    }
+        if (!button) {
+            return;
+        }
 
-    event.preventDefault();
-    event.stopImmediatePropagation();
-
-
-    const email =
-        document.getElementById("resetEmail")
-        .value
-        .trim()
-        .toLowerCase();
-
-    const message =
-        document.getElementById("resetMessage");
+        event.preventDefault();
+        event.stopImmediatePropagation();
 
 
-    if (!email) {
+        const emailInput =
+            document.getElementById(
+                "resetEmail"
+            );
 
-        message.textContent =
-            "Please enter your email address.";
-
-        return;
-    }
-
-
-    message.textContent =
-        "Sending password reset email...";
+        const message =
+            document.getElementById(
+                "resetMessage"
+            );
 
 
-    sendPasswordResetEmail(
-        auth,
-        email
-    )
+        const email =
+            emailInput.value
+                .trim()
+                .toLowerCase();
 
-    .then(function() {
 
-        message.textContent =
-            "Password reset link has been sent to your email.";
+        /* Email validation */
 
-    })
-
-    .catch(function(error) {
-
-        if (error.code === "auth/user-not-found") {
+        if (!email) {
 
             message.textContent =
-                "No account found with this email.";
+                "Please enter your email address.";
 
+            return;
         }
-        else if (error.code === "auth/invalid-email") {
+
+
+        const emailPattern =
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (
+            !emailPattern.test(email)
+        ) {
 
             message.textContent =
                 "Please enter a valid email address.";
 
+            return;
         }
-        else {
+
+
+        message.textContent =
+            "Sending password reset email...";
+
+
+        /* Firebase password reset */
+
+        sendPasswordResetEmail(
+            auth,
+            email
+        )
+
+        .then(function() {
 
             message.textContent =
-                error.message;
-        }
+                "Password reset link has been sent to your email.";
 
-    });
+        })
 
-}, true);
+        .catch(function(error) {
+
+            if (
+                error.code ===
+                "auth/user-not-found"
+            ) {
+
+                message.textContent =
+                    "No account found with this email.";
+
+            }
+
+            else if (
+                error.code ===
+                "auth/invalid-email"
+            ) {
+
+                message.textContent =
+                    "Please enter a valid email address.";
+
+            }
+
+            else {
+
+                message.textContent =
+                    "Unable to send reset email. Please try again.";
+
+                console.error(
+                    error
+                );
+
+            }
+
+        });
+
+    },
+    true
+);
 
 
 /* =====================================================
-   KEEP USER SIGNED IN
+   KEEP USER INFORMATION UPDATED
    ===================================================== */
 
-onAuthStateChanged(auth, function(user) {
+onAuthStateChanged(
+    auth,
+    function(user) {
 
-    if (user) {
+        if (user) {
 
-        saveJusticeUser(
-            user,
-            user.displayName
-        );
+            saveJusticeUser(
+                user,
+                user.displayName
+            );
+
+        }
 
     }
-
-});
+);
