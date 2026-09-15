@@ -392,12 +392,14 @@ document.getElementById("justiceHubBackButton")
 });
 
 
-document.getElementById("chatBackButton")
-.addEventListener("click", function() {
+const justiceHubBackButton =
+    document.getElementById("justicehubbackbotton");
 
-    showPage("home");
-
-});
+if (justiceHubBackButton) {
+    justiceHubBackButton.addEventListener("click", function () {
+        showPage("home");
+    });
+}
 
 
 document.getElementById("settingsBackButton")
