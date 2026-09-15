@@ -5040,8 +5040,8 @@ function resetLegalAid() {
    ===================================================== */
 
 // Firebase services
-const chatAuth = firebase.auth();
-const chatDB = firebase.firestore();
+const chatAuth = auth;
+const chatDB = db;
 
 let currentChatId = null;
 let currentChatData = null;
