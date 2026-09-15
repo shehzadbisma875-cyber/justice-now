@@ -2314,75 +2314,215 @@
 
 
 
-<!-- =========================
-     LIVE CHAT
-========================= -->
+<!-- ================= LIVE CHAT ================= -->
+<section id="liveChatPage" class="page chat-page">
 
-<section id="liveChatPage" class="page">
+    <div class="chat-layout">
 
-    <div class="chat-container">
+        <!-- CHAT SIDEBAR -->
+        <aside class="chat-sidebar">
 
-        <div class="page-header">
+            <div class="chat-sidebar-header">
+                <div>
+                    <h2>Chats</h2>
+                    <p id="currentUsername">@username</p>
+                </div>
 
-            <div>
+                <button class="chat-menu-btn" id="chatOptionsBtn">⋮</button>
+            </div>
 
-                <h1>💬 Live Chat</h1>
+            <!-- Search Username -->
+            <div class="username-search">
+                <input
+                    type="text"
+                    id="usernameSearch"
+                    placeholder="Search username..."
+                    autocomplete="off"
+                >
+                <button id="searchUserBtn">🔎</button>
+            </div>
 
-                <p>
-                    Chat privately or create a group.
-                </p>
+            <div id="userSearchResults" class="user-search-results"></div>
+
+            <!-- New Chat / Group -->
+            <div class="chat-create-buttons">
+                <button id="newChatBtn">＋ New Chat</button>
+                <button id="createGroupBtn">👥 Create Group</button>
+            </div>
+
+            <!-- Chat List -->
+            <div id="chatList" class="chat-list">
+                <p class="empty-chat">No chats yet</p>
+            </div>
+
+        </aside>
+
+
+        <!-- CHAT WINDOW -->
+        <main class="chat-window">
+
+            <!-- Chat Header -->
+            <header class="chat-header">
+
+                <div class="chat-person">
+
+                    <div class="chat-avatar" id="chatAvatar">
+                        👤
+                    </div>
+
+                    <div>
+                        <h3 id="chatName">Select a chat</h3>
+                        <span id="chatStatus"> </span>
+                    </div>
+
+                </div>
+
+                <div class="chat-header-actions">
+
+                    <button id="chatInfoBtn" title="Chat options">
+                        ⋮
+                    </button>
+
+                </div>
+
+            </header>
+
+
+            <!-- Messages -->
+            <div id="messagesContainer" class="messages-container">
+
+                <div class="chat-welcome">
+                    <div class="big-chat-icon">💬</div>
+                    <h2>Your Messages</h2>
+                    <p>Select a person or group to start chatting.</p>
+                </div>
 
             </div>
 
 
-            <button id="chatBackButton" class="back-button">
-                ← Home
-            </button>
+            <!-- Message Input -->
+            <div class="message-area">
 
-        </div>
+                <button
+                    class="message-tool"
+                    id="emojiBtn"
+                    title="Emoji">
+                    😊
+                </button>
 
+                <button
+                    class="message-tool"
+                    id="imageBtn"
+                    title="Picture">
+                    🖼️
+                </button>
 
-        <div class="chat-create-group">
+                <button
+                    class="message-tool"
+                    id="fileBtn"
+                    title="File">
+                    📎
+                </button>
+
+                <input
+                    type="text"
+                    id="messageInput"
+                    placeholder="Write a message..."
+                    autocomplete="off"
+                >
+
+                <button
+                    class="message-tool"
+                    id="voiceBtn"
+                    title="Voice message">
+                    🎤
+                </button>
+
+                <button
+                    class="send-message-btn"
+                    id="sendMessageBtn">
+                    ➤
+                </button>
+
+            </div>
+
+            <!-- Hidden file inputs -->
+            <input
+                type="file"
+                id="imageInput"
+                accept="image/*"
+                hidden
+            >
 
             <input
-                id="groupName"
+                type="file"
+                id="fileInput"
+                hidden
+            >
+
+            <!-- Emoji Box -->
+            <div id="emojiPicker" class="emoji-picker">
+                <button>😀</button>
+                <button>😂</button>
+                <button>😊</button>
+                <button>😍</button>
+                <button>🥰</button>
+                <button>😎</button>
+                <button>😭</button>
+                <button>😡</button>
+                <button>👍</button>
+                <button>❤️</button>
+                <button>🙏</button>
+                <button>🎉</button>
+                <button>🔥</button>
+                <button>💯</button>
+            </div>
+
+        </main>
+
+    </div>
+
+
+    <!-- CREATE GROUP MODAL -->
+    <div id="groupModal" class="chat-modal">
+
+        <div class="chat-modal-box">
+
+            <button class="close-modal" id="closeGroupModal">×</button>
+
+            <h2>Create Group</h2>
+
+            <input
+                type="text"
+                id="groupNameInput"
                 placeholder="Group name"
             >
 
-            <input
-                id="groupMembers"
-                placeholder="Members separated by commas"
-            >
+            <p>Select members:</p>
 
-            <button id="createGroupButton" class="main-button">
+            <div id="groupMembersList"></div>
+
+            <button
+                class="primary-chat-btn"
+                id="createGroupConfirm">
                 Create Group
             </button>
 
         </div>
 
-
-        <div id="groupList"></div>
-
-
-        <div class="chat-box">
-
-            <div id="chatMessages" class="chat-messages"></div>
+    </div>
 
 
-            <div class="chat-input-row">
+    <!-- CHAT OPTIONS -->
+    <div id="chatOptionsMenu" class="chat-options-menu">
 
-                <input
-                    id="chatMessageInput"
-                    placeholder="Write a message..."
-                >
+        <button id="deleteChatBtn">
+            🗑️ Delete Chat
+        </button>
 
-                <button id="sendMessageButton">
-                    Send
-                </button>
-
-            </div>
-
-        </div>
+        <button id="deleteGroupBtn">
+            🗑️ Delete Group
+        </button>
 
     </div>
 
