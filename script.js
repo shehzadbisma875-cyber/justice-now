@@ -393,7 +393,15 @@ document.getElementById("justiceHubBackButton")
 });
 
 
+const chatBackBtn=document.getElementById("chatBackButton")
+if(chatBackBtn){
+    chatBackBtn.addEventListener("click", function() {
 
+    showPage("home");
+
+});
+
+}
 
 document.getElementById("settingsBackButton")
 .addEventListener("click", function() {
@@ -5028,6 +5036,303 @@ function resetLegalAid() {
 
 }
 
+/* ==========================================
+   LIVE CHAT
+========================================== */
+
+document.getElementById("liveChatTopButton")
+.addEventListener("click", function() {
+
+    showPage("chat");
+
+    renderGroups();
+
+    renderMessages();
+
+});
+
+//Tareeqah 2: If condition
+const creatGrpBtn=document.getElementById("createGroupButton")
+if(creatGrpBtn){
+    creatGrpBtn.addEventListener("click", function() {
+
+    const nameInput =
+        document.getElementById(
+            "groupName"
+        )
+        const name=nameInput?nameInput
+        .value
+        .trim():"";
+    });
+
+
+    const members =
+        document.getElementById(
+            "groupMembers"
+        )
+        .value
+        .trim();
+
+
+    if (!name || !members) {
+
+        alert(
+            "Enter group name and members."
+        );
+
+        
+
+    }
+
+
+    const groups =
+    JSON.parse(
+        localStorage.getItem(
+            "justiceGroups"
+        )
+        ||
+        "[]"
+    );
+
+
+    groups.push({
+
+        id: Date.now(),
+
+        name: name,
+
+        members:
+            members
+            .split(",")
+            .map(function(member) {
+
+                return member.trim();
+
+            })
+
+    });
+    
+
+    localStorage.setItem(
+        "justiceGroups",
+        JSON.stringify(groups)
+    );
+
+
+    document.getElementById(
+        "groupName"
+    )
+    .value = "";
+
+
+    document.getElementById(
+        "groupMembers"
+    )
+    .value = "";
+
+
+    renderGroups();
+
+};
+
+
+function renderGroups() {
+
+    const container =
+        document.getElementById(
+            "groupList"
+        );
+
+
+    const groups =
+    JSON.parse(
+        localStorage.getItem(
+            "justiceGroups"
+        )
+        ||
+        "[]"
+    );
+
+
+    container.innerHTML = "";
+
+
+    groups.forEach(function(group) {
+
+        container.innerHTML += `
+
+            <div class="group-item">
+
+                <strong>
+                    👥 ${group.name}
+                </strong>
+
+                <p>
+                    ${group.members.join(", ")}
+                </p>
+
+            </div>
+
+        `;
+
+    });
+
+}
+
+
+
+const sendBtn=document.getElementById("sendMessageButton")
+if(sendBtn){
+    sendBtn.addEventListener("click", sendChatMessage);
+}
+
+const chatInput=document.getElementById("chatMessageInput")
+if(chatInput){
+    chatInput.addEventListener("keydown", function(event) {
+
+    if (event.key === "Enter") {
+
+    
+
+        sendChatMessage();
+
+    }
+
+});
+}
+
+function sendChatMessage() {
+
+    const input =
+        document.getElementById(
+            "chatMessageInput"
+        );
+
+
+    const message =
+        input.value
+        .trim();
+
+
+    if (!message) {
+
+        return;
+
+    }
+
+
+    const messages =
+    JSON.parse(
+        localStorage.getItem(
+            "justiceChat"
+        )
+        ||
+        "[]"
+    );
+
+
+    messages.push({
+
+        id: Date.now(),
+
+        text: message
+
+    });
+
+
+    localStorage.setItem(
+        "justiceChat",
+        JSON.stringify(messages)
+    );
+
+
+    input.value = "";
+
+
+    renderMessages();
+
+}
+
+
+function renderMessages() {
+
+    const container =
+        document.getElementById(
+            "chatMessages"
+        );
+
+
+    const messages =
+    JSON.parse(
+        localStorage.getItem(
+            "justiceChat"
+        )
+        ||
+        "[]"
+    );
+
+
+    container.innerHTML = "";
+
+
+    messages.forEach(function(message, index) {
+
+        container.innerHTML += `
+
+            <div class="chat-message">
+
+                <span>
+                    ${message.text}
+                </span>
+
+                <button
+                    class="delete-message"
+                    onclick="deleteMessage(${index})"
+                >
+                    🗑
+                </button>
+
+            </div>
+
+        `;
+
+    });
+
+
+    container.scrollTop =
+    container.scrollHeight;
+
+}
+
+
+function deleteMessage(index) {
+
+    const messages =
+    JSON.parse(
+        localStorage.getItem(
+            "justiceChat"
+        )
+        ||
+        "[]"
+    );
+
+
+    messages.splice(index, 1);
+
+
+    localStorage.setItem(
+        "justiceChat",
+        JSON.stringify(messages)
+    );
+
+
+    renderMessages();
+
+}
+
+
+window.deleteMessage =
+deleteMessage;
 
 
 
@@ -7171,6 +7476,87 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
 })();
+// مثال: جب یوزر سرچ بٹن پر کلک کرے
+async function handleSearch() {
+    const searchInput = document.getElementById("searchInput").value;
+    const users = await window.searchUserByUsernameOrName(searchInput);
+
+    if (users.length > 0) {
+        console.log("User Found:", users[0]);
+        alert("Found User: " + users[0].name + " (@" + users[0].username + ")");
+    } else {
+        alert("No user found!");
+    }
+}
+// Search username input listener
+ searchInput = document.querySelector('input[placeholder*="Search username"]');
+
+if (searchInput) {
+    searchInput.addEventListener("keyup", async function(event) {
+        if (event.key === "Enter") {
+            const query = searchInput.value.trim();
+            if (!query) return;
+
+            // Search user using Firebase function
+            if (typeof window.searchUserByUsernameOrName === "function") {
+                const results = await window.searchUserByUsernameOrName(query);
+                
+                if (results.length > 0) {
+                    alert("User Found: " + results[0].name + " (@" + results[0].username + ")");
+                    // یہاں آپ سرچ رزلٹ کی کارڈ UI رینڈر کروا سکتے ہیں
+                } else {
+                    alert("No user found with username: " + query);
+                }
+            }
+        }
+    });
+}
+// Search username input listener (Render UI on screen)
+const searchInput = document.querySelector('input[placeholder*="Search username"]');
+const chatListContainer = document.querySelector('.chat-list') || document.querySelector('#chatList') || document.querySelector('div:has(> p)'); 
+
+if (searchInput) {
+    searchInput.addEventListener("keyup", async function(event) {
+        if (event.key === "Enter") {
+            const query = searchInput.value.trim();
+            if (!query) return;
+
+            if (typeof window.searchUserByUsernameOrName === "function") {
+                const results = await window.searchUserByUsernameOrName(query);
+                
+                // ڈھونڈے گئے یوزرز کو سکرین پر شو کریں
+                if (results.length > 0) {
+                    let userCards = "";
+                    results.forEach(user => {
+                        const displayName = user.name || "User";
+                        const displayUsername = user.username ? `@${user.username}` : "";
+                        const photo = user.photoURL || "https://via.placeholder.com/40";
+
+                        userCards += `
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px; background: rgba(255, 255, 255, 0.1); margin-top: 10px; border-radius: 8px;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <img src="${photo}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                                    <div>
+                                        <div style="font-weight: bold; color: white;">${displayName}</div>
+                                        <div style="font-size: 12px; color: #ccc;">${displayUsername}</div>
+                                    </div>
+                                </div>
+                                <button style="padding: 6px 12px; background: #f39c12; border: none; border-radius: 5px; color: white; cursor: pointer;">Chat</button>
+                            </div>
+                        `;
+                    });
+
+                    // No chats yet کی جگہ نیا کارڈ رینڈر کریں
+                    const parentDiv = searchInput.nextElementSibling || searchInput.parentElement.querySelector('p')?.parentElement;
+                    if (parentDiv) parentDiv.innerHTML = userCards;
+
+                } else {
+                    alert("No user found with name: " + query);
+                }
+            }
+        }
+    });
+}
 /* =====================================================
    RELIABLE SEARCH USER & UI RENDER (Event Delegation)
    ===================================================== */
@@ -7222,5 +7608,40 @@ document.addEventListener("keydown", async function (event) {
         } else {
             console.error("searchUserByUsernameOrName function is not defined in window.");
         }
+    }
+});
+/* =====================================================
+   FIXED SAVE PROFILE WITH IMAGE BASE64
+   ===================================================== */
+document.addEventListener("click", async function(event) {
+    const saveBtn = event.target.closest("#saveProfileBtn") || (event.target.tagName === "BUTTON" && event.target.textContent.includes("Save Profile"));
+    if (!saveBtn) return;
+    event.preventDefault();
+
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+        alert("Please sign in first!");
+        return;
+    }
+
+    const usernameInput = document.querySelector('input[placeholder*="username"]') || document.getElementById("profileUsername");
+    const nameInput = document.querySelector('input[placeholder*="Name"]') || document.getElementById("profileName");
+    const fileInput = document.querySelector('input[type="file"]');
+
+    const username = usernameInput ? usernameInput.value.trim() : "";
+    const name = nameInput ? nameInput.value.trim() : "";
+
+    if (fileInput && fileInput.files && fileInput.files[0]) {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const photoURL = e.target.result; // Base64 image
+            await saveJusticeUser(currentUser, { name, username, photoURL });
+            alert("Profile with image saved successfully!");
+        };
+        reader.readAsDataURL(file);
+    } else {
+        await saveJusticeUser(currentUser, { name, username });
+        alert("Profile saved!");
     }
 });
