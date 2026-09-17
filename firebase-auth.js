@@ -47,17 +47,12 @@ window.auth = auth;
 window.db = db;
 
 const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({
-    prompt: "select_account"
-});
+googleProvider.setCustomParameters({ prompt: "select_account" });
 
-// Browser Persistent Session Configuration
-setPersistence(auth, browserLocalPersistence).catch(function(error) {
-    console.error("Firebase persistence error:", error);
-});
+setPersistence(auth, browserLocalPersistence).catch(err => console.error("Firebase persistence error:", err));
 
 /* =====================================================
-   UI PROFILE PICTURE AUTO UPDATE
+   UI PROFILE PICTURE RENDER
    ===================================================== */
 function renderProfilePictures(photoURL, displayName = "User") {
     const avatarElements = document.querySelectorAll('.profile-img, #profileImg, .avatar-img, #userAvatar, img[alt*="profile"]');
@@ -93,6 +88,7 @@ async function saveJusticeUser(user, extraData = {}) {
         updatedAt: new Date().toISOString()
     };
 
+    // Save locally and render UI immediately
     localStorage.setItem("justiceUser", JSON.stringify(profileData));
     renderProfilePictures(photoURL, userName);
 
@@ -167,7 +163,6 @@ export async function searchUserByUsernameOrName(searchQuery) {
             const uName = (data.username || "").toLowerCase();
             const fName = (data.name || "").toLowerCase();
 
-            // Ignore search for self
             if ((uName.includes(searchLower) || fName.includes(searchLower)) && data.uid !== auth.currentUser?.uid) {
                 results.push(data);
             }
@@ -179,28 +174,25 @@ export async function searchUserByUsernameOrName(searchQuery) {
         return [];
     }
 }
-
 window.searchUserByUsernameOrName = searchUserByUsernameOrName;
 
 /* =====================================================
-   1-MESSAGE CHAT REQUEST SYSTEM
+   TIKTOK STYLE 1-MESSAGE CHAT REQUEST
    ===================================================== */
-window.sendChatRequest = async function(targetUid, targetName) {
+window.sendChatRequest = async function(targetUid, targetName, targetPhoto) {
     const currentUser = auth.currentUser;
     if (!currentUser) return alert("Please sign in first!");
 
-    const firstMsg = prompt(`Type 1 message request to send to ${targetName}:`);
-    if (!firstMsg || !firstMsg.trim()) return alert("Request canceled or message empty.");
+    const firstMsg = prompt(`Send a chat request message to ${targetName}:`);
+    if (!firstMsg || !firstMsg.trim()) return;
 
     try {
         const requestsRef = collection(db, "requests");
-
-        // Check for existing pending/accepted request
         const q = query(requestsRef, where("senderUid", "==", currentUser.uid), where("receiverUid", "==", targetUid));
         const snap = await getDocs(q);
 
         if (!snap.empty) {
-            alert("A request has already been sent to this user!");
+            alert("Chat request already sent to this user!");
             return;
         }
 
@@ -209,6 +201,7 @@ window.sendChatRequest = async function(targetUid, targetName) {
         await addDoc(requestsRef, {
             senderUid: currentUser.uid,
             senderName: senderData.name || currentUser.displayName || "User",
+            senderPhoto: senderData.photoURL || "",
             receiverUid: targetUid,
             receiverName: targetName,
             initialMessage: firstMsg.trim(),
@@ -216,19 +209,20 @@ window.sendChatRequest = async function(targetUid, targetName) {
             createdAt: new Date().toISOString()
         });
 
-        alert("Request and first message sent successfully!");
+        alert("Request sent successfully! Once accepted, you can chat.");
     } catch (err) {
-        console.error("Send Request Error:", err);
-        alert("Could not send request.");
+        console.error("Error sending request:", err);
+        alert("Failed to send request.");
     }
 };
 
-window.respondToChatRequest = async function(requestId, action) {
+window.respondToChatRequest = async function(requestId, action, senderUid, senderName, senderPhoto) {
     try {
         const reqRef = doc(db, "requests", requestId);
         if (action === "accept") {
             await updateDoc(reqRef, { status: "accepted" });
-            alert("Request accepted! You can now chat.");
+            alert("Request accepted!");
+            window.openDirectChatWindow(senderUid, senderName, senderPhoto);
         } else {
             await updateDoc(reqRef, { status: "rejected" });
             alert("Request declined.");
@@ -239,106 +233,86 @@ window.respondToChatRequest = async function(requestId, action) {
     }
 };
 
+window.openDirectChatWindow = function(uid, name, photo) {
+    sessionStorage.setItem("activeChatUser", JSON.stringify({ uid, name, photo }));
+
+    if (typeof openAuthPage === "function") {
+        openAuthPage("chatPage");
+    } else if (typeof showPage === "function") {
+        showPage("chat");
+    } else {
+        const chatSection = document.getElementById("chatPage") || document.getElementById("chatSection") || document.querySelector('.chat-section');
+        if (chatSection) {
+            document.querySelectorAll('section, .page').forEach(p => p.style.display = 'none');
+            chatSection.style.display = 'block';
+        }
+    }
+
+    const chatTitleHeader = document.querySelector("#chatHeaderTitle, .chat-header h3, .chat-user-name");
+    if (chatTitleHeader) {
+        chatTitleHeader.textContent = name;
+    }
+};
+
 /* =====================================================
-   SIGN UP
+   SIGN UP & SIGN IN
    ===================================================== */
 document.addEventListener("submit", function(event) {
     const form = event.target;
-    if (!form || form.id !== "signupForm") return;
+    if (!form || (form.id !== "signupForm" && form.id !== "signinForm")) return;
 
     event.preventDefault();
     event.stopImmediatePropagation();
 
-    const name = document.getElementById("signupName").value.trim();
-    const email = document.getElementById("signupEmail").value.trim().toLowerCase();
-    const password = document.getElementById("signupPassword").value;
-    const confirmPassword = document.getElementById("signupConfirmPassword").value;
-    const message = document.getElementById("signupMessage");
+    const isSignUp = form.id === "signupForm";
+    const email = document.getElementById(isSignUp ? "signupEmail" : "email").value.trim().toLowerCase();
+    const password = document.getElementById(isSignUp ? "signupPassword" : "password").value;
+    const message = document.getElementById(isSignUp ? "signupMessage" : "signinMessage");
 
-    if (!name || !email || !password || !confirmPassword) {
-        if (message) message.textContent = "Please fill in all fields.";
-        return;
+    if (isSignUp) {
+        const name = document.getElementById("signupName").value.trim();
+        const confirmPassword = document.getElementById("signupConfirmPassword").value;
+
+        if (password !== confirmPassword) {
+            if (message) message.textContent = "Passwords do not match.";
+            return;
+        }
+
+        createUserWithEmailAndPassword(auth, email, password)
+            .then(async function(result) {
+                await saveJusticeUser(result.user, { name });
+                if (message) message.textContent = "Account created successfully!";
+                setTimeout(() => {
+                    if (typeof openAuthPage === "function") openAuthPage("welcomePage");
+                    else if (typeof showPage === "function") showPage("welcome");
+                }, 1000);
+            })
+            .catch(err => { if (message) message.textContent = "Sign up failed: " + err.code; });
+    } else {
+        const nameInput = document.getElementById("fullName");
+        const name = nameInput ? nameInput.value.trim() : "";
+
+        signInWithEmailAndPassword(auth, email, password)
+            .then(async function(result) {
+                await saveJusticeUser(result.user, { name });
+                if (message) message.textContent = "Sign in successful!";
+                setTimeout(() => {
+                    if (typeof openAuthPage === "function") openAuthPage("welcomePage");
+                    else if (typeof showPage === "function") showPage("welcome");
+                }, 700);
+            })
+            .catch(err => { if (message) message.textContent = "Sign in failed: " + err.code; });
     }
-
-    if (password.length < 6) {
-        if (message) message.textContent = "Password must be at least 6 characters.";
-        return;
-    }
-
-    if (password !== confirmPassword) {
-        if (message) message.textContent = "Passwords do not match.";
-        return;
-    }
-
-    if (message) message.textContent = "Creating your account...";
-
-    createUserWithEmailAndPassword(auth, email, password)
-        .then(async function(result) {
-            await saveJusticeUser(result.user, { name });
-            if (message) message.textContent = "Account created successfully!";
-            form.reset();
-
-            setTimeout(function() {
-                if (typeof openAuthPage === "function") openAuthPage("welcomePage");
-                else if (typeof showPage === "function") showPage("welcome");
-            }, 1000);
-        })
-        .catch(function(error) {
-            console.error("Firebase Sign Up Error:", error);
-            if (message) message.textContent = "Account creation failed: " + error.code;
-        });
 }, true);
 
 /* =====================================================
-   SIGN IN
-   ===================================================== */
-document.addEventListener("submit", function(event) {
-    const form = event.target;
-    if (!form || form.id !== "signinForm") return;
-
-    event.preventDefault();
-    event.stopImmediatePropagation();
-
-    const nameInput = document.getElementById("fullName");
-    const name = nameInput ? nameInput.value.trim() : "";
-    const email = document.getElementById("email").value.trim().toLowerCase();
-    const password = document.getElementById("password").value;
-    const message = document.getElementById("signinMessage");
-
-    if (!email || !password) {
-        if (message) message.textContent = "Please fill in all fields.";
-        return;
-    }
-
-    if (message) message.textContent = "Signing in...";
-
-    signInWithEmailAndPassword(auth, email, password)
-        .then(async function(result) {
-            await saveJusticeUser(result.user, { name });
-            if (message) message.textContent = "Sign in successful!";
-
-            setTimeout(function() {
-                if (typeof openAuthPage === "function") openAuthPage("welcomePage");
-                else if (typeof showPage === "function") showPage("welcome");
-            }, 700);
-        })
-        .catch(function(error) {
-            console.error("Firebase Sign In Error:", error);
-            if (message) message.textContent = "Sign in failed: " + error.code;
-        });
-}, true);
-
-/* =====================================================
-   GOOGLE SIGN IN & INITIALIZATION
+   GOOGLE SIGN IN
    ===================================================== */
 document.addEventListener("DOMContentLoaded", function() {
-    console.log("App Initialized Successfully");
-
     const signinForm = document.getElementById("signinForm");
     if (!signinForm) return;
 
     let googleButton = document.getElementById("googleSignInButton");
-
     if (!googleButton) {
         googleButton = document.createElement("button");
         googleButton.type = "button";
@@ -356,30 +330,15 @@ document.addEventListener("DOMContentLoaded", function() {
 
     googleButton.onclick = function(event) {
         event.preventDefault();
-
-        googleButton.disabled = true;
-        googleButton.textContent = "Opening Google...";
-
         signInWithPopup(auth, googleProvider)
             .then(async function(result) {
                 await saveJusticeUser(result.user, { name: result.user.displayName, photoURL: result.user.photoURL });
-
-                const message = document.getElementById("signinMessage");
-                if (message) message.textContent = "Google sign in successful!";
-
-                setTimeout(function() {
+                setTimeout(() => {
                     if (typeof openAuthPage === "function") openAuthPage("welcomePage");
                     else if (typeof showPage === "function") showPage("welcome");
                 }, 700);
             })
-            .catch(function(error) {
-                console.error("GOOGLE SIGN-IN ERROR:", error);
-                const message = document.getElementById("signinMessage");
-                if (message) message.textContent = "Google Sign-In error: " + error.code;
-
-                googleButton.disabled = false;
-                googleButton.innerHTML = "🌐 Continue with Google";
-            });
+            .catch(err => console.error("Google Auth Error:", err));
     };
 });
 
@@ -391,29 +350,16 @@ document.addEventListener("click", function(event) {
     if (!button) return;
 
     event.preventDefault();
-    event.stopImmediatePropagation();
-
     const emailInput = document.getElementById("resetEmail");
     const message = document.getElementById("resetMessage");
     if (!emailInput) return;
 
     const email = emailInput.value.trim().toLowerCase();
-
-    if (!email) {
-        if (message) message.textContent = "Please enter your email address.";
-        return;
-    }
-
-    if (message) message.textContent = "Sending password reset email...";
+    if (!email) return;
 
     sendPasswordResetEmail(auth, email)
-        .then(function() {
-            if (message) message.textContent = "Password reset link has been sent to your email.";
-        })
-        .catch(function(error) {
-            console.error("Password Reset Error:", error);
-            if (message) message.textContent = "Unable to send reset email: " + error.code;
-        });
+        .then(() => { if (message) message.textContent = "Reset link sent to your email."; })
+        .catch(err => { if (message) message.textContent = "Reset error: " + err.code; });
 }, true);
 
 /* =====================================================
@@ -429,7 +375,6 @@ document.addEventListener("keydown", async function (event) {
         if (!queryStr) return;
 
         const results = await searchUserByUsernameOrName(queryStr);
-
         let targetBox = input.parentElement.parentElement.querySelector('.chat-list') || input.parentElement.querySelector('.chat-list') || input.nextElementSibling;
 
         if (results.length > 0) {
@@ -437,11 +382,7 @@ document.addEventListener("keydown", async function (event) {
             results.forEach(user => {
                 const displayName = user.name || "User";
                 const displayUsername = user.username ? `@${user.username}` : "";
-                
-                const hasValidPhoto = user.photoURL && user.photoURL.length > 10;
-                const photoSrc = hasValidPhoto 
-                    ? user.photoURL 
-                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=f39c12&color=fff`;
+                const photoSrc = (user.photoURL && user.photoURL.length > 10) ? user.photoURL : `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=f39c12&color=fff`;
 
                 userCards += `
                     <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: rgba(255, 255, 255, 0.1); margin-top: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);">
@@ -452,21 +393,18 @@ document.addEventListener("keydown", async function (event) {
                                 <div style="font-size: 12px; color: #bbb;">${displayUsername}</div>
                             </div>
                         </div>
-                        <button type="button" class="action-chat-btn" data-uid="${user.uid}" data-name="${displayName}" style="padding: 8px 16px; background: #f39c12; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer;">Chat</button>
+                        <button type="button" class="action-chat-btn" data-uid="${user.uid}" data-name="${displayName}" data-photo="${photoSrc}" style="padding: 8px 16px; background: #f39c12; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer;">Chat</button>
                     </div>
                 `;
             });
 
-            if (targetBox) {
-                targetBox.innerHTML = userCards;
-            }
+            if (targetBox) targetBox.innerHTML = userCards;
         } else {
             alert("No user found with name: " + queryStr);
         }
     }
 });
 
-// Chat Button Click Event Listener
 document.addEventListener("click", function(e) {
     const btn = e.target.closest(".action-chat-btn");
     if (btn) {
@@ -475,13 +413,14 @@ document.addEventListener("click", function(e) {
 
         const targetUid = btn.getAttribute("data-uid");
         const targetName = btn.getAttribute("data-name");
+        const targetPhoto = btn.getAttribute("data-photo");
 
-        window.sendChatRequest(targetUid, targetName);
+        window.sendChatRequest(targetUid, targetName, targetPhoto);
     }
 });
 
 /* =====================================================
-   FETCH INCOMING REQUESTS FOR LOGGED IN USER
+   FETCH INCOMING REQUESTS
    ===================================================== */
 async function loadUserChatRequests(currentUserUid) {
     try {
@@ -496,20 +435,27 @@ async function loadUserChatRequests(currentUserUid) {
         if (!reqContainer) return;
 
         if (snapshot.empty) {
-            reqContainer.innerHTML = "<p style='color: #888; padding: 10px;'>No pending chat requests.</p>";
+            reqContainer.innerHTML = "<p style='color: #888; padding: 10px; text-align:center;'>No pending chat requests.</p>";
             return;
         }
 
         let reqHTML = "";
         snapshot.forEach((docSnap) => {
             const data = docSnap.data();
+            const photo = data.senderPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.senderName)}&background=f39c12&color=fff`;
+
             reqHTML += `
-                <div style="background: rgba(0, 0, 0, 0.4); padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #f39c12; color: white;">
-                    <div style="font-weight: bold; font-size: 14px;">${data.senderName}</div>
-                    <div style="font-size: 13px; color: #ddd; margin: 4px 0;">"${data.initialMessage}"</div>
-                    <div style="display: flex; gap: 8px; margin-top: 8px;">
-                        <button onclick="respondToChatRequest('${docSnap.id}', 'accept')" style="background: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">Accept</button>
-                        <button onclick="respondToChatRequest('${docSnap.id}', 'reject')" style="background: #c0392b; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">Decline</button>
+                <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(20, 20, 20, 0.85); padding: 12px; border-radius: 10px; margin-bottom: 10px; border: 1px solid rgba(255, 255, 255, 0.1); color: white;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <img src="${photo}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                        <div>
+                            <div style="font-weight: bold; font-size: 14px;">${data.senderName}</div>
+                            <div style="font-size: 12px; color: #ccc;">"${data.initialMessage}"</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 6px;">
+                        <button onclick="respondToChatRequest('${docSnap.id}', 'accept', '${data.senderUid}', '${data.senderName}', '${photo}')" style="background: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">Accept</button>
+                        <button onclick="respondToChatRequest('${docSnap.id}', 'reject')" style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer;">Delete</button>
                     </div>
                 </div>
             `;
@@ -522,10 +468,11 @@ async function loadUserChatRequests(currentUserUid) {
 }
 
 /* =====================================================
-   AUTH STATE CHANGED (AUTO-LOGIN LOGIC)
+   AUTH STATE CHANGED (AUTO-LOAD PROFILE & REQUESTS)
    ===================================================== */
 onAuthStateChanged(auth, async function(user) {
     if (user) {
+        // Load local data immediately to prevent flickering
         const localData = JSON.parse(localStorage.getItem("justiceUser") || "{}");
         if (localData.photoURL) {
             renderProfilePictures(localData.photoURL, localData.name);
