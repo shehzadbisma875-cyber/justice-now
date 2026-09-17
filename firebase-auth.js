@@ -32,37 +32,31 @@ const firebaseConfig = {
     appId: "1:651828513296:web:41f7491a9e92fddb641895"
 };
 
-/* =====================================================
-   INITIALIZE FIREBASE & GLOBAL EXPORTS
-   ===================================================== */
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
-// Global Bindings
 window.auth = auth;
 window.db = db;
 
 const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({
-    prompt: "select_account"
-});
+googleProvider.setCustomParameters({ prompt: "select_account" });
+
+setPersistence(auth, browserLocalPersistence).catch(err => console.error("Persistence Error:", err));
 
 /* =====================================================
-   KEEP USER SIGNED IN
-   ===================================================== */
-setPersistence(auth, browserLocalPersistence).catch(function(error) {
-    console.error("Firebase persistence error:", error);
-});
-
-/* =====================================================
-   SAVE USER TO LOCALSTORAGE & FIRESTORE DATABASE
+   SAVE & UPDATE USER PROFILE (PERMANENT SAVE)
    ===================================================== */
 async function saveJusticeUser(user, extraData = {}) {
-    const userName = extraData.name || user.displayName || "User";
-    const userEmail = user.email || "";
-    const username = extraData.username || "";
-    const photoURL = extraData.photoURL || user.photoURL || "";
+    if (!user) return;
+
+    // LocalStorage سے پرانا ڈیٹا لے کر چیک کریں تاکہ تصویر ڈلیٹ نہ ہو
+    const localData = JSON.parse(localStorage.getItem("justiceUser") || "{}");
+
+    const userName = extraData.name || localData.name || user.displayName || "User";
+    const userEmail = user.email || localData.email || "";
+    const username = extraData.username || localData.username || "";
+    const photoURL = extraData.photoURL || localData.photoURL || user.photoURL || "";
 
     const profileData = {
         uid: user.uid,
@@ -70,31 +64,49 @@ async function saveJusticeUser(user, extraData = {}) {
         username: username.toLowerCase(),
         email: userEmail,
         photoURL: photoURL,
-        updatedAt: new Date()
+        updatedAt: new Date().toISOString()
     };
 
+    // 1. LocalStorage میں سیو کریں (تاکہ ہر بار ایپ اوپن ہونے پر فوراً مل جائے)
     localStorage.setItem("justiceUser", JSON.stringify(profileData));
 
+    // UI میں تصویر اپ ڈیٹ کریں
+    updateUIProfilePicture(photoURL, userName);
+
+    // 2. Firestore میں سیو کریں
     try {
         await setDoc(doc(db, "users", user.uid), profileData, { merge: true });
-        console.log("Profile successfully saved to Firestore!");
+        console.log("Profile permanently saved!");
     } catch (err) {
         console.error("Firestore Save Error:", err);
     }
 }
 
+/* UI میں پروفائل پکچر دکھانے کا فنکشن */
+function updateUIProfilePicture(photoURL, name = "User") {
+    const avatarImgs = document.querySelectorAll('.profile-img, #profileImg, .avatar-img, #userAvatar');
+    const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=f39c12&color=fff`;
+
+    const finalSrc = (photoURL && photoURL.trim().length > 5) ? photoURL : defaultAvatar;
+
+    avatarImgs.forEach(img => {
+        if (img) img.src = finalSrc;
+    });
+}
+
 /* =====================================================
-   SAVE PROFILE FORM FUNCTIONALITY
+   SAVE PROFILE FORM CLICK HANDLER
    ===================================================== */
 document.addEventListener("click", async function(event) {
-    const saveBtn = event.target.closest("#saveProfileBtn") || (event.target.tagName === "BUTTON" && event.target.textContent.includes("Save Profile"));
+    const saveBtn = event.target.closest("#saveProfileBtn") || 
+                    (event.target.tagName === "BUTTON" && event.target.textContent.includes("Save Profile"));
     
     if (!saveBtn) return;
     event.preventDefault();
 
     const currentUser = auth.currentUser;
     if (!currentUser) {
-        alert("Please sign in first to save your profile!");
+        alert("Please sign in first!");
         return;
     }
 
@@ -105,248 +117,58 @@ document.addEventListener("click", async function(event) {
     const username = usernameInput ? usernameInput.value.trim() : "";
     const name = nameInput ? nameInput.value.trim() : "";
 
-    let photoURL = currentUser.photoURL || "";
-
     if (fileInput && fileInput.files && fileInput.files[0]) {
         const file = fileInput.files[0];
         const reader = new FileReader();
         reader.onload = async function(e) {
-            photoURL = e.target.result;
+            const photoURL = e.target.result; // Base64 Image
             await saveJusticeUser(currentUser, { name, username, photoURL });
-            alert("Profile saved successfully!");
+            alert("Profile & Picture saved successfully!");
         };
         reader.readAsDataURL(file);
     } else {
-        await saveJusticeUser(currentUser, { name, username, photoURL });
+        await saveJusticeUser(currentUser, { name, username });
         alert("Profile saved successfully!");
     }
 });
 
 /* =====================================================
-   SEARCH USER FUNCTIONALITY
+   SEARCH USER & SHOW PICTURE + WORKING CHAT BUTTON
    ===================================================== */
 export async function searchUserByUsernameOrName(searchQuery) {
     if (!searchQuery) return [];
-
-    const searchTerm = searchQuery.trim();
-    const searchLower = searchTerm.toLowerCase();
+    const searchLower = searchQuery.trim().toLowerCase();
     const usersRef = collection(db, "users");
 
     try {
         const querySnapshot = await getDocs(usersRef);
         let results = [];
-
         querySnapshot.forEach((doc) => {
             const data = doc.data();
             const uName = (data.username || "").toLowerCase();
             const fName = (data.name || "").toLowerCase();
-
             if (uName.includes(searchLower) || fName.includes(searchLower)) {
                 results.push(data);
             }
         });
-
         return results;
     } catch (error) {
-        console.error("Search User Error:", error);
+        console.error("Search Error:", error);
         return [];
     }
 }
-
 window.searchUserByUsernameOrName = searchUserByUsernameOrName;
 
-/* =====================================================
-   SIGN UP
-   ===================================================== */
-document.addEventListener("submit", function(event) {
-    const form = event.target;
-    if (!form || form.id !== "signupForm") return;
-
-    event.preventDefault();
-    event.stopImmediatePropagation();
-
-    const name = document.getElementById("signupName").value.trim();
-    const email = document.getElementById("signupEmail").value.trim().toLowerCase();
-    const password = document.getElementById("signupPassword").value;
-    const confirmPassword = document.getElementById("signupConfirmPassword").value;
-    const message = document.getElementById("signupMessage");
-
-    if (!name || !email || !password || !confirmPassword) {
-        if (message) message.textContent = "Please fill in all fields.";
-        return;
-    }
-
-    if (password.length < 6) {
-        if (message) message.textContent = "Password must be at least 6 characters.";
-        return;
-    }
-
-    if (password !== confirmPassword) {
-        if (message) message.textContent = "Passwords do not match.";
-        return;
-    }
-
-    if (message) message.textContent = "Creating your account...";
-
-    createUserWithEmailAndPassword(auth, email, password)
-        .then(async function(result) {
-            await saveJusticeUser(result.user, { name });
-            if (message) message.textContent = "Account created successfully!";
-            form.reset();
-
-            setTimeout(function() {
-                if (typeof openAuthPage === "function") openAuthPage("signinPage");
-                else if (typeof showPage === "function") showPage("signin");
-            }, 1000);
-        })
-        .catch(function(error) {
-            console.error("Firebase Sign Up Error:", error);
-            if (message) message.textContent = "Account creation failed: " + error.code;
-        });
-}, true);
-
-/* =====================================================
-   SIGN IN
-   ===================================================== */
-document.addEventListener("submit", function(event) {
-    const form = event.target;
-    if (!form || form.id !== "signinForm") return;
-
-    event.preventDefault();
-    event.stopImmediatePropagation();
-
-    const nameInput = document.getElementById("fullName");
-    const name = nameInput ? nameInput.value.trim() : "";
-    const email = document.getElementById("email").value.trim().toLowerCase();
-    const password = document.getElementById("password").value;
-    const message = document.getElementById("signinMessage");
-
-    if (!email || !password) {
-        if (message) message.textContent = "Please fill in all fields.";
-        return;
-    }
-
-    if (message) message.textContent = "Signing in...";
-
-    signInWithEmailAndPassword(auth, email, password)
-        .then(async function(result) {
-            await saveJusticeUser(result.user, { name });
-            if (message) message.textContent = "Sign in successful!";
-
-            setTimeout(function() {
-                if (typeof openAuthPage === "function") openAuthPage("welcomePage");
-                else if (typeof showPage === "function") showPage("welcome");
-            }, 700);
-        })
-        .catch(function(error) {
-            console.error("Firebase Sign In Error:", error);
-            if (message) message.textContent = "Sign in failed: " + error.code;
-        });
-}, true);
-
-/* =====================================================
-   GOOGLE SIGN IN & INITIALIZATION
-   ===================================================== */
-document.addEventListener("DOMContentLoaded", function() {
-    console.log("App Initialized Successfully");
-
-    const signinForm = document.getElementById("signinForm");
-    if (!signinForm) return;
-
-    let googleButton = document.getElementById("googleSignInButton");
-
-    if (!googleButton) {
-        googleButton = document.createElement("button");
-        googleButton.type = "button";
-        googleButton.id = "googleSignInButton";
-        googleButton.className = "google-signin-button";
-        googleButton.innerHTML = "🌐 Continue with Google";
-
-        const divider = document.createElement("div");
-        divider.className = "auth-divider";
-        divider.textContent = "OR";
-
-        signinForm.after(divider);
-        divider.after(googleButton);
-    }
-
-    googleButton.onclick = function(event) {
-        event.preventDefault();
-
-        googleButton.disabled = true;
-        googleButton.textContent = "Opening Google...";
-
-        signInWithPopup(auth, googleProvider)
-            .then(async function(result) {
-                await saveJusticeUser(result.user, { name: result.user.displayName });
-
-                const message = document.getElementById("signinMessage");
-                if (message) message.textContent = "Google sign in successful!";
-
-                setTimeout(function() {
-                    if (typeof openAuthPage === "function") openAuthPage("welcomePage");
-                    else if (typeof showPage === "function") showPage("welcome");
-                }, 700);
-            })
-            .catch(function(error) {
-                console.error("GOOGLE SIGN-IN ERROR:", error);
-                const message = document.getElementById("signinMessage");
-                if (message) message.textContent = "Google Sign-In error: " + error.code;
-
-                googleButton.disabled = false;
-                googleButton.innerHTML = "🌐 Continue with Google";
-            });
-    };
-});
-
-/* =====================================================
-   FORGOT PASSWORD
-   ===================================================== */
-document.addEventListener("click", function(event) {
-    const button = event.target.closest("#resetPasswordButton");
-    if (!button) return;
-
-    event.preventDefault();
-    event.stopImmediatePropagation();
-
-    const emailInput = document.getElementById("resetEmail");
-    const message = document.getElementById("resetMessage");
-    if (!emailInput) return;
-
-    const email = emailInput.value.trim().toLowerCase();
-
-    if (!email) {
-        if (message) message.textContent = "Please enter your email address.";
-        return;
-    }
-
-    if (message) message.textContent = "Sending password reset email...";
-
-    sendPasswordResetEmail(auth, email)
-        .then(function() {
-            if (message) message.textContent = "Password reset link has been sent to your email.";
-        })
-        .catch(function(error) {
-            console.error("Password Reset Error:", error);
-            if (message) message.textContent = "Unable to send reset email: " + error.code;
-        });
-}, true);
-
-/* =====================================================
-   SEARCH UI & CHAT EVENT HANDLERS
-   ===================================================== */
+/* سرچ ان پٹ کا ایونٹ */
 document.addEventListener("keydown", async function (event) {
     const input = event.target;
-    
     if (event.key === "Enter" && input && input.placeholder && input.placeholder.toLowerCase().includes("search username")) {
         event.preventDefault();
-
         const query = input.value.trim();
         if (!query) return;
 
         const results = await searchUserByUsernameOrName(query);
-
-        let targetBox = input.parentElement.querySelector('div:last-child') || document.querySelector('.chat-list') || input.nextElementSibling;
+        let targetBox = input.parentElement.querySelector('.search-results') || document.querySelector('.chat-list') || input.nextElementSibling;
 
         if (results.length > 0) {
             let userCards = "";
@@ -354,16 +176,15 @@ document.addEventListener("keydown", async function (event) {
                 const displayName = user.name || "User";
                 const displayUsername = user.username ? `@${user.username}` : "";
                 
-                // تصویر چیک کرنے کا بہتر طریقہ
-                const hasValidPhoto = user.photoURL && user.photoURL.length > 10;
-                const photoSrc = hasValidPhoto 
+                // تصویر کا درست چیک
+                const photoSrc = (user.photoURL && user.photoURL.length > 10) 
                     ? user.photoURL 
                     : `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=f39c12&color=fff`;
 
                 userCards += `
                     <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: rgba(255, 255, 255, 0.1); margin-top: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <img src="${photoSrc}" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #f39c12;" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=f39c12&color=fff'">
+                            <img src="${photoSrc}" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #f39c12;" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=f39c12&color=fff'">
                             <div style="text-align: left;">
                                 <div style="font-weight: bold; color: white; font-size: 15px;">${displayName}</div>
                                 <div style="font-size: 12px; color: #bbb;">${displayUsername}</div>
@@ -374,43 +195,52 @@ document.addEventListener("keydown", async function (event) {
                 `;
             });
 
-            if (targetBox) {
-                targetBox.innerHTML = userCards;
-            }
+            if (targetBox) targetBox.innerHTML = userCards;
         } else {
             alert("No user found with name: " + query);
         }
     }
 });
 
-// Chat Button Event Handler
+/* چیٹ بٹن پر کلک کا فنکشن */
 document.addEventListener("click", function(e) {
     const btn = e.target.closest(".action-chat-btn");
     if (btn) {
         e.preventDefault();
         const name = btn.getAttribute("data-name");
-        const uid = btn.getAttribute("data-uid");
-        alert("Starting chat with: " + name);
+        
+        // چیٹ کا پیج اوپن کرنا
+        if (typeof showPage === "function") {
+            showPage("chat");
+        } else if (typeof openAuthPage === "function") {
+            openAuthPage("chatPage");
+        }
     }
 });
 
 /* =====================================================
-   AUTH STATE CHANGED
+   AUTH STATE & AUTO-LOAD PHOTO ON APP OPEN
    ===================================================== */
 onAuthStateChanged(auth, async function(user) {
     if (user) {
+        // پہلے LocalStorage سے دیکھ کر فوراً تصویر لوڈ کریں
+        const localData = JSON.parse(localStorage.getItem("justiceUser") || "{}");
+        if (localData.photoURL) {
+            updateUIProfilePicture(localData.photoURL, localData.name);
+        }
+
         try {
             const userDocRef = doc(db, "users", user.uid);
             const userDoc = await getDoc(userDocRef);
-            
             if (userDoc.exists()) {
                 const data = userDoc.data();
                 localStorage.setItem("justiceUser", JSON.stringify(data));
+                updateUIProfilePicture(data.photoURL, data.name);
             } else {
                 saveJusticeUser(user, { name: user.displayName });
             }
         } catch (err) {
-            console.error("Auth state update error:", err);
+            console.error("Auth Load Error:", err);
         }
     }
 });
