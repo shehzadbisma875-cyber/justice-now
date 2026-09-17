@@ -17,8 +17,6 @@ import {
     setDoc,
     getDoc,
     collection,
-    query,
-    where,
     getDocs
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -35,11 +33,15 @@ const firebaseConfig = {
 };
 
 /* =====================================================
-   INITIALIZE FIREBASE
+   INITIALIZE FIREBASE & GLOBAL EXPORTS
    ===================================================== */
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+// Global Bindings
+window.auth = auth;
+window.db = db;
 
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
@@ -71,10 +73,8 @@ async function saveJusticeUser(user, extraData = {}) {
         updatedAt: new Date()
     };
 
-    // Save to LocalStorage
     localStorage.setItem("justiceUser", JSON.stringify(profileData));
 
-    // Save to Firestore Database
     try {
         await setDoc(doc(db, "users", user.uid), profileData, { merge: true });
         console.log("Profile successfully saved to Firestore!");
@@ -123,7 +123,7 @@ document.addEventListener("click", async function(event) {
 });
 
 /* =====================================================
-   IMPROVED SEARCH USER FUNCTIONALITY (یوزرنیم اور نام دونوں سے سرچ)
+   SEARCH USER FUNCTIONALITY
    ===================================================== */
 export async function searchUserByUsernameOrName(searchQuery) {
     if (!searchQuery) return [];
@@ -141,7 +141,6 @@ export async function searchUserByUsernameOrName(searchQuery) {
             const uName = (data.username || "").toLowerCase();
             const fName = (data.name || "").toLowerCase();
 
-            // اگر یوزرنیم یا پورا نام سرچ کیوری سے میچ کرے
             if (uName.includes(searchLower) || fName.includes(searchLower)) {
                 results.push(data);
             }
@@ -154,7 +153,6 @@ export async function searchUserByUsernameOrName(searchQuery) {
     }
 }
 
-// Global scope میں سرچ فنکشن اٹیچ کریں
 window.searchUserByUsernameOrName = searchUserByUsernameOrName;
 
 /* =====================================================
@@ -174,26 +172,26 @@ document.addEventListener("submit", function(event) {
     const message = document.getElementById("signupMessage");
 
     if (!name || !email || !password || !confirmPassword) {
-        message.textContent = "Please fill in all fields.";
+        if (message) message.textContent = "Please fill in all fields.";
         return;
     }
 
     if (password.length < 6) {
-        message.textContent = "Password must be at least 6 characters.";
+        if (message) message.textContent = "Password must be at least 6 characters.";
         return;
     }
 
     if (password !== confirmPassword) {
-        message.textContent = "Passwords do not match.";
+        if (message) message.textContent = "Passwords do not match.";
         return;
     }
 
-    message.textContent = "Creating your account...";
+    if (message) message.textContent = "Creating your account...";
 
     createUserWithEmailAndPassword(auth, email, password)
         .then(async function(result) {
             await saveJusticeUser(result.user, { name });
-            message.textContent = "Account created successfully!";
+            if (message) message.textContent = "Account created successfully!";
             form.reset();
 
             setTimeout(function() {
@@ -203,7 +201,7 @@ document.addEventListener("submit", function(event) {
         })
         .catch(function(error) {
             console.error("Firebase Sign Up Error:", error);
-            message.textContent = "Account creation failed: " + error.code;
+            if (message) message.textContent = "Account creation failed: " + error.code;
         });
 }, true);
 
@@ -224,16 +222,16 @@ document.addEventListener("submit", function(event) {
     const message = document.getElementById("signinMessage");
 
     if (!email || !password) {
-        message.textContent = "Please fill in all fields.";
+        if (message) message.textContent = "Please fill in all fields.";
         return;
     }
 
-    message.textContent = "Signing in...";
+    if (message) message.textContent = "Signing in...";
 
     signInWithEmailAndPassword(auth, email, password)
         .then(async function(result) {
             await saveJusticeUser(result.user, { name });
-            message.textContent = "Sign in successful!";
+            if (message) message.textContent = "Sign in successful!";
 
             setTimeout(function() {
                 if (typeof openAuthPage === "function") openAuthPage("welcomePage");
@@ -242,14 +240,16 @@ document.addEventListener("submit", function(event) {
         })
         .catch(function(error) {
             console.error("Firebase Sign In Error:", error);
-            message.textContent = "Sign in failed: " + error.code;
+            if (message) message.textContent = "Sign in failed: " + error.code;
         });
 }, true);
 
 /* =====================================================
-   GOOGLE SIGN IN
+   GOOGLE SIGN IN & INITIALIZATION
    ===================================================== */
 document.addEventListener("DOMContentLoaded", function() {
+    console.log("App Initialized Successfully");
+
     const signinForm = document.getElementById("signinForm");
     if (!signinForm) return;
 
@@ -311,43 +311,29 @@ document.addEventListener("click", function(event) {
 
     const emailInput = document.getElementById("resetEmail");
     const message = document.getElementById("resetMessage");
+    if (!emailInput) return;
+
     const email = emailInput.value.trim().toLowerCase();
 
     if (!email) {
-        message.textContent = "Please enter your email address.";
+        if (message) message.textContent = "Please enter your email address.";
         return;
     }
 
-    message.textContent = "Sending password reset email...";
+    if (message) message.textContent = "Sending password reset email...";
 
     sendPasswordResetEmail(auth, email)
         .then(function() {
-            message.textContent = "Password reset link has been sent to your email.";
+            if (message) message.textContent = "Password reset link has been sent to your email.";
         })
         .catch(function(error) {
             console.error("Password Reset Error:", error);
-            message.textContent = "Unable to send reset email: " + error.code;
+            if (message) message.textContent = "Unable to send reset email: " + error.code;
         });
 }, true);
 
 /* =====================================================
-   KEEP USER INFORMATION UPDATED
-   ===================================================== */
-onAuthStateChanged(auth, async function(user) {
-    if (user) {
-        const userDocRef = doc(db, "users", user.uid);
-        const userDoc = await getDoc(userDocRef);
-        
-        if (userDoc.exists()) {
-            const data = userDoc.data();
-            localStorage.setItem("justiceUser", JSON.stringify(data));
-        } else {
-            saveJusticeUser(user, { name: user.displayName });
-        }
-    }
-});
-/* =====================================================
-   SEARCH USER & CHAT BUTTON CLICK (WORKING FIX)
+   SEARCH UI & CHAT EVENT HANDLERS
    ===================================================== */
 document.addEventListener("keydown", async function (event) {
     const input = event.target;
@@ -358,58 +344,41 @@ document.addEventListener("keydown", async function (event) {
         const query = input.value.trim();
         if (!query) return;
 
-        const searchLower = query.toLowerCase();
-        const usersRef = collection(db, "users");
+        const results = await searchUserByUsernameOrName(query);
 
-        try {
-            const querySnapshot = await getDocs(usersRef);
-            let results = [];
+        let targetBox = input.parentElement.querySelector('div:last-child') || document.querySelector('.chat-list') || input.nextElementSibling;
 
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                const uName = (data.username || "").toLowerCase();
-                const fName = (data.name || "").toLowerCase();
+        if (results.length > 0) {
+            let userCards = "";
+            results.forEach(user => {
+                const displayName = user.name || "User";
+                const displayUsername = user.username ? `@${user.username}` : "";
+                
+                // تصویر چیک کرنے کا بہتر طریقہ
+                const hasValidPhoto = user.photoURL && user.photoURL.length > 10;
+                const photoSrc = hasValidPhoto 
+                    ? user.photoURL 
+                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=f39c12&color=fff`;
 
-                if (uName.includes(searchLower) || fName.includes(searchLower)) {
-                    results.push(data);
-                }
+                userCards += `
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: rgba(255, 255, 255, 0.1); margin-top: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <img src="${photoSrc}" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #f39c12;" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=f39c12&color=fff'">
+                            <div style="text-align: left;">
+                                <div style="font-weight: bold; color: white; font-size: 15px;">${displayName}</div>
+                                <div style="font-size: 12px; color: #bbb;">${displayUsername}</div>
+                            </div>
+                        </div>
+                        <button type="button" class="action-chat-btn" data-uid="${user.uid}" data-name="${displayName}" style="padding: 8px 16px; background: #f39c12; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer;">Chat</button>
+                    </div>
+                `;
             });
 
-            // Target search results container
-            let targetBox = input.parentElement.querySelector('div:last-child') || document.querySelector('.chat-list') || input.nextElementSibling;
-
-            if (results.length > 0) {
-                let userCards = "";
-                results.forEach(user => {
-                    const displayName = user.name || "User";
-                    const displayUsername = user.username ? `@${user.username}` : "";
-                    
-                    // Check valid Base64 or Image URL
-                    const hasValidPhoto = user.photoURL && user.photoURL.startsWith("data:image");
-                    const photoSrc = hasValidPhoto ? user.photoURL : `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=f39c12&color=fff`;
-
-                    userCards += `
-                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: rgba(255, 255, 255, 0.1); margin-top: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);">
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <img src="${photoSrc}" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #f39c12;">
-                                <div style="text-align: left;">
-                                    <div style="font-weight: bold; color: white; font-size: 15px;">${displayName}</div>
-                                    <div style="font-size: 12px; color: #bbb;">${displayUsername}</div>
-                                </div>
-                            </div>
-                            <button type="button" class="action-chat-btn" data-uid="${user.uid}" data-name="${displayName}" style="padding: 8px 16px; background: #f39c12; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer;">Chat</button>
-                        </div>
-                    `;
-                });
-
-                if (targetBox) {
-                    targetBox.innerHTML = userCards;
-                }
-            } else {
-                alert("No user found with name: " + query);
+            if (targetBox) {
+                targetBox.innerHTML = userCards;
             }
-        } catch (error) {
-            console.error("Search Error:", error);
+        } else {
+            alert("No user found with name: " + query);
         }
     }
 });
@@ -424,14 +393,24 @@ document.addEventListener("click", function(e) {
         alert("Starting chat with: " + name);
     }
 });
-document.addEventListener("DOMContentLoaded", function() {
-    // اگر کوئی ایلیمنٹ نہ بھی ملے تو پیج کریش نہ ہو
-    try {
-        console.log("App Initialized Successfully");
-    } catch (err) {
-        console.error("DOM Initialization Error:", err);
+
+/* =====================================================
+   AUTH STATE CHANGED
+   ===================================================== */
+onAuthStateChanged(auth, async function(user) {
+    if (user) {
+        try {
+            const userDocRef = doc(db, "users", user.uid);
+            const userDoc = await getDoc(userDocRef);
+            
+            if (userDoc.exists()) {
+                const data = userDoc.data();
+                localStorage.setItem("justiceUser", JSON.stringify(data));
+            } else {
+                saveJusticeUser(user, { name: user.displayName });
+            }
+        } catch (err) {
+            console.error("Auth state update error:", err);
+        }
     }
 });
-// firebase-auth.js کے بالکل آخر میں یہ لائنز شامل رکھیں تاکہ دوسری فائلز کو بھی Firebase کے اشیاء مل سکیں
-window.auth = auth;
-window.db = db;
