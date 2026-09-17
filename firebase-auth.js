@@ -84,10 +84,9 @@ async function saveJusticeUser(user, extraData = {}) {
 }
 
 /* =====================================================
-   SAVE PROFILE FORM FUNCTIONALITY (آپ کا پروفائل فارم)
+   SAVE PROFILE FORM FUNCTIONALITY
    ===================================================== */
 document.addEventListener("click", async function(event) {
-    // اگر "Save Profile" بٹن پر کلک ہو
     const saveBtn = event.target.closest("#saveProfileBtn") || (event.target.tagName === "BUTTON" && event.target.textContent.includes("Save Profile"));
     
     if (!saveBtn) return;
@@ -99,7 +98,6 @@ document.addEventListener("click", async function(event) {
         return;
     }
 
-    // Input Fields سے ویلیوز حاصل کریں
     const usernameInput = document.querySelector('input[placeholder*="username"], input[value*="bisma"]') || document.getElementById("profileUsername");
     const nameInput = document.querySelector('input[placeholder*="Name"], input[value*="Bisma"]') || document.getElementById("profileName");
     const fileInput = document.querySelector('input[type="file"]');
@@ -109,12 +107,11 @@ document.addEventListener("click", async function(event) {
 
     let photoURL = currentUser.photoURL || "";
 
-    // اگر یوزر نے تصویر اپ لوڈ کی ہے
     if (fileInput && fileInput.files && fileInput.files[0]) {
         const file = fileInput.files[0];
         const reader = new FileReader();
         reader.onload = async function(e) {
-            photoURL = e.target.result; // Convert image to DataURL
+            photoURL = e.target.result;
             await saveJusticeUser(currentUser, { name, username, photoURL });
             alert("Profile saved successfully!");
         };
@@ -126,28 +123,29 @@ document.addEventListener("click", async function(event) {
 });
 
 /* =====================================================
-   SEARCH USER FUNCTIONALITY (دوسرے یوزر کو سرچ کرنے کا فیچر)
+   IMPROVED SEARCH USER FUNCTIONALITY (یوزرنیم اور نام دونوں سے سرچ)
    ===================================================== */
 export async function searchUserByUsernameOrName(searchQuery) {
     if (!searchQuery) return [];
 
-    const searchTerm = searchQuery.toLowerCase().trim();
+    const searchTerm = searchQuery.trim();
+    const searchLower = searchTerm.toLowerCase();
     const usersRef = collection(db, "users");
 
     try {
-        // Username کی بنیاد پر تلاش کریں
-        const q1 = query(usersRef, where("username", "==", searchTerm));
-        const snapshot1 = await getDocs(q1);
-
+        const querySnapshot = await getDocs(usersRef);
         let results = [];
-        snapshot1.forEach((doc) => results.push(doc.data()));
 
-        // اگر Username سے رزلٹ نہ ملے تو Full Name کی بنیاد پر بھی سرچ کریں
-        if (results.length === 0) {
-            const q2 = query(usersRef, where("name", "==", searchQuery));
-            const snapshot2 = await getDocs(q2);
-            snapshot2.forEach((doc) => results.push(doc.data()));
-        }
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const uName = (data.username || "").toLowerCase();
+            const fName = (data.name || "").toLowerCase();
+
+            // اگر یوزرنیم یا پورا نام سرچ کیوری سے میچ کرے
+            if (uName.includes(searchLower) || fName.includes(searchLower)) {
+                results.push(data);
+            }
+        });
 
         return results;
     } catch (error) {
@@ -156,7 +154,7 @@ export async function searchUserByUsernameOrName(searchQuery) {
     }
 }
 
-// Global scope میں سرچ فنکشن اٹیچ کریں تاکہ HTML/JS میں کہیں بھی استعمال ہو سکے
+// Global scope میں سرچ فنکشن اٹیچ کریں
 window.searchUserByUsernameOrName = searchUserByUsernameOrName;
 
 /* =====================================================
@@ -337,7 +335,6 @@ document.addEventListener("click", function(event) {
    ===================================================== */
 onAuthStateChanged(auth, async function(user) {
     if (user) {
-        // فائر بیس سے یوزر کا ڈیٹا حاصل کریں تاکہ پرانی معلومات ضائع نہ ہوں
         const userDocRef = doc(db, "users", user.uid);
         const userDoc = await getDoc(userDocRef);
         
