@@ -7557,3 +7557,57 @@ if (searchInput) {
         }
     });
 }
+/* =====================================================
+   SEARCH USER & SHOW UI ON SCREEN (Fixed Selector)
+   ===================================================== */
+document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.querySelector('input[placeholder*="Search username"]');
+
+    if (searchInput) {
+        searchInput.addEventListener("keydown", async function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault(); // Form refresh روکے گا
+                
+                const query = searchInput.value.trim();
+                if (!query) return;
+
+                // اگر سرچ فنکشن موجود ہو
+                if (typeof window.searchUserByUsernameOrName === "function") {
+                    const results = await window.searchUserByUsernameOrName(query);
+                    
+                    // جہاں "No chats yet" لکھا ہے اس باکس کو تلاش کریں
+                    const chatBox = searchInput.nextElementSibling || document.querySelector('.chat-list') || searchInput.parentElement;
+
+                    if (results.length > 0) {
+                        let userCards = "";
+                        results.forEach(user => {
+                            const displayName = user.name || "User";
+                            const displayUsername = user.username ? `@${user.username}` : "";
+                            const photo = user.photoURL || "https://via.placeholder.com/40";
+
+                            userCards += `
+                                <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: rgba(255, 255, 255, 0.1); margin-top: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <img src="${photo}" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover;">
+                                        <div style="text-align: left;">
+                                            <div style="font-weight: bold; color: white; font-size: 15px;">${displayName}</div>
+                                            <div style="font-size: 12px; color: #bbb;">${displayUsername}</div>
+                                        </div>
+                                    </div>
+                                    <button onclick="alert('Starting chat with ${displayName}')" style="padding: 8px 16px; background: #f39c12; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer;">Chat</button>
+                                </div>
+                            `;
+                        });
+
+                        // "No chats yet" کی جگہ یوزر کارڈ دکھائیں
+                        if (chatBox) {
+                            chatBox.innerHTML = userCards;
+                        }
+                    } else {
+                        alert("No user found with name: " + query);
+                    }
+                }
+            }
+        });
+    }
+});
