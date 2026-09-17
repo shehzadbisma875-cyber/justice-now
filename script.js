@@ -7489,7 +7489,7 @@ async function handleSearch() {
     }
 }
 // Search username input listener
-const searchInput = document.querySelector('input[placeholder*="Search username"]');
+ searchInput = document.querySelector('input[placeholder*="Search username"]');
 
 if (searchInput) {
     searchInput.addEventListener("keyup", async function(event) {
@@ -7506,6 +7506,52 @@ if (searchInput) {
                     // یہاں آپ سرچ رزلٹ کی کارڈ UI رینڈر کروا سکتے ہیں
                 } else {
                     alert("No user found with username: " + query);
+                }
+            }
+        }
+    });
+}
+// Search username input listener (Render UI on screen)
+const searchInput = document.querySelector('input[placeholder*="Search username"]');
+const chatListContainer = document.querySelector('.chat-list') || document.querySelector('#chatList') || document.querySelector('div:has(> p)'); 
+
+if (searchInput) {
+    searchInput.addEventListener("keyup", async function(event) {
+        if (event.key === "Enter") {
+            const query = searchInput.value.trim();
+            if (!query) return;
+
+            if (typeof window.searchUserByUsernameOrName === "function") {
+                const results = await window.searchUserByUsernameOrName(query);
+                
+                // ڈھونڈے گئے یوزرز کو سکرین پر شو کریں
+                if (results.length > 0) {
+                    let userCards = "";
+                    results.forEach(user => {
+                        const displayName = user.name || "User";
+                        const displayUsername = user.username ? `@${user.username}` : "";
+                        const photo = user.photoURL || "https://via.placeholder.com/40";
+
+                        userCards += `
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px; background: rgba(255, 255, 255, 0.1); margin-top: 10px; border-radius: 8px;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <img src="${photo}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                                    <div>
+                                        <div style="font-weight: bold; color: white;">${displayName}</div>
+                                        <div style="font-size: 12px; color: #ccc;">${displayUsername}</div>
+                                    </div>
+                                </div>
+                                <button style="padding: 6px 12px; background: #f39c12; border: none; border-radius: 5px; color: white; cursor: pointer;">Chat</button>
+                            </div>
+                        `;
+                    });
+
+                    // No chats yet کی جگہ نیا کارڈ رینڈر کریں
+                    const parentDiv = searchInput.nextElementSibling || searchInput.parentElement.querySelector('p')?.parentElement;
+                    if (parentDiv) parentDiv.innerHTML = userCards;
+
+                } else {
+                    alert("No user found with name: " + query);
                 }
             }
         }
