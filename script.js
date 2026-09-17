@@ -7645,3 +7645,6 @@ document.addEventListener("click", async function(event) {
         alert("Profile saved!");
     }
 });
+// firebase-auth.js کے بالکل آخر میں یہ یقینی بنائیں
+window.auth = auth;
+window.db = db;
