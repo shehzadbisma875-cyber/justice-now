@@ -424,3 +424,11 @@ document.addEventListener("click", function(e) {
         alert("Starting chat with: " + name);
     }
 });
+document.addEventListener("DOMContentLoaded", function() {
+    // اگر کوئی ایلیمنٹ نہ بھی ملے تو پیج کریش نہ ہو
+    try {
+        console.log("App Initialized Successfully");
+    } catch (err) {
+        console.error("DOM Initialization Error:", err);
+    }
+});
