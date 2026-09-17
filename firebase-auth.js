@@ -21,7 +21,8 @@ import {
     addDoc,
     query,
     where,
-    updateDoc
+    updateDoc,
+    onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 /* =====================================================
@@ -88,13 +89,11 @@ async function saveJusticeUser(user, extraData = {}) {
         updatedAt: new Date().toISOString()
     };
 
-    // Save locally and render UI immediately
     localStorage.setItem("justiceUser", JSON.stringify(profileData));
     renderProfilePictures(photoURL, userName);
 
     try {
         await setDoc(doc(db, "users", user.uid), profileData, { merge: true });
-        console.log("Profile successfully saved to Firestore!");
     } catch (err) {
         console.error("Firestore Save Error:", err);
     }
@@ -110,10 +109,7 @@ document.addEventListener("click", async function(event) {
     event.preventDefault();
 
     const currentUser = auth.currentUser;
-    if (!currentUser) {
-        alert("Please sign in first to save your profile!");
-        return;
-    }
+    if (!currentUser) return alert("Please sign in first!");
 
     const usernameInput = document.querySelector('input[placeholder*="username"], input[value*="bisma"]') || document.getElementById("profileUsername");
     const nameInput = document.querySelector('input[placeholder*="Name"], input[value*="Bisma"]') || document.getElementById("profileName");
@@ -150,8 +146,7 @@ document.addEventListener("click", async function(event) {
 export async function searchUserByUsernameOrName(searchQuery) {
     if (!searchQuery) return [];
 
-    const searchTerm = searchQuery.trim();
-    const searchLower = searchTerm.toLowerCase();
+    const searchLower = searchQuery.trim().toLowerCase();
     const usersRef = collection(db, "users");
 
     try {
@@ -177,14 +172,59 @@ export async function searchUserByUsernameOrName(searchQuery) {
 window.searchUserByUsernameOrName = searchUserByUsernameOrName;
 
 /* =====================================================
-   TIKTOK STYLE 1-MESSAGE CHAT REQUEST
+   TIKTOK STYLE CHAT PAGE OPEN & REQUEST SENDING
    ===================================================== */
-window.sendChatRequest = async function(targetUid, targetName, targetPhoto) {
+window.openTikTokStyleChat = function(targetUid, targetName, targetPhoto) {
+    sessionStorage.setItem("activeChatUser", JSON.stringify({ uid: targetUid, name: targetName, photo: targetPhoto }));
+
+    // Switch view to chat section
+    if (typeof openAuthPage === "function") {
+        openAuthPage("chatPage");
+    } else if (typeof showPage === "function") {
+        showPage("chat");
+    } else {
+        const chatSection = document.getElementById("chatPage") || document.getElementById("chatSection") || document.querySelector('.chat-section');
+        if (chatSection) {
+            document.querySelectorAll('section, .page').forEach(p => p.style.display = 'none');
+            chatSection.style.display = 'block';
+        }
+    }
+
+    // Render Full Profile Banner inside Chat View
+    const chatContainer = document.querySelector("#chatPage, #chatSection, .chat-section");
+    if (chatContainer) {
+        const existingBanner = document.getElementById("tiktokProfileHeader");
+        if (existingBanner) existingBanner.remove();
+
+        const banner = document.createElement("div");
+        banner.id = "tiktokProfileHeader";
+        banner.style.cssText = "background: rgba(255, 255, 255, 0.05); padding: 20px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 15px;";
+        banner.innerHTML = `
+            <img src="${targetPhoto}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #f39c12; margin-bottom: 10px;">
+            <h3 style="color: white; margin: 0; font-size: 18px;">${targetName}</h3>
+            <p style="color: #bbb; font-size: 13px; margin: 5px 0 15px 0;">Send a message request to start chatting</p>
+            <div id="requestInputBox" style="display: flex; gap: 8px; max-width: 400px; margin: 0 auto;">
+                <input type="text" id="initialChatMsgInput" placeholder="Send a chat request message..." style="flex: 1; padding: 10px 14px; border-radius: 20px; border: 1px solid #444; background: #222; color: white;">
+                <button id="sendRequestBtn" style="padding: 10px 18px; background: #f39c12; color: white; border: none; border-radius: 20px; font-weight: bold; cursor: pointer;">Send</button>
+            </div>
+        `;
+
+        chatContainer.insertBefore(banner, chatContainer.firstChild);
+
+        document.getElementById("sendRequestBtn").onclick = async function() {
+            const input = document.getElementById("initialChatMsgInput");
+            const msgText = input.value.trim();
+            if (!msgText) return alert("Please type a message first.");
+
+            await sendChatRequest(targetUid, targetName, targetPhoto, msgText);
+            input.value = "";
+        };
+    }
+};
+
+window.sendChatRequest = async function(targetUid, targetName, targetPhoto, messageText) {
     const currentUser = auth.currentUser;
     if (!currentUser) return alert("Please sign in first!");
-
-    const firstMsg = prompt(`Send a chat request message to ${targetName}:`);
-    if (!firstMsg || !firstMsg.trim()) return;
 
     try {
         const requestsRef = collection(db, "requests");
@@ -204,12 +244,12 @@ window.sendChatRequest = async function(targetUid, targetName, targetPhoto) {
             senderPhoto: senderData.photoURL || "",
             receiverUid: targetUid,
             receiverName: targetName,
-            initialMessage: firstMsg.trim(),
+            initialMessage: messageText,
             status: "pending",
             createdAt: new Date().toISOString()
         });
 
-        alert("Request sent successfully! Once accepted, you can chat.");
+        alert("Chat request sent successfully!");
     } catch (err) {
         console.error("Error sending request:", err);
         alert("Failed to send request.");
@@ -222,148 +262,18 @@ window.respondToChatRequest = async function(requestId, action, senderUid, sende
         if (action === "accept") {
             await updateDoc(reqRef, { status: "accepted" });
             alert("Request accepted!");
-            window.openDirectChatWindow(senderUid, senderName, senderPhoto);
+            window.openTikTokStyleChat(senderUid, senderName, senderPhoto);
         } else {
             await updateDoc(reqRef, { status: "rejected" });
             alert("Request declined.");
         }
-        location.reload();
     } catch (err) {
         console.error("Respond Error:", err);
     }
 };
 
-window.openDirectChatWindow = function(uid, name, photo) {
-    sessionStorage.setItem("activeChatUser", JSON.stringify({ uid, name, photo }));
-
-    if (typeof openAuthPage === "function") {
-        openAuthPage("chatPage");
-    } else if (typeof showPage === "function") {
-        showPage("chat");
-    } else {
-        const chatSection = document.getElementById("chatPage") || document.getElementById("chatSection") || document.querySelector('.chat-section');
-        if (chatSection) {
-            document.querySelectorAll('section, .page').forEach(p => p.style.display = 'none');
-            chatSection.style.display = 'block';
-        }
-    }
-
-    const chatTitleHeader = document.querySelector("#chatHeaderTitle, .chat-header h3, .chat-user-name");
-    if (chatTitleHeader) {
-        chatTitleHeader.textContent = name;
-    }
-};
-
 /* =====================================================
-   SIGN UP & SIGN IN
-   ===================================================== */
-document.addEventListener("submit", function(event) {
-    const form = event.target;
-    if (!form || (form.id !== "signupForm" && form.id !== "signinForm")) return;
-
-    event.preventDefault();
-    event.stopImmediatePropagation();
-
-    const isSignUp = form.id === "signupForm";
-    const email = document.getElementById(isSignUp ? "signupEmail" : "email").value.trim().toLowerCase();
-    const password = document.getElementById(isSignUp ? "signupPassword" : "password").value;
-    const message = document.getElementById(isSignUp ? "signupMessage" : "signinMessage");
-
-    if (isSignUp) {
-        const name = document.getElementById("signupName").value.trim();
-        const confirmPassword = document.getElementById("signupConfirmPassword").value;
-
-        if (password !== confirmPassword) {
-            if (message) message.textContent = "Passwords do not match.";
-            return;
-        }
-
-        createUserWithEmailAndPassword(auth, email, password)
-            .then(async function(result) {
-                await saveJusticeUser(result.user, { name });
-                if (message) message.textContent = "Account created successfully!";
-                setTimeout(() => {
-                    if (typeof openAuthPage === "function") openAuthPage("welcomePage");
-                    else if (typeof showPage === "function") showPage("welcome");
-                }, 1000);
-            })
-            .catch(err => { if (message) message.textContent = "Sign up failed: " + err.code; });
-    } else {
-        const nameInput = document.getElementById("fullName");
-        const name = nameInput ? nameInput.value.trim() : "";
-
-        signInWithEmailAndPassword(auth, email, password)
-            .then(async function(result) {
-                await saveJusticeUser(result.user, { name });
-                if (message) message.textContent = "Sign in successful!";
-                setTimeout(() => {
-                    if (typeof openAuthPage === "function") openAuthPage("welcomePage");
-                    else if (typeof showPage === "function") showPage("welcome");
-                }, 700);
-            })
-            .catch(err => { if (message) message.textContent = "Sign in failed: " + err.code; });
-    }
-}, true);
-
-/* =====================================================
-   GOOGLE SIGN IN
-   ===================================================== */
-document.addEventListener("DOMContentLoaded", function() {
-    const signinForm = document.getElementById("signinForm");
-    if (!signinForm) return;
-
-    let googleButton = document.getElementById("googleSignInButton");
-    if (!googleButton) {
-        googleButton = document.createElement("button");
-        googleButton.type = "button";
-        googleButton.id = "googleSignInButton";
-        googleButton.className = "google-signin-button";
-        googleButton.innerHTML = "🌐 Continue with Google";
-
-        const divider = document.createElement("div");
-        divider.className = "auth-divider";
-        divider.textContent = "OR";
-
-        signinForm.after(divider);
-        divider.after(googleButton);
-    }
-
-    googleButton.onclick = function(event) {
-        event.preventDefault();
-        signInWithPopup(auth, googleProvider)
-            .then(async function(result) {
-                await saveJusticeUser(result.user, { name: result.user.displayName, photoURL: result.user.photoURL });
-                setTimeout(() => {
-                    if (typeof openAuthPage === "function") openAuthPage("welcomePage");
-                    else if (typeof showPage === "function") showPage("welcome");
-                }, 700);
-            })
-            .catch(err => console.error("Google Auth Error:", err));
-    };
-});
-
-/* =====================================================
-   FORGOT PASSWORD
-   ===================================================== */
-document.addEventListener("click", function(event) {
-    const button = event.target.closest("#resetPasswordButton");
-    if (!button) return;
-
-    event.preventDefault();
-    const emailInput = document.getElementById("resetEmail");
-    const message = document.getElementById("resetMessage");
-    if (!emailInput) return;
-
-    const email = emailInput.value.trim().toLowerCase();
-    if (!email) return;
-
-    sendPasswordResetEmail(auth, email)
-        .then(() => { if (message) message.textContent = "Reset link sent to your email."; })
-        .catch(err => { if (message) message.textContent = "Reset error: " + err.code; });
-}, true);
-
-/* =====================================================
-   SEARCH UI & CHAT EVENT HANDLERS
+   SEARCH UI HANDLERS
    ===================================================== */
 document.addEventListener("keydown", async function (event) {
     const input = event.target;
@@ -385,7 +295,7 @@ document.addEventListener("keydown", async function (event) {
                 const photoSrc = (user.photoURL && user.photoURL.length > 10) ? user.photoURL : `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=f39c12&color=fff`;
 
                 userCards += `
-                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: rgba(255, 255, 255, 0.1); margin-top: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);">
+                    <div class="user-profile-card" data-uid="${user.uid}" data-name="${displayName}" data-photo="${photoSrc}" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: rgba(255, 255, 255, 0.1); margin-top: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); cursor: pointer;">
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <img src="${photoSrc}" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #f39c12;" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=f39c12&color=fff'">
                             <div style="text-align: left;">
@@ -406,36 +316,50 @@ document.addEventListener("keydown", async function (event) {
 });
 
 document.addEventListener("click", function(e) {
-    const btn = e.target.closest(".action-chat-btn");
-    if (btn) {
+    const card = e.target.closest(".user-profile-card");
+    if (card) {
         e.preventDefault();
-        e.stopPropagation();
+        const targetUid = card.getAttribute("data-uid");
+        const targetName = card.getAttribute("data-name");
+        const targetPhoto = card.getAttribute("data-photo");
 
-        const targetUid = btn.getAttribute("data-uid");
-        const targetName = btn.getAttribute("data-name");
-        const targetPhoto = btn.getAttribute("data-photo");
-
-        window.sendChatRequest(targetUid, targetName, targetPhoto);
+        window.openTikTokStyleChat(targetUid, targetName, targetPhoto);
     }
 });
 
 /* =====================================================
-   FETCH INCOMING REQUESTS
+   LIVE TikTok-STYLE REQUEST COUNTER & LIST
    ===================================================== */
-async function loadUserChatRequests(currentUserUid) {
-    try {
-        const q = query(
-            collection(db, "requests"),
-            where("receiverUid", "==", currentUserUid),
-            where("status", "==", "pending")
-        );
-        const snapshot = await getDocs(q);
+function listenForIncomingRequests(currentUserUid) {
+    const q = query(
+        collection(db, "requests"),
+        where("receiverUid", "==", currentUserUid),
+        where("status", "==", "pending")
+    );
 
+    onSnapshot(q, (snapshot) => {
+        const count = snapshot.size;
+
+        // 1. Update Request Badge Count on Header / Menu Option
+        const requestTabs = document.querySelectorAll("#requestBadge, .request-count, #chatRequestsHeader, [data-tab='requests']");
+        requestTabs.forEach(el => {
+            let badge = el.querySelector(".badge-count");
+            if (!badge) {
+                badge = document.createElement("span");
+                badge.className = "badge-count";
+                badge.style.cssText = "background: #e74c3c; color: white; font-size: 11px; padding: 2px 7px; border-radius: 10px; margin-left: 6px; font-weight: bold;";
+                el.appendChild(badge);
+            }
+            badge.textContent = count > 0 ? count : "";
+            badge.style.display = count > 0 ? "inline-block" : "none";
+        });
+
+        // 2. Render Request Cards List
         const reqContainer = document.querySelector("#chatRequests, .chat-requests-box, #requestList");
         if (!reqContainer) return;
 
         if (snapshot.empty) {
-            reqContainer.innerHTML = "<p style='color: #888; padding: 10px; text-align:center;'>No pending chat requests.</p>";
+            reqContainer.innerHTML = "<p style='color: #888; padding: 10px; text-align:center;'>No pending chat requests</p>";
             return;
         }
 
@@ -462,28 +386,21 @@ async function loadUserChatRequests(currentUserUid) {
         });
 
         reqContainer.innerHTML = reqHTML;
-    } catch (err) {
-        console.error("Error loading chat requests:", err);
-    }
+    });
 }
 
 /* =====================================================
-   AUTH STATE CHANGED (AUTO-LOAD PROFILE & REQUESTS)
+   AUTH STATE LISTEN
    ===================================================== */
 onAuthStateChanged(auth, async function(user) {
     if (user) {
-        // Load local data immediately to prevent flickering
         const localData = JSON.parse(localStorage.getItem("justiceUser") || "{}");
-        if (localData.photoURL) {
-            renderProfilePictures(localData.photoURL, localData.name);
-        }
+        if (localData.photoURL) renderProfilePictures(localData.photoURL, localData.name);
 
-        loadUserChatRequests(user.uid);
+        listenForIncomingRequests(user.uid);
 
         try {
-            const userDocRef = doc(db, "users", user.uid);
-            const userDoc = await getDoc(userDocRef);
-            
+            const userDoc = await getDoc(doc(db, "users", user.uid));
             if (userDoc.exists()) {
                 const data = userDoc.data();
                 localStorage.setItem("justiceUser", JSON.stringify(data));
@@ -492,7 +409,7 @@ onAuthStateChanged(auth, async function(user) {
                 saveJusticeUser(user, { name: user.displayName, photoURL: user.photoURL });
             }
         } catch (err) {
-            console.error("Auth state update error:", err);
+            console.error("Auth state error:", err);
         }
     }
 });
