@@ -7476,3 +7476,16 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
 })();
+import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+const db = getFirestore(app);
+
+// پروفائل محفوظ کرنے کے لیے:
+async function saveUserProfile(user) {
+  await setDoc(doc(db, "users", user.uid), {
+    name: user.displayName || "User",
+    email: user.email,
+    photoURL: user.photoURL || "",
+    createdAt: new Date()
+  });
+}
