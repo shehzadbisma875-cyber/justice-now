@@ -347,12 +347,11 @@ onAuthStateChanged(auth, async function(user) {
     }
 });
 /* =====================================================
-   DIRECT SEARCH USER & RENDER CARD (100% WORKING)
+   SEARCH & CHAT INTEGRATION (FIXED PHOTO & CHAT BUTTON)
    ===================================================== */
 document.addEventListener("keydown", async function (event) {
     const input = event.target;
     
-    // اگر Enter کی کی دبائی جائے اور انپٹ "Search username" والا ہو
     if (event.key === "Enter" && input && input.placeholder && input.placeholder.toLowerCase().includes("search username")) {
         event.preventDefault();
 
@@ -376,7 +375,6 @@ document.addEventListener("keydown", async function (event) {
                 }
             });
 
-            // سکرین پر رزلٹ دکھانے کے لیے کنٹینر تلاش کریں
             let targetBox = document.querySelector('.chat-list') || input.parentElement.querySelector('p')?.parentElement || input.nextElementSibling;
 
             if (results.length > 0) {
@@ -384,18 +382,22 @@ document.addEventListener("keydown", async function (event) {
                 results.forEach(user => {
                     const displayName = user.name || "User";
                     const displayUsername = user.username ? `@${user.username}` : "";
-                    const photo = user.photoURL || "https://via.placeholder.com/40";
+                    
+                    // اگر تصویر نہ ہو یا گوگل کی تصویر ہو تو وہ لوڈ ہو، ورنہ فرسٹ لیٹر اوتار
+                    const photo = user.photoURL && user.photoURL.length > 5 
+                        ? user.photoURL 
+                        : `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=f39c12&color=fff`;
 
                     userCards += `
                         <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: rgba(255, 255, 255, 0.1); margin-top: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);">
                             <div style="display: flex; align-items: center; gap: 12px;">
-                                <img src="${photo}" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover;">
+                                <img src="${photo}" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #f39c12;" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=f39c12&color=fff'">
                                 <div style="text-align: left;">
                                     <div style="font-weight: bold; color: white; font-size: 15px;">${displayName}</div>
                                     <div style="font-size: 12px; color: #bbb;">${displayUsername}</div>
                                 </div>
                             </div>
-                            <button onclick="alert('Starting chat with ${displayName}')" style="padding: 8px 16px; background: #f39c12; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer;">Chat</button>
+                            <button class="start-chat-btn" data-uid="${user.uid}" data-name="${displayName}" style="padding: 8px 16px; background: #f39c12; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer;">Chat</button>
                         </div>
                     `;
                 });
@@ -408,7 +410,22 @@ document.addEventListener("keydown", async function (event) {
             }
         } catch (error) {
             console.error("Search Error:", error);
-            alert("Error searching user: " + error.message);
         }
+    }
+});
+
+// Chat بٹن کے کلک کا ایکشن
+document.addEventListener("click", function(event) {
+    const chatBtn = event.target.closest(".start-chat-btn");
+    if (!chatBtn) return;
+
+    const targetUid = chatBtn.getAttribute("data-uid");
+    const targetName = chatBtn.getAttribute("data-name");
+
+    alert(`Opening chat with ${targetName}...`);
+    
+    // اگر آپ کا کوئی چیٹ اوپن کرنے کا فنکشن (e.g. openChatRoom) ہے تو یہاں کال کریں:
+    if (typeof window.openChatRoom === "function") {
+        window.openChatRoom(targetUid, targetName);
     }
 });
