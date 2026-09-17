@@ -432,3 +432,6 @@ document.addEventListener("DOMContentLoaded", function() {
         console.error("DOM Initialization Error:", err);
     }
 });
+// firebase-auth.js کے بالکل آخر میں یہ لائنز شامل رکھیں تاکہ دوسری فائلز کو بھی Firebase کے اشیاء مل سکیں
+window.auth = auth;
+window.db = db;
