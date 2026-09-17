@@ -17,7 +17,11 @@ import {
     setDoc,
     getDoc,
     collection,
-    getDocs
+    getDocs,
+    addDoc,
+    query,
+    where,
+    updateDoc
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 /* =====================================================
@@ -163,7 +167,8 @@ export async function searchUserByUsernameOrName(searchQuery) {
             const uName = (data.username || "").toLowerCase();
             const fName = (data.name || "").toLowerCase();
 
-            if (uName.includes(searchLower) || fName.includes(searchLower)) {
+            // Ignore search for self
+            if ((uName.includes(searchLower) || fName.includes(searchLower)) && data.uid !== auth.currentUser?.uid) {
                 results.push(data);
             }
         });
@@ -176,6 +181,63 @@ export async function searchUserByUsernameOrName(searchQuery) {
 }
 
 window.searchUserByUsernameOrName = searchUserByUsernameOrName;
+
+/* =====================================================
+   1-MESSAGE CHAT REQUEST SYSTEM
+   ===================================================== */
+window.sendChatRequest = async function(targetUid, targetName) {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return alert("Please sign in first!");
+
+    const firstMsg = prompt(`Type 1 message request to send to ${targetName}:`);
+    if (!firstMsg || !firstMsg.trim()) return alert("Request canceled or message empty.");
+
+    try {
+        const requestsRef = collection(db, "requests");
+
+        // Check for existing pending/accepted request
+        const q = query(requestsRef, where("senderUid", "==", currentUser.uid), where("receiverUid", "==", targetUid));
+        const snap = await getDocs(q);
+
+        if (!snap.empty) {
+            alert("A request has already been sent to this user!");
+            return;
+        }
+
+        const senderData = JSON.parse(localStorage.getItem("justiceUser") || "{}");
+
+        await addDoc(requestsRef, {
+            senderUid: currentUser.uid,
+            senderName: senderData.name || currentUser.displayName || "User",
+            receiverUid: targetUid,
+            receiverName: targetName,
+            initialMessage: firstMsg.trim(),
+            status: "pending",
+            createdAt: new Date().toISOString()
+        });
+
+        alert("Request and first message sent successfully!");
+    } catch (err) {
+        console.error("Send Request Error:", err);
+        alert("Could not send request.");
+    }
+};
+
+window.respondToChatRequest = async function(requestId, action) {
+    try {
+        const reqRef = doc(db, "requests", requestId);
+        if (action === "accept") {
+            await updateDoc(reqRef, { status: "accepted" });
+            alert("Request accepted! You can now chat.");
+        } else {
+            await updateDoc(reqRef, { status: "rejected" });
+            alert("Request declined.");
+        }
+        location.reload();
+    } catch (err) {
+        console.error("Respond Error:", err);
+    }
+};
 
 /* =====================================================
    SIGN UP
@@ -363,10 +425,10 @@ document.addEventListener("keydown", async function (event) {
     if (event.key === "Enter" && input && (input.placeholder?.toLowerCase().includes("faiqi") || input.placeholder?.toLowerCase().includes("search"))) {
         event.preventDefault();
 
-        const query = input.value.trim();
-        if (!query) return;
+        const queryStr = input.value.trim();
+        if (!queryStr) return;
 
-        const results = await searchUserByUsernameOrName(query);
+        const results = await searchUserByUsernameOrName(queryStr);
 
         let targetBox = input.parentElement.parentElement.querySelector('.chat-list') || input.parentElement.querySelector('.chat-list') || input.nextElementSibling;
 
@@ -390,7 +452,7 @@ document.addEventListener("keydown", async function (event) {
                                 <div style="font-size: 12px; color: #bbb;">${displayUsername}</div>
                             </div>
                         </div>
-                        <button type="button" class="action-chat-btn" data-uid="${user.uid}" data-name="${displayName}" data-photo="${photoSrc}" style="padding: 8px 16px; background: #f39c12; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer;">Chat</button>
+                        <button type="button" class="action-chat-btn" data-uid="${user.uid}" data-name="${displayName}" style="padding: 8px 16px; background: #f39c12; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer;">Chat</button>
                     </div>
                 `;
             });
@@ -399,50 +461,65 @@ document.addEventListener("keydown", async function (event) {
                 targetBox.innerHTML = userCards;
             }
         } else {
-            alert("No user found with name: " + query);
+            alert("No user found with name: " + queryStr);
         }
     }
 });
 
-// ACTIVE CHAT OPENER FUNCTION
-window.startChatWithSelectedUser = function(uid, name, photo) {
-    // 1. Save Target Active User Info
-    sessionStorage.setItem("activeChatUser", JSON.stringify({ uid, name, photo }));
-
-    // 2. Open Chat View / Page
-    if (typeof openAuthPage === "function") {
-        openAuthPage("chatPage");
-    } else if (typeof showPage === "function") {
-        showPage("chat");
-    } else {
-        const chatSection = document.getElementById("chatPage") || document.getElementById("chatSection") || document.querySelector('.chat-section');
-        if (chatSection) {
-            document.querySelectorAll('section, .page').forEach(p => p.style.display = 'none');
-            chatSection.style.display = 'block';
-        }
-    }
-
-    // 3. Update Chat Title/Header UI
-    const chatTitleHeader = document.querySelector("#chatHeaderTitle, .chat-header h3, .chat-user-name");
-    if (chatTitleHeader) {
-        chatTitleHeader.textContent = name;
-    }
-};
-
-// Chat Button Click Event Handler
+// Chat Button Click Event Listener
 document.addEventListener("click", function(e) {
     const btn = e.target.closest(".action-chat-btn");
     if (btn) {
         e.preventDefault();
         e.stopPropagation();
 
-        const uid = btn.getAttribute("data-uid");
-        const name = btn.getAttribute("data-name");
-        const photo = btn.getAttribute("data-photo");
+        const targetUid = btn.getAttribute("data-uid");
+        const targetName = btn.getAttribute("data-name");
 
-        window.startChatWithSelectedUser(uid, name, photo);
+        window.sendChatRequest(targetUid, targetName);
     }
 });
+
+/* =====================================================
+   FETCH INCOMING REQUESTS FOR LOGGED IN USER
+   ===================================================== */
+async function loadUserChatRequests(currentUserUid) {
+    try {
+        const q = query(
+            collection(db, "requests"),
+            where("receiverUid", "==", currentUserUid),
+            where("status", "==", "pending")
+        );
+        const snapshot = await getDocs(q);
+
+        const reqContainer = document.querySelector("#chatRequests, .chat-requests-box, #requestList");
+        if (!reqContainer) return;
+
+        if (snapshot.empty) {
+            reqContainer.innerHTML = "<p style='color: #888; padding: 10px;'>No pending chat requests.</p>";
+            return;
+        }
+
+        let reqHTML = "";
+        snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            reqHTML += `
+                <div style="background: rgba(0, 0, 0, 0.4); padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #f39c12; color: white;">
+                    <div style="font-weight: bold; font-size: 14px;">${data.senderName}</div>
+                    <div style="font-size: 13px; color: #ddd; margin: 4px 0;">"${data.initialMessage}"</div>
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                        <button onclick="respondToChatRequest('${docSnap.id}', 'accept')" style="background: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">Accept</button>
+                        <button onclick="respondToChatRequest('${docSnap.id}', 'reject')" style="background: #c0392b; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">Decline</button>
+                    </div>
+                </div>
+            `;
+        });
+
+        reqContainer.innerHTML = reqHTML;
+    } catch (err) {
+        console.error("Error loading chat requests:", err);
+    }
+}
 
 /* =====================================================
    AUTH STATE CHANGED (AUTO-LOGIN LOGIC)
@@ -453,6 +530,8 @@ onAuthStateChanged(auth, async function(user) {
         if (localData.photoURL) {
             renderProfilePictures(localData.photoURL, localData.name);
         }
+
+        loadUserChatRequests(user.uid);
 
         try {
             const userDocRef = doc(db, "users", user.uid);
