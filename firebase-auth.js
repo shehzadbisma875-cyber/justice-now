@@ -14,7 +14,12 @@ import {
 import {
     getFirestore,
     doc,
-    setDoc
+    setDoc,
+    getDoc,
+    collection,
+    query,
+    where,
+    getDocs
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 /* =====================================================
@@ -51,33 +56,108 @@ setPersistence(auth, browserLocalPersistence).catch(function(error) {
 /* =====================================================
    SAVE USER TO LOCALSTORAGE & FIRESTORE DATABASE
    ===================================================== */
-async function saveJusticeUser(user, name = "") {
-    const userName = name || user.displayName || "User";
+async function saveJusticeUser(user, extraData = {}) {
+    const userName = extraData.name || user.displayName || "User";
     const userEmail = user.email || "";
+    const username = extraData.username || "";
+    const photoURL = extraData.photoURL || user.photoURL || "";
 
-    // LocalStorage Save
-    localStorage.setItem(
-        "justiceUser",
-        JSON.stringify({
-            name: userName,
-            email: userEmail
-        })
-    );
+    const profileData = {
+        uid: user.uid,
+        name: userName,
+        username: username.toLowerCase(),
+        email: userEmail,
+        photoURL: photoURL,
+        updatedAt: new Date()
+    };
 
-    // Firestore Database Save (خود بخود users کلیکشن بن جائے گا)
+    // Save to LocalStorage
+    localStorage.setItem("justiceUser", JSON.stringify(profileData));
+
+    // Save to Firestore Database
     try {
-        await setDoc(doc(db, "users", user.uid), {
-            uid: user.uid,
-            name: userName,
-            email: userEmail,
-            photoURL: user.photoURL || "",
-            createdAt: new Date()
-        }, { merge: true });
-        console.log("Profile saved to Firestore!");
+        await setDoc(doc(db, "users", user.uid), profileData, { merge: true });
+        console.log("Profile successfully saved to Firestore!");
     } catch (err) {
         console.error("Firestore Save Error:", err);
     }
 }
+
+/* =====================================================
+   SAVE PROFILE FORM FUNCTIONALITY (آپ کا پروفائل فارم)
+   ===================================================== */
+document.addEventListener("click", async function(event) {
+    // اگر "Save Profile" بٹن پر کلک ہو
+    const saveBtn = event.target.closest("#saveProfileBtn") || (event.target.tagName === "BUTTON" && event.target.textContent.includes("Save Profile"));
+    
+    if (!saveBtn) return;
+    event.preventDefault();
+
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+        alert("Please sign in first to save your profile!");
+        return;
+    }
+
+    // Input Fields سے ویلیوز حاصل کریں
+    const usernameInput = document.querySelector('input[placeholder*="username"], input[value*="bisma"]') || document.getElementById("profileUsername");
+    const nameInput = document.querySelector('input[placeholder*="Name"], input[value*="Bisma"]') || document.getElementById("profileName");
+    const fileInput = document.querySelector('input[type="file"]');
+
+    const username = usernameInput ? usernameInput.value.trim() : "";
+    const name = nameInput ? nameInput.value.trim() : "";
+
+    let photoURL = currentUser.photoURL || "";
+
+    // اگر یوزر نے تصویر اپ لوڈ کی ہے
+    if (fileInput && fileInput.files && fileInput.files[0]) {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            photoURL = e.target.result; // Convert image to DataURL
+            await saveJusticeUser(currentUser, { name, username, photoURL });
+            alert("Profile saved successfully!");
+        };
+        reader.readAsDataURL(file);
+    } else {
+        await saveJusticeUser(currentUser, { name, username, photoURL });
+        alert("Profile saved successfully!");
+    }
+});
+
+/* =====================================================
+   SEARCH USER FUNCTIONALITY (دوسرے یوزر کو سرچ کرنے کا فیچر)
+   ===================================================== */
+export async function searchUserByUsernameOrName(searchQuery) {
+    if (!searchQuery) return [];
+
+    const searchTerm = searchQuery.toLowerCase().trim();
+    const usersRef = collection(db, "users");
+
+    try {
+        // Username کی بنیاد پر تلاش کریں
+        const q1 = query(usersRef, where("username", "==", searchTerm));
+        const snapshot1 = await getDocs(q1);
+
+        let results = [];
+        snapshot1.forEach((doc) => results.push(doc.data()));
+
+        // اگر Username سے رزلٹ نہ ملے تو Full Name کی بنیاد پر بھی سرچ کریں
+        if (results.length === 0) {
+            const q2 = query(usersRef, where("name", "==", searchQuery));
+            const snapshot2 = await getDocs(q2);
+            snapshot2.forEach((doc) => results.push(doc.data()));
+        }
+
+        return results;
+    } catch (error) {
+        console.error("Search User Error:", error);
+        return [];
+    }
+}
+
+// Global scope میں سرچ فنکشن اٹیچ کریں تاکہ HTML/JS میں کہیں بھی استعمال ہو سکے
+window.searchUserByUsernameOrName = searchUserByUsernameOrName;
 
 /* =====================================================
    SIGN UP
@@ -114,7 +194,7 @@ document.addEventListener("submit", function(event) {
 
     createUserWithEmailAndPassword(auth, email, password)
         .then(async function(result) {
-            await saveJusticeUser(result.user, name);
+            await saveJusticeUser(result.user, { name });
             message.textContent = "Account created successfully!";
             form.reset();
 
@@ -154,7 +234,7 @@ document.addEventListener("submit", function(event) {
 
     signInWithEmailAndPassword(auth, email, password)
         .then(async function(result) {
-            await saveJusticeUser(result.user, name);
+            await saveJusticeUser(result.user, { name });
             message.textContent = "Sign in successful!";
 
             setTimeout(function() {
@@ -200,7 +280,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         signInWithPopup(auth, googleProvider)
             .then(async function(result) {
-                await saveJusticeUser(result.user, result.user.displayName);
+                await saveJusticeUser(result.user, { name: result.user.displayName });
 
                 const message = document.getElementById("signinMessage");
                 if (message) message.textContent = "Google sign in successful!";
@@ -255,8 +335,17 @@ document.addEventListener("click", function(event) {
 /* =====================================================
    KEEP USER INFORMATION UPDATED
    ===================================================== */
-onAuthStateChanged(auth, function(user) {
+onAuthStateChanged(auth, async function(user) {
     if (user) {
-        saveJusticeUser(user, user.displayName);
+        // فائر بیس سے یوزر کا ڈیٹا حاصل کریں تاکہ پرانی معلومات ضائع نہ ہوں
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+        
+        if (userDoc.exists()) {
+            const data = userDoc.data();
+            localStorage.setItem("justiceUser", JSON.stringify(data));
+        } else {
+            saveJusticeUser(user, { name: user.displayName });
+        }
     }
 });

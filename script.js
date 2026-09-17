@@ -7476,3 +7476,15 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
 })();
+// مثال: جب یوزر سرچ بٹن پر کلک کرے
+async function handleSearch() {
+    const searchInput = document.getElementById("searchInput").value;
+    const users = await window.searchUserByUsernameOrName(searchInput);
+
+    if (users.length > 0) {
+        console.log("User Found:", users[0]);
+        alert("Found User: " + users[0].name + " (@" + users[0].username + ")");
+    } else {
+        alert("No user found!");
+    }
+}
