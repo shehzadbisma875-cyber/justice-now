@@ -7476,22 +7476,3 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
 })();
-import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-const db = getFirestore();
-
-// لاگ ان یا سائن اپ کامیا ب ہونے کے بعد یہ فنکشن کال کریں:
-async function saveUserToFirestore(user) {
-  try {
-    await setDoc(doc(db, "users", user.uid), {
-      name: user.displayName || "Anonymous User",
-      email: user.email,
-      photoURL: user.photoURL || "",
-      createdAt: new Date()
-    }, { merge: true }); // merge سے پرانا ڈیٹا اوور رائٹ نہیں ہوگا
-    
-    console.log("Profile created successfully in Firestore!");
-  } catch (error) {
-    console.error("Error saving profile: ", error);
-  }
-}
