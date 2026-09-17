@@ -47,6 +47,7 @@ googleProvider.setCustomParameters({
     prompt: "select_account"
 });
 
+// Browser Persistent Session Configuration
 setPersistence(auth, browserLocalPersistence).catch(function(error) {
     console.error("Firebase persistence error:", error);
 });
@@ -121,17 +122,24 @@ document.addEventListener("click", async function(event) {
     const username = usernameInput ? usernameInput.value.trim() : "";
     const name = nameInput ? nameInput.value.trim() : "";
 
+    saveBtn.disabled = true;
+    saveBtn.textContent = "Saving...";
+
     if (fileInput && fileInput.files && fileInput.files[0]) {
         const file = fileInput.files[0];
         const reader = new FileReader();
         reader.onload = async function(e) {
             const photoURL = e.target.result;
             await saveJusticeUser(currentUser, { name, username, photoURL });
+            saveBtn.disabled = false;
+            saveBtn.textContent = "Save Profile";
             alert("Profile & Picture saved successfully!");
         };
         reader.readAsDataURL(file);
     } else {
         await saveJusticeUser(currentUser, { name, username });
+        saveBtn.disabled = false;
+        saveBtn.textContent = "Save Profile";
         alert("Profile saved successfully!");
     }
 });
@@ -209,8 +217,8 @@ document.addEventListener("submit", function(event) {
             form.reset();
 
             setTimeout(function() {
-                if (typeof openAuthPage === "function") openAuthPage("signinPage");
-                else if (typeof showPage === "function") showPage("signin");
+                if (typeof openAuthPage === "function") openAuthPage("welcomePage");
+                else if (typeof showPage === "function") showPage("welcome");
             }, 1000);
         })
         .catch(function(error) {
@@ -352,7 +360,7 @@ document.addEventListener("click", function(event) {
 document.addEventListener("keydown", async function (event) {
     const input = event.target;
     
-    if (event.key === "Enter" && input && input.placeholder && input.placeholder.toLowerCase().includes("search username")) {
+    if (event.key === "Enter" && input && (input.placeholder?.toLowerCase().includes("faiqi") || input.placeholder?.toLowerCase().includes("search"))) {
         event.preventDefault();
 
         const query = input.value.trim();
@@ -360,7 +368,7 @@ document.addEventListener("keydown", async function (event) {
 
         const results = await searchUserByUsernameOrName(query);
 
-        let targetBox = input.parentElement.querySelector('div:last-child') || document.querySelector('.chat-list') || input.nextElementSibling;
+        let targetBox = input.parentElement.parentElement.querySelector('.chat-list') || input.parentElement.querySelector('.chat-list') || input.nextElementSibling;
 
         if (results.length > 0) {
             let userCards = "";
@@ -382,7 +390,7 @@ document.addEventListener("keydown", async function (event) {
                                 <div style="font-size: 12px; color: #bbb;">${displayUsername}</div>
                             </div>
                         </div>
-                        <button type="button" class="action-chat-btn" data-uid="${user.uid}" data-name="${displayName}" style="padding: 8px 16px; background: #f39c12; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer;">Chat</button>
+                        <button type="button" class="action-chat-btn" data-uid="${user.uid}" data-name="${displayName}" data-photo="${photoSrc}" style="padding: 8px 16px; background: #f39c12; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer;">Chat</button>
                     </div>
                 `;
             });
@@ -396,23 +404,48 @@ document.addEventListener("keydown", async function (event) {
     }
 });
 
-// Chat Button Event Handler
+// ACTIVE CHAT OPENER FUNCTION
+window.startChatWithSelectedUser = function(uid, name, photo) {
+    // 1. Save Target Active User Info
+    sessionStorage.setItem("activeChatUser", JSON.stringify({ uid, name, photo }));
+
+    // 2. Open Chat View / Page
+    if (typeof openAuthPage === "function") {
+        openAuthPage("chatPage");
+    } else if (typeof showPage === "function") {
+        showPage("chat");
+    } else {
+        const chatSection = document.getElementById("chatPage") || document.getElementById("chatSection") || document.querySelector('.chat-section');
+        if (chatSection) {
+            document.querySelectorAll('section, .page').forEach(p => p.style.display = 'none');
+            chatSection.style.display = 'block';
+        }
+    }
+
+    // 3. Update Chat Title/Header UI
+    const chatTitleHeader = document.querySelector("#chatHeaderTitle, .chat-header h3, .chat-user-name");
+    if (chatTitleHeader) {
+        chatTitleHeader.textContent = name;
+    }
+};
+
+// Chat Button Click Event Handler
 document.addEventListener("click", function(e) {
     const btn = e.target.closest(".action-chat-btn");
     if (btn) {
         e.preventDefault();
-        const name = btn.getAttribute("data-name");
+        e.stopPropagation();
 
-        if (typeof showPage === "function") {
-            showPage("chat");
-        } else if (typeof openAuthPage === "function") {
-            openAuthPage("chatPage");
-        }
+        const uid = btn.getAttribute("data-uid");
+        const name = btn.getAttribute("data-name");
+        const photo = btn.getAttribute("data-photo");
+
+        window.startChatWithSelectedUser(uid, name, photo);
     }
 });
 
 /* =====================================================
-   AUTH STATE CHANGED
+   AUTH STATE CHANGED (AUTO-LOGIN LOGIC)
    ===================================================== */
 onAuthStateChanged(auth, async function(user) {
     if (user) {
