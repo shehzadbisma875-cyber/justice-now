@@ -2314,222 +2314,153 @@
 
 
 
-<!-- ================= LIVE CHAT ================= -->
-<section id="liveChatPage" class="page chat-page">
+<!-- ================= CHAT PAGE ================= -->
+<section id="justiceChatPage" class="justice-chat-page" aria-hidden="true">
 
-    <div class="chat-layout">
+  <div class="justice-chat-header">
+    <button id="justiceChatBack" class="justice-chat-back">←</button>
+    <h2>Chat</h2>
+  </div>
 
-        <!-- CHAT SIDEBAR -->
-        <aside class="chat-sidebar">
+  <div class="justice-chat-tabs">
+    <button class="justice-chat-tab active" data-tab="profile">Profile</button>
+    <button class="justice-chat-tab" data-tab="chats">Chat</button>
+    <button class="justice-chat-tab" data-tab="requests">Requests</button>
+  </div>
 
-            <div class="chat-sidebar-header">
-                <div>
-                    <h2>Chats</h2>
-                    <p id="currentUsername">@username</p>
-                </div>
+  <!-- PROFILE -->
+  <div id="justiceProfileTab" class="justice-chat-content active">
 
-                <button class="chat-menu-btn" id="chatOptionsBtn">⋮</button>
-            </div>
+    <div class="justice-profile-card">
 
-            <!-- Search Username -->
-            <div class="username-search">
-                <input
-                    type="text"
-                    id="usernameSearch"
-                    placeholder="Search username..."
-                    autocomplete="off"
-                >
-                <button id="searchUserBtn">🔎</button>
-            </div>
+      <div class="justice-profile-image-box">
+        <img id="justiceProfilePreview"
+             src="https://via.placeholder.com/110"
+             alt="Profile">
+      </div>
 
-            <div id="userSearchResults" class="user-search-results"></div>
+      <input
+        type="file"
+        id="justiceProfileImage"
+        accept="image/*"
+      >
 
-            <!-- New Chat / Group -->
-            <div class="chat-create-buttons">
-                <button id="newChatBtn">＋ New Chat</button>
-                <button id="createGroupBtn">👥 Create Group</button>
-            </div>
+      <input
+        type="text"
+        id="justiceUsername"
+        placeholder="Username"
+        maxlength="30"
+      >
 
-            <!-- Chat List -->
-            <div id="chatList" class="chat-list">
-                <p class="empty-chat">No chats yet</p>
-            </div>
+      <input
+        type="text"
+        id="justiceProfileName"
+        placeholder="Profile Name"
+        maxlength="50"
+      >
 
-        </aside>
-
-
-        <!-- CHAT WINDOW -->
-        <main class="chat-window">
-
-            <!-- Chat Header -->
-            <header class="chat-header">
-
-                <div class="chat-person">
-
-                    <div class="chat-avatar" id="chatAvatar">
-                        👤
-                    </div>
-
-                    <div>
-                        <h3 id="chatName">Select a chat</h3>
-                        <span id="chatStatus"> </span>
-                    </div>
-
-                </div>
-
-                <div class="chat-header-actions">
-
-                    <button id="chatInfoBtn" title="Chat options">
-                        ⋮
-                    </button>
-
-                </div>
-
-            </header>
-
-
-            <!-- Messages -->
-            <div id="messagesContainer" class="messages-container">
-
-                <div class="chat-welcome">
-                    <div class="big-chat-icon">💬</div>
-                    <h2>Your Messages</h2>
-                    <p>Select a person or group to start chatting.</p>
-                </div>
-
-            </div>
-
-
-            <!-- Message Input -->
-            <div class="message-area">
-
-                <button
-                    class="message-tool"
-                    id="emojiBtn"
-                    title="Emoji">
-                    😊
-                </button>
-
-                <button
-                    class="message-tool"
-                    id="imageBtn"
-                    title="Picture">
-                    🖼️
-                </button>
-
-                <button
-                    class="message-tool"
-                    id="fileBtn"
-                    title="File">
-                    📎
-                </button>
-
-                <input
-                    type="text"
-                    id="messageInput"
-                    placeholder="Write a message..."
-                    autocomplete="off"
-                >
-
-                <button
-                    class="message-tool"
-                    id="voiceBtn"
-                    title="Voice message">
-                    🎤
-                </button>
-
-                <button
-                    class="send-message-btn"
-                    id="sendMessageBtn">
-                    ➤
-                </button>
-
-            </div>
-
-            <!-- Hidden file inputs -->
-            <input
-                type="file"
-                id="imageInput"
-                accept="image/*"
-                hidden
-            >
-
-            <input
-                type="file"
-                id="fileInput"
-                hidden
-            >
-
-            <!-- Emoji Box -->
-            <div id="emojiPicker" class="emoji-picker">
-                <button>😀</button>
-                <button>😂</button>
-                <button>😊</button>
-                <button>😍</button>
-                <button>🥰</button>
-                <button>😎</button>
-                <button>😭</button>
-                <button>😡</button>
-                <button>👍</button>
-                <button>❤️</button>
-                <button>🙏</button>
-                <button>🎉</button>
-                <button>🔥</button>
-                <button>💯</button>
-            </div>
-
-        </main>
+      <button id="justiceSaveProfile" class="justice-orange-btn">
+        Save Profile
+      </button>
 
     </div>
 
+  </div>
 
-    <!-- CREATE GROUP MODAL -->
-    <div id="groupModal" class="chat-modal">
+  <!-- CHAT -->
+  <div id="justiceChatsTab" class="justice-chat-content">
 
-        <div class="chat-modal-box">
+    <div class="justice-chat-actions">
+      <button id="justiceAddPerson" class="justice-orange-btn">
+        + Add to Chat
+      </button>
 
-            <button class="close-modal" id="closeGroupModal">×</button>
+      <button id="justiceCreateGroup" class="justice-dark-btn">
+        + Create Group
+      </button>
+    </div>
 
-            <h2>Create Group</h2>
+    <input
+      id="justiceChatSearch"
+      class="justice-chat-search"
+      type="text"
+      placeholder="Search username..."
+    >
 
-            <input
-                type="text"
-                id="groupNameInput"
-                placeholder="Group name"
-            >
+    <div id="justiceChatList" class="justice-chat-list">
+      <div class="justice-empty-chat">
+        No chats yet.
+      </div>
+    </div>
 
-            <p>Select members:</p>
+  </div>
 
-            <div id="groupMembersList"></div>
+  <!-- REQUESTS -->
+  <div id="justiceRequestsTab" class="justice-chat-content">
 
-            <button
-                class="primary-chat-btn"
-                id="createGroupConfirm">
-                Create Group
-            </button>
+    <div id="justiceRequestList" class="justice-request-list">
+      <div class="justice-empty-chat">
+        No requests yet.
+      </div>
+    </div>
 
-        </div>
+  </div>
+
+  <!-- ADD PERSON MODAL -->
+  <div id="justiceAddModal" class="justice-modal">
+
+    <div class="justice-modal-box">
+
+      <button class="justice-modal-close" id="justiceAddClose">
+        ×
+      </button>
+
+      <h3>Add Person</h3>
+
+      <input
+        id="justiceSearchUsername"
+        type="text"
+        placeholder="Enter username"
+      >
+
+      <button id="justiceSendRequest" class="justice-orange-btn">
+        Send Request
+      </button>
+
+      <div id="justiceSearchResult"></div>
 
     </div>
 
+  </div>
 
-    <!-- CHAT OPTIONS -->
-    <div id="chatOptionsMenu" class="chat-options-menu">
+  <!-- GROUP MODAL -->
+  <div id="justiceGroupModal" class="justice-modal">
 
-        <button id="deleteChatBtn">
-            🗑️ Delete Chat
-        </button>
+    <div class="justice-modal-box">
 
-        <button id="deleteGroupBtn">
-            🗑️ Delete Group
-        </button>
+      <button class="justice-modal-close" id="justiceGroupClose">
+        ×
+      </button>
+
+      <h3>Create Group</h3>
+
+      <input
+        id="justiceGroupName"
+        type="text"
+        placeholder="Group name"
+      >
+
+      <button id="justiceCreateGroupBtn" class="justice-orange-btn">
+        Create Group
+      </button>
 
     </div>
+
+  </div>
+
+  <div id="justiceChatToast" class="justice-chat-toast"></div>
 
 </section>
-
-
-
 <!-- =========================
      SETTINGS
 ========================= -->

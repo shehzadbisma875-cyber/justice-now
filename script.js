@@ -1,3 +1,4 @@
+
 /* ==========================================
    JUSTICE NOW
    COMPLETE JAVASCRIPT
@@ -392,15 +393,15 @@ document.getElementById("justiceHubBackButton")
 });
 
 
-const justiceHubBackButton =
-    document.getElementById("justicehubbackbotton");
+const chatBackBtn=document.getElementById("chatBackButton")
+if(chatBackBtn){
+    chatBackBtn.addEventListener("click", function() {
 
-if (justiceHubBackButton) {
-    justiceHubBackButton.addEventListener("click", function () {
-        showPage("home");
-    });
+    showPage("home");
+
+});
+
 }
-
 
 document.getElementById("settingsBackButton")
 .addEventListener("click", function() {
@@ -601,7 +602,7 @@ function changeLanguage(language) {
         document.querySelector(".home-title p");
 
 
-    if (homeHeading) {
+    if (homeHeading && t) {
 
         homeHeading.textContent =
         t.homeTitle;
@@ -615,7 +616,7 @@ function changeLanguage(language) {
         );
 
 
-    if (featureButtons.length >= 6) {
+    if (featureButtons.length >= 6 && t) {
 
         featureButtons[0].textContent =
         t.danger;
@@ -5035,972 +5036,305 @@ function resetLegalAid() {
 
 }
 
-/* =====================================================
-   JUSTICE NOW - FIREBASE CHAT SYSTEM
-   ===================================================== */
+/* ==========================================
+   LIVE CHAT
+========================================== */
 
-// Firebase services
-const chatAuth = auth;
-const chatDB = db;
+document.getElementById("liveChatTopButton")
+.addEventListener("click", function() {
 
-let currentChatId = null;
-let currentChatData = null;
-let messageListener = null;
+    showPage("chat");
 
+    renderGroups();
 
-/* =====================================================
-   CURRENT USER
-   ===================================================== */
-
-function getCurrentChatUser() {
-    return chatAuth.currentUser;
-}
-
-
-/* =====================================================
-   OPEN LIVE CHAT
-   ===================================================== */
-
-function openLiveChat() {
-
-    const page = document.getElementById("liveChatPage");
-
-    if (!page) return;
-
-    page.style.display = "block";
-
-    const user = getCurrentChatUser();
-
-    if (!user) {
-        alert("Please sign in first.");
-        return;
-    }
-
-    document.getElementById("currentUsername").textContent =
-        user.displayName
-            ? "@" + user.displayName.replace(/\s+/g, "").toLowerCase()
-            : "@" + user.uid.substring(0, 8);
-
-    loadChats();
-}
-
-
-/* =====================================================
-   SEARCH USERNAME
-   ===================================================== */
-
-document.getElementById("searchUserBtn")?.addEventListener("click", searchUsername);
-
-document.getElementById("usernameSearch")?.addEventListener("keypress", function(e) {
-
-    if (e.key === "Enter") {
-        searchUsername();
-    }
+    renderMessages();
 
 });
 
-
-async function searchUsername() {
-
-    const input = document.getElementById("usernameSearch");
-
-    const username = input.value.trim().toLowerCase();
-
-    const results = document.getElementById("userSearchResults");
-
-    if (!username) {
-        results.innerHTML = "";
-        return;
-    }
-
-    results.innerHTML = "<p>Searching...</p>";
-
-    try {
-
-        const snapshot = await chatDB
-            .collection("users")
-            .where("username", "==", username)
-            .limit(10)
-            .get();
-
-        results.innerHTML = "";
-
-        if (snapshot.empty) {
-
-            results.innerHTML =
-                "<p class='empty-chat'>User not found.</p>";
-
-            return;
-        }
-
-        snapshot.forEach(doc => {
-
-            const user = doc.data();
-
-            const div = document.createElement("div");
-
-            div.className = "search-user";
-
-            div.innerHTML = `
-                <strong>${escapeChatHTML(user.displayName || username)}</strong>
-                <small>@${escapeChatHTML(user.username)}</small>
-            `;
-
-            div.onclick = () => startPrivateChat(
-                doc.id,
-                user
-            );
-
-            results.appendChild(div);
-
-        });
-
-    } catch (error) {
-
-        console.error(error);
-
-        results.innerHTML =
-            "<p>Unable to search users.</p>";
-    }
-}
-
-
-/* =====================================================
-   START PRIVATE CHAT
-   ===================================================== */
-
-async function startPrivateChat(otherUserId, otherUser) {
-
-    const currentUser = getCurrentChatUser();
-
-    if (!currentUser) {
-        alert("Please sign in first.");
-        return;
-    }
-
-    if (otherUserId === currentUser.uid) {
-        alert("You cannot chat with yourself.");
-        return;
-    }
-
-    try {
-
-        const chats = await chatDB
-            .collection("chats")
-            .where("type", "==", "private")
-            .where("members", "array-contains", currentUser.uid)
-            .get();
-
-        let existingChat = null;
-
-        chats.forEach(doc => {
-
-            const data = doc.data();
-
-            if (
-                data.members &&
-                data.members.includes(otherUserId)
-            ) {
-                existingChat = {
-                    id: doc.id,
-                    data: data
-                };
-            }
-
-        });
-
-
-        if (existingChat) {
-
-            openChat(
-                existingChat.id,
-                existingChat.data
-            );
-
-            return;
-        }
-
-
-        const myUserDoc =
-            await chatDB
-                .collection("users")
-                .doc(currentUser.uid)
-                .get();
-
-        const myData =
-            myUserDoc.exists
-                ? myUserDoc.data()
-                : {};
-
-
-        const chatRef =
-            await chatDB.collection("chats").add({
-
-                type: "private",
-
-                members: [
-                    currentUser.uid,
-                    otherUserId
-                ],
-
-                memberInfo: {
-
-                    [currentUser.uid]: {
-                        username: myData.username || "",
-                        displayName: myData.displayName ||
-                            currentUser.displayName ||
-                            ""
-                    },
-
-                    [otherUserId]: {
-                        username: otherUser.username || "",
-                        displayName: otherUser.displayName || ""
-                    }
-
-                },
-
-                createdAt:
-                    firebase.firestore.FieldValue.serverTimestamp(),
-
-                updatedAt:
-                    firebase.firestore.FieldValue.serverTimestamp()
-
-            });
-
-
-        openChat(
-            chatRef.id,
-            {
-                type: "private",
-                members: [
-                    currentUser.uid,
-                    otherUserId
-                ],
-                memberInfo: {
-                    [otherUserId]: otherUser
-                }
-            }
-        );
-
-        document.getElementById("usernameSearch").value = "";
-        document.getElementById("userSearchResults").innerHTML = "";
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert("Could not create chat.");
-    }
-}
-
-
-/* =====================================================
-   LOAD CHATS
-   ===================================================== */
-
-function loadChats() {
-
-    const user = getCurrentChatUser();
-
-    if (!user) return;
-
-    chatDB
-        .collection("chats")
-        .where("members", "array-contains", user.uid)
-        .orderBy("updatedAt", "desc")
-        .onSnapshot(snapshot => {
-
-            const chatList =
-                document.getElementById("chatList");
-
-            chatList.innerHTML = "";
-
-            if (snapshot.empty) {
-
-                chatList.innerHTML =
-                    "<p class='empty-chat'>No chats yet</p>";
-
-                return;
-            }
-
-            snapshot.forEach(doc => {
-
-                const data = doc.data();
-
-                let title = "Chat";
-
-                if (data.type === "group") {
-
-                    title = data.name || "Group";
-
-                } else {
-
-                    const otherId =
-                        data.members.find(
-                            id => id !== user.uid
-                        );
-
-                    title =
-                        data.memberInfo?.[otherId]?.displayName ||
-                        data.memberInfo?.[otherId]?.username ||
-                        "User";
-                }
-
-
-                const item =
-                    document.createElement("div");
-
-                item.className = "chat-item";
-
-                item.innerHTML = `
-                    <div class="chat-item-avatar">
-                        ${data.type === "group" ? "👥" : "👤"}
-                    </div>
-
-                    <div class="chat-item-info">
-                        <strong>${escapeChatHTML(title)}</strong>
-                        <small>${data.lastMessage
-                            ? escapeChatHTML(data.lastMessage)
-                            : "No messages yet"}</small>
-                    </div>
-                `;
-
-                item.onclick = () =>
-                    openChat(doc.id, data);
-
-                chatList.appendChild(item);
-
-            });
-
-        });
-}
-
-
-/* =====================================================
-   OPEN CHAT
-   ===================================================== */
-
-function openChat(chatId, chatData) {
-
-    currentChatId = chatId;
-    currentChatData = chatData;
-
-    const currentUser =
-        getCurrentChatUser();
-
-    let title = "Chat";
-
-    if (chatData.type === "group") {
-
-        title = chatData.name || "Group";
-
-    } else {
-
-        const otherId =
-            chatData.members.find(
-                id => id !== currentUser.uid
-            );
-
-        title =
-            chatData.memberInfo?.[otherId]?.displayName ||
-            chatData.memberInfo?.[otherId]?.username ||
-            "User";
-    }
-
-    document.getElementById("chatName").textContent =
-        title;
-
-    document.getElementById("chatStatus").textContent =
-        chatData.type === "group"
-            ? `${chatData.members.length} members`
-            : "Chat";
-
-
-    if (messageListener) {
-        messageListener();
-    }
-
-
-    messageListener =
-        chatDB
-            .collection("chats")
-            .doc(chatId)
-            .collection("messages")
-            .orderBy("createdAt", "asc")
-            .onSnapshot(snapshot => {
-
-                const container =
-                    document.getElementById(
-                        "messagesContainer"
-                    );
-
-                container.innerHTML = "";
-
-                snapshot.forEach(doc => {
-
-                    renderMessage(
-                        doc.id,
-                        doc.data()
-                    );
-
-                });
-
-                container.scrollTop =
-                    container.scrollHeight;
-
-            });
-
-
-    document.querySelector(".chat-layout")
-        ?.classList.add("chat-open");
-}
-
-
-/* =====================================================
-   SEND MESSAGE
-   ===================================================== */
-
-document.getElementById("sendMessageBtn")
-    ?.addEventListener("click", sendMessage);
-
-
-document.getElementById("messageInput")
-    ?.addEventListener("keypress", function(e) {
-
-        if (e.key === "Enter") {
-            sendMessage();
-        }
-
+//Tareeqah 2: If condition
+const creatGrpBtn=document.getElementById("createGroupButton")
+if(creatGrpBtn){
+    creatGrpBtn.addEventListener("click", function() {
+
+    const nameInput =
+        document.getElementById(
+            "groupName"
+        )
+        const name=nameInput?nameInput
+        .value
+        .trim():"";
     });
 
 
-async function sendMessage() {
+    const members =
+        document.getElementById(
+            "groupMembers"
+        )
+        .value
+        .trim();
 
-    const input =
-        document.getElementById("messageInput");
 
-    const text =
-        input.value.trim();
+    if (!name || !members) {
 
-    const user =
-        getCurrentChatUser();
+        alert(
+            "Enter group name and members."
+        );
 
-    if (!user || !currentChatId || !text) {
-        return;
+        
+
     }
 
 
-    try {
-
-        await chatDB
-            .collection("chats")
-            .doc(currentChatId)
-            .collection("messages")
-            .add({
-
-                senderId: user.uid,
-
-                text: text,
-
-                type: "text",
-
-                createdAt:
-                    firebase.firestore.FieldValue.serverTimestamp()
-
-            });
+    const groups =
+    JSON.parse(
+        localStorage.getItem(
+            "justiceGroups"
+        )
+        ||
+        "[]"
+    );
 
 
-        await chatDB
-            .collection("chats")
-            .doc(currentChatId)
-            .update({
+    groups.push({
 
-                lastMessage: text,
+        id: Date.now(),
 
-                updatedAt:
-                    firebase.firestore.FieldValue.serverTimestamp()
+        name: name,
 
-            });
+        members:
+            members
+            .split(",")
+            .map(function(member) {
+
+                return member.trim();
+
+            })
+
+    });
+    
+
+    localStorage.setItem(
+        "justiceGroups",
+        JSON.stringify(groups)
+    );
 
 
-        input.value = "";
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert("Message could not be sent.");
-    }
-}
+    document.getElementById(
+        "groupName"
+    )
+    .value = "";
 
 
-/* =====================================================
-   DISPLAY MESSAGE
-   ===================================================== */
+    document.getElementById(
+        "groupMembers"
+    )
+    .value = "";
 
-function renderMessage(messageId, message) {
 
-    const user =
-        getCurrentChatUser();
+    renderGroups();
+
+};
+
+
+function renderGroups() {
 
     const container =
         document.getElementById(
-            "messagesContainer"
+            "groupList"
         );
 
-    const mine =
-        message.senderId === user.uid;
 
-    const row =
-        document.createElement("div");
-
-    row.className =
-        "message-row " +
-        (mine ? "mine" : "theirs");
-
-
-    const bubble =
-        document.createElement("div");
-
-    bubble.className =
-        "message-bubble";
+    const groups =
+    JSON.parse(
+        localStorage.getItem(
+            "justiceGroups"
+        )
+        ||
+        "[]"
+    );
 
 
-    if (message.type === "text") {
-
-        bubble.innerHTML =
-            escapeChatHTML(message.text);
-
-    }
-
-    else if (message.type === "image") {
-
-        bubble.innerHTML = `
-            <img
-                src="${message.url}"
-                style="
-                    max-width:220px;
-                    border-radius:10px;
-                "
-            >
-        `;
-
-    }
-
-    else if (message.type === "file") {
-
-        bubble.innerHTML = `
-            <a
-                href="${message.url}"
-                target="_blank"
-                style="color:inherit;"
-            >
-                📎 ${escapeChatHTML(
-                    message.fileName || "File"
-                )}
-            </a>
-        `;
-
-    }
-
-    else if (message.type === "voice") {
-
-        bubble.innerHTML = `
-            <audio controls>
-                <source src="${message.url}">
-            </audio>
-        `;
-
-    }
+    container.innerHTML = "";
 
 
-    const time =
-        document.createElement("small");
+    groups.forEach(function(group) {
 
-    time.className = "message-time";
+        container.innerHTML += `
 
-    time.textContent =
-        message.createdAt
-            ? formatChatTime(message.createdAt.toDate())
-            : "Sending...";
+            <div class="group-item">
 
+                <strong>
+                    👥 ${group.name}
+                </strong>
 
-    bubble.appendChild(time);
+                <p>
+                    ${group.members.join(", ")}
+                </p>
 
-
-    if (mine) {
-
-        const deleteButton =
-            document.createElement("button");
-
-        deleteButton.className =
-            "message-delete";
-
-        deleteButton.textContent =
-            "🗑️";
-
-        deleteButton.title =
-            "Delete message";
-
-        deleteButton.onclick =
-            () => deleteMessage(messageId);
-
-        bubble.appendChild(deleteButton);
-    }
-
-
-    row.appendChild(bubble);
-
-    container.appendChild(row);
-}
-
-
-/* =====================================================
-   DELETE MESSAGE
-   ===================================================== */
-
-async function deleteMessage(messageId) {
-
-    if (!currentChatId) return;
-
-    const confirmDelete =
-        confirm("Delete this message?");
-
-    if (!confirmDelete) return;
-
-    try {
-
-        await chatDB
-            .collection("chats")
-            .doc(currentChatId)
-            .collection("messages")
-            .doc(messageId)
-            .delete();
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert("Message could not be deleted.");
-    }
-}
-
-
-/* =====================================================
-   DELETE CHAT
-   ===================================================== */
-
-document.getElementById("deleteChatBtn")
-    ?.addEventListener("click", deleteCurrentChat);
-
-
-async function deleteCurrentChat() {
-
-    if (!currentChatId) {
-        alert("Select a chat first.");
-        return;
-    }
-
-    if (!confirm("Delete this chat?")) return;
-
-    try {
-
-        await chatDB
-            .collection("chats")
-            .doc(currentChatId)
-            .delete();
-
-        currentChatId = null;
-        currentChatData = null;
-
-        document.getElementById(
-            "messagesContainer"
-        ).innerHTML = `
-            <div class="chat-welcome">
-                <div class="big-chat-icon">💬</div>
-                <h2>Your Messages</h2>
-                <p>Select a person or group to start chatting.</p>
             </div>
+
         `;
 
-        document.getElementById(
-            "chatName"
-        ).textContent = "Select a chat";
+    });
 
-    } catch (error) {
-
-        console.error(error);
-
-        alert("Chat could not be deleted.");
-    }
 }
 
 
-/* =====================================================
-   CREATE GROUP
-   ===================================================== */
 
-document.getElementById("createGroupBtn")
-    ?.addEventListener("click", openGroupModal);
-
-
-async function openGroupModal() {
-
-    const modal =
-        document.getElementById("groupModal");
-
-    const membersList =
-        document.getElementById(
-            "groupMembersList"
-        );
-
-    membersList.innerHTML =
-        "<p>Loading users...</p>";
-
-    modal.classList.add("show");
-
-
-    const currentUser =
-        getCurrentChatUser();
-
-    try {
-
-        const snapshot =
-            await chatDB
-                .collection("users")
-                .limit(50)
-                .get();
-
-        membersList.innerHTML = "";
-
-        snapshot.forEach(doc => {
-
-            if (doc.id === currentUser.uid)
-                return;
-
-            const user = doc.data();
-
-            const div =
-                document.createElement("label");
-
-            div.className =
-                "group-member";
-
-            div.innerHTML = `
-                <input
-                    type="checkbox"
-                    value="${doc.id}"
-                >
-                ${escapeChatHTML(
-                    user.displayName ||
-                    user.username ||
-                    "User"
-                )}
-                <small>
-                    @${escapeChatHTML(
-                        user.username || ""
-                    )}
-                </small>
-            `;
-
-            membersList.appendChild(div);
-
-        });
-
-    } catch (error) {
-
-        console.error(error);
-
-        membersList.innerHTML =
-            "<p>Could not load users.</p>";
-    }
+const sendBtn=document.getElementById("sendMessageButton")
+if(sendBtn){
+    sendBtn.addEventListener("click", sendChatMessage);
 }
 
+const chatInput=document.getElementById("chatMessageInput")
+if(chatInput){
+    chatInput.addEventListener("keydown", function(event) {
 
-/* =====================================================
-   CONFIRM GROUP
-   ===================================================== */
+    if (event.key === "Enter") {
 
-document.getElementById("createGroupConfirm")
-    ?.addEventListener("click", createGroup);
+    
 
+        sendChatMessage();
 
-async function createGroup() {
-
-    const name =
-        document
-            .getElementById("groupNameInput")
-            .value.trim();
-
-    const currentUser =
-        getCurrentChatUser();
-
-    if (!name) {
-
-        alert("Enter a group name.");
-
-        return;
     }
-
-
-    const selected =
-        [...document.querySelectorAll(
-            "#groupMembersList input:checked"
-        )].map(input => input.value);
-
-
-    if (selected.length === 0) {
-
-        alert("Select at least one member.");
-
-        return;
-    }
-
-
-    const members = [
-        currentUser.uid,
-        ...selected
-    ];
-
-
-    try {
-
-        const ref =
-            await chatDB
-                .collection("chats")
-                .add({
-
-                    type: "group",
-
-                    name: name,
-
-                    members: members,
-
-                    createdBy:
-                        currentUser.uid,
-
-                    lastMessage: "",
-
-                    createdAt:
-                        firebase.firestore.FieldValue.serverTimestamp(),
-
-                    updatedAt:
-                        firebase.firestore.FieldValue.serverTimestamp()
-
-                });
-
-
-        document
-            .getElementById("groupModal")
-            .classList.remove("show");
-
-        document
-            .getElementById("groupNameInput")
-            .value = "";
-
-        openChat(ref.id, {
-            type: "group",
-            name: name,
-            members: members
-        });
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert("Group could not be created.");
-    }
-}
-
-
-/* =====================================================
-   CLOSE GROUP MODAL
-   ===================================================== */
-
-document.getElementById("closeGroupModal")
-    ?.addEventListener("click", function() {
-
-        document
-            .getElementById("groupModal")
-            .classList.remove("show");
-
-    });
-
-
-/* =====================================================
-   EMOJI
-   ===================================================== */
-
-document.getElementById("emojiBtn")
-    ?.addEventListener("click", function() {
-
-        document
-            .getElementById("emojiPicker")
-            .classList.toggle("show");
-
-    });
-
-
-document.querySelectorAll(
-    "#emojiPicker button"
-).forEach(button => {
-
-    button.addEventListener("click", function() {
-
-        const input =
-            document.getElementById(
-                "messageInput"
-            );
-
-        input.value +=
-            this.textContent;
-
-        input.focus();
-
-    });
 
 });
+}
+
+function sendChatMessage() {
+
+    const input =
+        document.getElementById(
+            "chatMessageInput"
+        );
 
 
-/* =====================================================
-   CHAT OPTIONS
-   ===================================================== */
+    const message =
+        input.value
+        .trim();
 
-document.getElementById("chatInfoBtn")
-    ?.addEventListener("click", function() {
 
-        document
-            .getElementById("chatOptionsMenu")
-            .classList.toggle("show");
+    if (!message) {
+
+        return;
+
+    }
+
+
+    const messages =
+    JSON.parse(
+        localStorage.getItem(
+            "justiceChat"
+        )
+        ||
+        "[]"
+    );
+
+
+    messages.push({
+
+        id: Date.now(),
+
+        text: message
 
     });
 
 
-/* =====================================================
-   UTILITY FUNCTIONS
-   ===================================================== */
+    localStorage.setItem(
+        "justiceChat",
+        JSON.stringify(messages)
+    );
 
-function escapeChatHTML(text) {
 
-    if (!text) return "";
+    input.value = "";
 
-    return String(text)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+
+    renderMessages();
+
 }
 
 
-function formatChatTime(date) {
+function renderMessages() {
 
-    return date.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit"
+    const container =
+        document.getElementById(
+            "chatMessages"
+        );
+
+
+    const messages =
+    JSON.parse(
+        localStorage.getItem(
+            "justiceChat"
+        )
+        ||
+        "[]"
+    );
+
+
+    container.innerHTML = "";
+
+
+    messages.forEach(function(message, index) {
+
+        container.innerHTML += `
+
+            <div class="chat-message">
+
+                <span>
+                    ${message.text}
+                </span>
+
+                <button
+                    class="delete-message"
+                    onclick="deleteMessage(${index})"
+                >
+                    🗑
+                </button>
+
+            </div>
+
+        `;
+
     });
 
+
+    container.scrollTop =
+    container.scrollHeight;
+
 }
+
+
+function deleteMessage(index) {
+
+    const messages =
+    JSON.parse(
+        localStorage.getItem(
+            "justiceChat"
+        )
+        ||
+        "[]"
+    );
+
+
+    messages.splice(index, 1);
+
+
+    localStorage.setItem(
+        "justiceChat",
+        JSON.stringify(messages)
+    );
+
+
+    renderMessages();
+
+}
+
+
+window.deleteMessage =
+deleteMessage;
+
+
 
 /* ==========================================
    LOAD SAVED SETTINGS
@@ -7728,3 +7062,417 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 });
+/* =====================================================
+   JUSTICE NOW CHAT - SAFE ADD-ON
+   ===================================================== */
+
+(function () {
+
+  "use strict";
+
+  const chatPage = document.getElementById("justiceChatPage");
+  const backButton = document.getElementById("justiceChatBack");
+
+  if (!chatPage) {
+    console.warn("Justice Now Chat page was not found.");
+    return;
+  }
+
+  /* ---------- FIND EXISTING CHAT BUTTON ---------- */
+
+  const possibleChatButtons = [
+    document.getElementById("topChatButton"),
+    document.getElementById("chatButton"),
+    document.getElementById("homeChatButton")
+  ];
+
+  let chatButton = possibleChatButtons.find(function (button) {
+    return button !== null;
+  });
+
+  /* ---------- CREATE CHAT BUTTON IF NOT FOUND ---------- */
+
+  if (!chatButton) {
+
+    const homePage =
+      document.getElementById("homePage") ||
+      document.querySelector("#home");
+
+    if (homePage) {
+
+      chatButton = document.createElement("button");
+
+      chatButton.id = "justiceAutoChatButton";
+      chatButton.type = "button";
+      chatButton.textContent = "💬 Chat";
+
+      chatButton.style.cssText = `
+        background:#f28c28;
+        color:#111;
+        border:none;
+        border-radius:10px;
+        padding:10px 18px;
+        font-weight:bold;
+        cursor:pointer;
+        margin:10px;
+      `;
+
+      const topBar =
+        homePage.querySelector(".top-bar") ||
+        homePage.querySelector(".header") ||
+        homePage.querySelector("header");
+
+      if (topBar) {
+        topBar.appendChild(chatButton);
+      } else {
+        homePage.insertBefore(chatButton, homePage.firstChild);
+      }
+
+    }
+
+  }
+
+  /* ---------- OPEN CHAT ---------- */
+
+  function openJusticeChat() {
+
+    chatPage.classList.add("justice-chat-open");
+    chatPage.setAttribute("aria-hidden", "false");
+
+    document.body.style.overflow = "hidden";
+
+  }
+
+  /* ---------- CLOSE CHAT ---------- */
+
+  function closeJusticeChat() {
+
+    chatPage.classList.remove("justice-chat-open");
+    chatPage.setAttribute("aria-hidden", "true");
+
+    document.body.style.overflow = "";
+
+  }
+
+  if (chatButton) {
+    chatButton.addEventListener("click", openJusticeChat);
+  }
+
+  if (backButton) {
+    backButton.addEventListener("click", closeJusticeChat);
+  }
+
+
+  /* ---------- TABS ---------- */
+
+  const tabs = document.querySelectorAll(".justice-chat-tab");
+
+  tabs.forEach(function (tab) {
+
+    tab.addEventListener("click", function () {
+
+      const selectedTab = tab.dataset.tab;
+
+      tabs.forEach(function (item) {
+        item.classList.remove("active");
+      });
+
+      tab.classList.add("active");
+
+      document.querySelectorAll(".justice-chat-content")
+        .forEach(function (content) {
+          content.classList.remove("active");
+        });
+
+      if (selectedTab === "profile") {
+        document.getElementById("justiceProfileTab")
+          .classList.add("active");
+      }
+
+      if (selectedTab === "chats") {
+        document.getElementById("justiceChatsTab")
+          .classList.add("active");
+      }
+
+      if (selectedTab === "requests") {
+        document.getElementById("justiceRequestsTab")
+          .classList.add("active");
+      }
+
+    });
+
+  });
+
+
+  /* ---------- PROFILE IMAGE ---------- */
+
+  const imageInput =
+    document.getElementById("justiceProfileImage");
+
+  const imagePreview =
+    document.getElementById("justiceProfilePreview");
+
+  if (imageInput && imagePreview) {
+
+    imageInput.addEventListener("change", function () {
+
+      const file = this.files[0];
+
+      if (!file) return;
+
+      if (!file.type.startsWith("image/")) {
+        showJusticeToast("Please select an image.");
+        return;
+      }
+
+      const reader = new FileReader();
+
+      reader.onload = function (event) {
+        imagePreview.src = event.target.result;
+      };
+
+      reader.readAsDataURL(file);
+
+    });
+
+  }
+
+
+  /* ---------- PROFILE SAVE ---------- */
+
+  const saveProfile =
+    document.getElementById("justiceSaveProfile");
+
+  if (saveProfile) {
+
+    saveProfile.addEventListener("click", function () {
+
+      const username =
+        document.getElementById("justiceUsername").value.trim();
+
+      const profileName =
+        document.getElementById("justiceProfileName").value.trim();
+
+      if (!username) {
+        showJusticeToast("Enter a username.");
+        return;
+      }
+
+      localStorage.setItem(
+        "justiceNowUsername",
+        username
+      );
+
+      localStorage.setItem(
+        "justiceNowProfileName",
+        profileName
+      );
+
+      showJusticeToast("Profile saved successfully.");
+
+    });
+
+  }
+
+
+  /* ---------- LOAD PROFILE ---------- */
+
+  const savedUsername =
+    localStorage.getItem("justiceNowUsername");
+
+  const savedProfileName =
+    localStorage.getItem("justiceNowProfileName");
+
+  if (savedUsername) {
+    document.getElementById("justiceUsername").value =
+      savedUsername;
+  }
+
+  if (savedProfileName) {
+    document.getElementById("justiceProfileName").value =
+      savedProfileName;
+  }
+
+
+  /* ---------- ADD PERSON MODAL ---------- */
+
+  const addPerson =
+    document.getElementById("justiceAddPerson");
+
+  const addModal =
+    document.getElementById("justiceAddModal");
+
+  const addClose =
+    document.getElementById("justiceAddClose");
+
+  if (addPerson && addModal) {
+
+    addPerson.addEventListener("click", function () {
+      addModal.classList.add("active");
+    });
+
+  }
+
+  if (addClose && addModal) {
+
+    addClose.addEventListener("click", function () {
+      addModal.classList.remove("active");
+    });
+
+  }
+
+
+  /* ---------- GROUP MODAL ---------- */
+
+  const createGroup =
+    document.getElementById("justiceCreateGroup");
+
+  const groupModal =
+    document.getElementById("justiceGroupModal");
+
+  const groupClose =
+    document.getElementById("justiceGroupClose");
+
+  if (createGroup && groupModal) {
+
+    createGroup.addEventListener("click", function () {
+      groupModal.classList.add("active");
+    });
+
+  }
+
+  if (groupClose && groupModal) {
+
+    groupClose.addEventListener("click", function () {
+      groupModal.classList.remove("active");
+    });
+
+  }
+
+
+  /* ---------- CREATE GROUP ---------- */
+
+  const createGroupBtn =
+    document.getElementById("justiceCreateGroupBtn");
+
+  if (createGroupBtn) {
+
+    createGroupBtn.addEventListener("click", function () {
+
+      const groupName =
+        document.getElementById("justiceGroupName")
+          .value.trim();
+
+      if (!groupName) {
+        showJusticeToast("Enter group name.");
+        return;
+      }
+
+      const chatList =
+        document.getElementById("justiceChatList");
+
+      const item =
+        document.createElement("div");
+
+      item.className = "justice-chat-item";
+
+      item.innerHTML =
+        "<strong>👥 " +
+        escapeJusticeText(groupName) +
+        "</strong><br>" +
+        "<small>Group created</small>";
+
+      chatList.appendChild(item);
+
+      document.getElementById("justiceGroupName").value = "";
+
+      groupModal.classList.remove("active");
+
+      showJusticeToast("Group created.");
+
+    });
+
+  }
+
+
+  /* ---------- SEND REQUEST ---------- */
+
+  const sendRequest =
+    document.getElementById("justiceSendRequest");
+
+  if (sendRequest) {
+
+    sendRequest.addEventListener("click", function () {
+
+      const username =
+        document.getElementById("justiceSearchUsername")
+          .value.trim();
+
+      if (!username) {
+        showJusticeToast("Enter a username.");
+        return;
+      }
+
+      const requests =
+        document.getElementById("justiceRequestList");
+
+      const item =
+        document.createElement("div");
+
+      item.className = "justice-request-item";
+
+      item.innerHTML = `
+        <strong>@${escapeJusticeText(username)}</strong>
+        <p>Message request sent.</p>
+        <button class="justice-orange-btn"
+                type="button">
+          Pending
+        </button>
+      `;
+
+      requests.appendChild(item);
+
+      document.getElementById("justiceSearchUsername").value = "";
+
+      if (addModal) {
+        addModal.classList.remove("active");
+      }
+
+      showJusticeToast("Request sent.");
+
+    });
+
+  }
+
+
+  /* ---------- TOAST ---------- */
+
+  function showJusticeToast(message) {
+
+    const toast =
+      document.getElementById("justiceChatToast");
+
+    if (!toast) return;
+
+    toast.textContent = message;
+    toast.classList.add("show");
+
+    setTimeout(function () {
+      toast.classList.remove("show");
+    }, 2500);
+
+  }
+
+
+  /* ---------- SAFE TEXT ---------- */
+
+  function escapeJusticeText(text) {
+
+    const div = document.createElement("div");
+    div.textContent = text;
+
+    return div.innerHTML;
+
+  }
+
+})();

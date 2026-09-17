@@ -1,3 +1,22 @@
+import {
+    collection,
+    query,
+    where,
+    getDocs,
+    doc,
+    getDoc,
+    setDoc,
+    addDoc,
+    deleteDoc,
+    onSnapshot,
+    serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+
+import {
+    onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+
+import { auth, db } from "./firebase-auth.js";
 /* =====================================================
    JUSTICE NOW - FIREBASE AUTHENTICATION
    Sign Up + Sign In + Google + Forgot Password
