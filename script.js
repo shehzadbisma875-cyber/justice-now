@@ -7488,3 +7488,26 @@ async function handleSearch() {
         alert("No user found!");
     }
 }
+// Search username input listener
+const searchInput = document.querySelector('input[placeholder*="Search username"]');
+
+if (searchInput) {
+    searchInput.addEventListener("keyup", async function(event) {
+        if (event.key === "Enter") {
+            const query = searchInput.value.trim();
+            if (!query) return;
+
+            // Search user using Firebase function
+            if (typeof window.searchUserByUsernameOrName === "function") {
+                const results = await window.searchUserByUsernameOrName(query);
+                
+                if (results.length > 0) {
+                    alert("User Found: " + results[0].name + " (@" + results[0].username + ")");
+                    // یہاں آپ سرچ رزلٹ کی کارڈ UI رینڈر کروا سکتے ہیں
+                } else {
+                    alert("No user found with username: " + query);
+                }
+            }
+        }
+    });
+}
