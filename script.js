@@ -5040,8 +5040,9 @@ function resetLegalAid() {
    LIVE CHAT
 ========================================== */
 
-document.getElementById("liveChatTopButton")
-.addEventListener("click", function() {
+constChatBtn=document.getElementById("liveChatTopButton")
+if(ChatBtn){
+    ChatBtn.addEventListener("click", function() {
 
     showPage("chat");
 
@@ -5050,6 +5051,7 @@ document.getElementById("liveChatTopButton")
     renderMessages();
 
 });
+}
 
 //Tareeqah 2: If condition
 const creatGrpBtn=document.getElementById("createGroupButton")
