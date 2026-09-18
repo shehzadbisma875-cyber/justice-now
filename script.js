@@ -7346,6 +7346,41 @@ document.addEventListener("click", async function(event) {
         alert("Profile saved!");
     }
 });
+/* =====================================================
+   SEND MESSAGE HANDLER (BOTTOM BAR)
+   ===================================================== */
+document.addEventListener("click", async function (event) {
+    const sendBtn = event.target.closest("#sendMessageBtn");
+    if (!sendBtn) return;
+
+    event.preventDefault();
+
+    const input = document.getElementById("chatMessageInput");
+    const messageText = input ? input.value.trim() : "";
+    if (!messageText) return;
+
+    const currentUser = auth.currentUser;
+    const activeChatUser = JSON.parse(sessionStorage.getItem("activeChatUser") || "{}");
+
+    if (!currentUser || !activeChatUser.uid) {
+        alert("Please select a user to chat with.");
+        return;
+    }
+
+    try {
+        const messagesRef = collection(db, "chats");
+        await addDoc(messagesRef, {
+            senderUid: currentUser.uid,
+            receiverUid: activeChatUser.uid,
+            text: messageText,
+            timestamp: new Date().toISOString()
+        });
+
+        input.value = "";
+    } catch (error) {
+        console.error("Message send error:", error);
+    }
+});
 // firebase-auth.js کے بالکل آخر میں یہ یقینی بنائیں
 window.auth = auth;
 window.db = db;
