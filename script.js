@@ -6314,10 +6314,7 @@ document.addEventListener("DOMContentLoaded", function () {
         googleButton.onclick =
             function () {
 
-                alert(
-                    "Google Sign-In needs Google OAuth configuration. The button is ready, but a Google Client ID must be added to enable real Google account login."
-                );
-
+                justice-now-web.vercel.app
             };
     }
 
