@@ -413,36 +413,3 @@ onAuthStateChanged(auth, async function(user) {
         }
     }
 });
-/* =====================================================
-   GOOGLE SIGN-IN EVENT HANDLER
-   ===================================================== */
-document.addEventListener("click", async function (event) {
-    const googleBtn = event.target.closest("#googleBtn, #googleAuthBtn, .google-btn");
-    
-    if (!googleBtn) return;
-    event.preventDefault();
-
-    try {
-        const result = await signInWithPopup(auth, googleProvider);
-        const user = result.user;
-
-        // User ko LocalStorage aur Firestore mein save karein
-        await saveJusticeUser(user, {
-            name: user.displayName,
-            photoURL: user.photoURL,
-            email: user.email
-        });
-
-        alert(`Welcome, ${user.displayName}!`);
-
-        // App/Home view par redirect ya show karein
-        if (typeof showPage === "function") {
-            showPage("home");
-        } else if (typeof openAuthPage === "function") {
-            openAuthPage("homePage");
-        }
-    } catch (error) {
-        console.error("Google Sign-In Error:", error);
-        alert("Google Sign-In failed: " + error.message);
-    }
-});
