@@ -344,9 +344,7 @@
 <!-- =========================
      TOP HEADER
 ========================= -->
-<button id="ChatTopButton" class="top-button">
-    💬 Chat
-</button>
+
 <header id="appHeader" class="app-header hidden">
 
     <div class="header-brand">
@@ -357,7 +355,9 @@
     <div class="header-actions">
 
          
-
+<button id="ChatTopButton" class="top-button" type="button">
+    💬 Chat
+</button>
         <div class="menu-wrapper">
 
             <button id="threeDotsButton" class="three-dots">
@@ -2314,282 +2314,640 @@
 
 
 
-<!-- ================= JUSTICE NOW CHAT ================= -->
-
-<section id="justiceChatPage" class="jn-chat-page">
-
-    <!-- HEADER -->
-    <div class="jn-chat-header">
-
-        <button id="chatBackButton" class="jn-chat-back" type="button">
-            ←
-        </button>
-
-        <div class="jn-chat-title">
-            <h2>Chat</h2>
-            <span>Stay connected</span>
-        </div>
-
-    </div>
-
-
-    <!-- TABS -->
-    <div class="jn-chat-tabs">
-
-        <button
-            class="jn-chat-tab active"
-            data-chat-tab="chats"
-            type="button">
-            💬 Chat
-        </button>
-
-        <button
-            class="jn-chat-tab"
-            data-chat-tab="requests"
-            type="button">
-            👤 Requests
-        </button>
-
-        <button
-            class="jn-chat-tab"
-            data-chat-tab="profile"
-            type="button">
-            Profile
-        </button>
-
-    </div>
-
-
-    <!-- ================= CHAT TAB ================= -->
-
-    <div
-        id="jnChatsSection"
-        class="jn-chat-section active">
-
-        <!-- SEARCH -->
-        <div class="jn-search-box">
-
-            <span>🔍</span>
-
-            <input
-                id="jnUsernameSearch"
-                type="text"
-                placeholder="Search username..."
-                autocomplete="off">
-
-        </div>
-
-
-        <!-- SEARCH RESULTS -->
-
-        <div
-            id="jnSearchResults"
-            class="jn-search-results">
-        </div>
-
-
-        <!-- CHAT LIST -->
-
-        <div class="jn-section-heading">
-
-            <h3>Your Chats</h3>
-
-        </div>
-
-        <div
-            id="jnChatList"
-            class="jn-chat-list">
-
-            <div class="jn-empty-state">
-                <div class="jn-empty-icon">💬</div>
-
-                <h3>No chats yet</h3>
-
-                <p>
-                    Search for a username above to start a chat.
-                </p>
-            </div>
-
-        </div>
-
-    </div>
-
-
-    <!-- ================= REQUESTS ================= -->
-
-    <div
-        id="jnRequestsSection"
-        class="jn-chat-section">
-
-        <div class="jn-section-heading">
-            <h3>Message Requests</h3>
-        </div>
-
-        <div
-            id="jnRequestsList"
-            class="jn-requests-list">
-
-            <div class="jn-empty-state">
-                No requests yet.
-            </div>
-
-        </div>
-
-    </div>
-
-
-    <!-- ================= PROFILE ================= -->
-
-    <div
-        id="jnProfileSection"
-        class="jn-chat-section">
-
-        <div class="jn-profile-card">
-
-            <div class="jn-profile-photo-wrapper">
-
-                <img
-                    id="jnProfilePreview"
-                    src="https://via.placeholder.com/120"
-                    alt="Profile">
-
-                <label
-                    for="jnProfileImage"
-                    class="jn-camera-button">
-                    📷
-                </label>
-
-            </div>
-
-
-            <input
-                type="file"
-                id="jnProfileImage"
-                accept="image/*"
-                hidden>
-
-
-            <label>Username</label>
-
-            <input
-                id="jnMyUsername"
-                type="text"
-                placeholder="Choose username">
-
-
-            <label>Profile Name</label>
-
-            <input
-                id="jnMyProfileName"
-                type="text"
-                placeholder="Your name">
-
-
-            <button
-                id="jnSaveProfile"
-                class="jn-orange-button"
-                type="button">
-                Save Profile
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <!-- ================= PERSON SEARCH MODAL ================= -->
-
-    <div
-        id="jnUserModal"
-        class="jn-modal">
-
-        <div class="jn-modal-card">
-
-            <button
-                id="jnCloseUserModal"
-                class="jn-modal-close"
-                type="button">
-                ×
-            </button>
-
-            <div id="jnUserDetails"></div>
-
-            <button
-                id="jnSendRequestButton"
-                class="jn-orange-button"
-                type="button">
-                Add to Chat
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <!-- ================= CHAT ROOM ================= -->
-
-    <div
-        id="jnConversationPage"
-        class="jn-conversation-page">
-
-        <div class="jn-conversation-header">
-
-            <button
-                id="jnConversationBack"
-                type="button">
-                ←
-            </button>
+<!-- ================= CHAT SECTION ================= -->
+<section id="chatSection" class="chat-section">
+    <div class="chat-app">
+
+        <!-- CHAT HEADER -->
+        <div class="chat-header">
 
             <div>
+                <h1>Chat</h1>
+                <p>Connect and communicate securely.</p>
+            </div>
 
-                <strong id="jnConversationName">
-                    Chat
-                </strong>
+            <button id="closeChatBtn" class="chat-close-btn">
+                ✕
+            </button>
 
-                <small id="jnConversationUsername"></small>
+        </div>
+
+
+        <!-- CHAT NAVIGATION -->
+        <div class="chat-tabs">
+
+            <button class="chat-tab active" data-chat-tab="messages">
+                💬 Chats
+            </button>
+
+            <button class="chat-tab" data-chat-tab="requests">
+                👥 Requests
+                <span id="requestCount" class="request-count">0</span>
+            </button>
+
+            <button class="chat-tab" data-chat-tab="groups">
+                👨‍👩‍👧‍👦 Groups
+            </button>
+
+            <button class="chat-tab" data-chat-tab="profile">
+                👤 Profile
+            </button>
+
+        </div>
+
+
+        <!-- ================= MESSAGES ================= -->
+        <div id="messagesTab" class="chat-tab-content active">
+
+            <div class="chat-search-area">
+
+                <div class="username-search">
+
+                    <span>🔎</span>
+
+                    <input
+                        type="text"
+                        id="usernameSearch"
+                        placeholder="Search username..."
+                    >
+
+                    <button id="searchUserBtn">
+                        Search
+                    </button>
+
+                </div>
+
+                <div id="searchResult" class="search-result"></div>
+
+            </div>
+
+
+            <div class="chat-layout">
+
+                <!-- CONVERSATION LIST -->
+                <aside class="conversation-list">
+
+                    <div class="conversation-title">
+                        <h3>Chats</h3>
+
+                        <button id="newChatBtn">
+                            ＋
+                        </button>
+                    </div>
+
+                    <div id="conversationList">
+
+                        <div class="empty-chat-list">
+                            <span>💬</span>
+                            <p>No chats yet</p>
+                            <small>Search a username to start chatting.</small>
+                        </div>
+
+                    </div>
+
+                </aside>
+
+
+                <!-- MESSAGE AREA -->
+                <main class="message-area">
+
+                    <!-- NO CHAT -->
+                    <div id="noChatSelected" class="no-chat-selected">
+
+                        <div class="no-chat-icon">
+                            💬
+                        </div>
+
+                        <h2>Select a chat</h2>
+
+                        <p>
+                            Select a conversation to start messaging.
+                        </p>
+
+                    </div>
+
+
+                    <!-- ACTIVE CHAT -->
+                    <div id="activeChat" class="active-chat hidden">
+
+                        <!-- CHAT PERSON HEADER -->
+                        <div class="active-chat-header">
+
+                            <div class="chat-user-info">
+
+                                <div
+                                    id="activeChatAvatar"
+                                    class="chat-avatar"
+                                >
+                                    U
+                                </div>
+
+                                <div>
+
+                                    <h3 id="activeChatName">
+                                        User
+                                    </h3>
+
+                                    <span id="activeChatUsername">
+                                        @username
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- CALL OPTIONS -->
+                            <div class="chat-header-actions">
+
+                                <button
+                                    id="voiceCallBtn"
+                                    class="chat-action-btn"
+                                    title="Voice Call"
+                                >
+                                    📞
+                                </button>
+
+                                <button
+                                    id="videoCallBtn"
+                                    class="chat-action-btn"
+                                    title="Video Call"
+                                >
+                                    🎥
+                                </button>
+
+                                <button
+                                    id="chatProfileBtn"
+                                    class="chat-action-btn"
+                                    title="Profile"
+                                >
+                                    👤
+                                </button>
+
+                                <button
+                                    id="chatMenuBtn"
+                                    class="chat-action-btn"
+                                    title="More"
+                                >
+                                    ⋮
+                                </button>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- CHAT MENU -->
+                        <div id="chatMenu" class="chat-menu hidden">
+
+                            <button id="muteChatBtn">
+                                🔇 Mute Chat
+                            </button>
+
+                            <button id="deleteChatBtn">
+                                🗑️ Delete Chat
+                            </button>
+
+                            <button id="blockUserBtn">
+                                🚫 Block User
+                            </button>
+
+                            <button id="viewUserProfileBtn">
+                                👤 View Profile
+                            </button>
+
+                        </div>
+
+
+                        <!-- MESSAGES -->
+                        <div
+                            id="messageList"
+                            class="message-list"
+                        >
+
+                        </div>
+
+
+                        <!-- TYPING -->
+                        <div
+                            id="typingIndicator"
+                            class="typing-indicator hidden"
+                        >
+                            User is typing...
+                        </div>
+
+
+                        <!-- MESSAGE COMPOSER -->
+                        <div class="message-composer">
+
+                            <!-- EMOJI -->
+                            <button
+                                id="emojiBtn"
+                                class="composer-btn"
+                                title="Emoji"
+                            >
+                                😊
+                            </button>
+
+                            <!-- IMAGE -->
+                            <button
+                                id="imageBtn"
+                                class="composer-btn"
+                                title="Send Picture"
+                            >
+                                🖼️
+                            </button>
+
+                            <input
+                                type="file"
+                                id="imageInput"
+                                accept="image/*"
+                                hidden
+                            >
+
+
+                            <!-- VOICE -->
+                            <button
+                                id="voiceMessageBtn"
+                                class="composer-btn"
+                                title="Voice Message"
+                            >
+                                🎤
+                            </button>
+
+
+                            <input
+                                id="messageInput"
+                                type="text"
+                                placeholder="Write a message..."
+                                autocomplete="off"
+                            >
+
+
+                            <!-- SEND -->
+                            <button
+                                id="sendMessageBtn"
+                                class="send-message-btn"
+                                title="Send"
+                            >
+                                ➤
+                            </button>
+
+                        </div>
+
+
+                        <!-- EMOJI PANEL -->
+                        <div
+                            id="emojiPanel"
+                            class="emoji-panel hidden"
+                        >
+
+                            <button>😀</button>
+                            <button>😂</button>
+                            <button>🤣</button>
+                            <button>😊</button>
+                            <button>😍</button>
+                            <button>😘</button>
+                            <button>😎</button>
+                            <button>🤔</button>
+                            <button>😢</button>
+                            <button>😭</button>
+                            <button>😡</button>
+                            <button>😱</button>
+                            <button>❤️</button>
+                            <button>💔</button>
+                            <button>👍</button>
+                            <button>👎</button>
+                            <button>🙏</button>
+                            <button>👏</button>
+                            <button>🔥</button>
+                            <button>🎉</button>
+
+                        </div>
+
+
+                        <!-- VOICE RECORDING -->
+                        <div
+                            id="voiceRecorder"
+                            class="voice-recorder hidden"
+                        >
+
+                            <div class="recording-animation">
+                                🔴
+                            </div>
+
+                            <span id="recordingTime">
+                                00:00
+                            </span>
+
+                            <button
+                                id="cancelRecordingBtn"
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                id="sendRecordingBtn"
+                            >
+                                Send
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </main>
 
             </div>
 
         </div>
 
 
+        <!-- ================= REQUESTS ================= -->
         <div
-            id="jnMessages"
-            class="jn-messages">
+            id="requestsTab"
+            class="chat-tab-content"
+        >
+
+            <div class="chat-page-heading">
+
+                <h2>👥 Chat Requests</h2>
+
+                <p>
+                    Manage your connection requests.
+                </p>
+
+            </div>
+
+            <div id="requestsList" class="requests-list">
+
+                <div class="empty-state">
+                    <span>👥</span>
+                    <h3>No requests</h3>
+                    <p>You don't have any pending requests.</p>
+                </div>
+
+            </div>
+
         </div>
 
 
-        <div class="jn-message-bar">
+        <!-- ================= GROUPS ================= -->
+        <div
+            id="groupsTab"
+            class="chat-tab-content"
+        >
 
-            <button
-                id="jnEmojiButton"
-                type="button">
-                😊
-            </button>
+            <div class="chat-page-heading group-heading">
 
-            <input
-                id="jnMessageInput"
-                type="text"
-                placeholder="Type a message...">
+                <div>
+                    <h2>👨‍👩‍👧‍👦 Groups</h2>
 
-            <button
-                id="jnSendMessage"
-                class="jn-send-button"
-                type="button">
-                ➤
-            </button>
+                    <p>
+                        Create and manage your groups.
+                    </p>
+                </div>
+
+                <button
+                    id="createGroupBtn"
+                    class="primary-chat-btn"
+                >
+                    ＋ Create Group
+                </button>
+
+            </div>
+
+
+            <div
+                id="groupsList"
+                class="groups-list"
+            >
+
+                <div class="empty-state">
+
+                    <span>👨‍👩‍👧‍👦</span>
+
+                    <h3>No groups yet</h3>
+
+                    <p>
+                        Create a group to start chatting with multiple people.
+                    </p>
+
+                </div>
+
+            </div>
 
         </div>
 
-    </div>
+
+        <!-- ================= PROFILE ================= -->
+        <div
+            id="profileTab"
+            class="chat-tab-content"
+        >
+
+            <div class="chat-page-heading">
+
+                <h2>👤 My Profile</h2>
+
+                <p>
+                    Manage your Chat profile.
+                </p>
+
+            </div>
 
 
-    <div
-        id="jnChatToast"
-        class="jn-chat-toast">
+            <div class="my-chat-profile">
+
+                <div class="profile-photo-area">
+
+                    <div
+                        id="myProfileAvatar"
+                        class="large-profile-avatar"
+                    >
+                        U
+                    </div>
+
+                    <button id="changeProfilePictureBtn">
+                        Change Picture
+                    </button>
+
+                    <input
+                        type="file"
+                        id="profilePictureInput"
+                        accept="image/*"
+                        hidden
+                    >
+
+                </div>
+
+
+                <div class="profile-form">
+
+                    <label>
+                        Username
+                    </label>
+
+                    <div class="username-field">
+
+                        <span>@</span>
+
+                        <input
+                            type="text"
+                            id="myUsername"
+                            placeholder="Username"
+                        >
+
+                    </div>
+
+
+                    <label>
+                        Profile Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="myProfileName"
+                        placeholder="Your name"
+                    >
+
+
+                    <label>
+                        Email
+                    </label>
+
+                    <input
+                        type="email"
+                        id="myProfileEmail"
+                        readonly
+                    >
+
+
+                    <button 
+    id="saveMyChatProfileBtn"
+    class="primary-chat-btn"
+>
+    Save Profile
+</button>
+
+
+                    <button
+                        id="deleteAccountBtn"
+                        class="danger-chat-btn"
+                    >
+                        🗑️ Delete Account / Username
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
     </div>
 
 </section>
+
+
+<!-- ================= USER PROFILE MODAL ================= -->
+<div
+    id="userProfileModal"
+    class="chat-modal hidden"
+>
+
+    <div class="chat-modal-card">
+
+        <button
+            id="closeUserProfileModal"
+            class="modal-close"
+        >
+            ✕
+        </button>
+
+        <div
+            id="modalProfileAvatar"
+            class="modal-profile-avatar"
+        >
+            U
+        </div>
+
+        <h2 id="modalProfileName">
+            User
+        </h2>
+
+        <p id="modalProfileUsername">
+            @username
+        </p>
+
+        <button
+            id="modalMessageBtn"
+            class="primary-chat-btn"
+        >
+            💬 Message
+        </button>
+
+        <button
+            id="modalBlockBtn"
+            class="danger-chat-btn"
+        >
+            🚫 Block User
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- ================= CREATE GROUP MODAL ================= -->
+<div
+    id="createGroupModal"
+    class="chat-modal hidden"
+>
+
+    <div class="chat-modal-card group-modal">
+
+        <button
+            id="closeGroupModal"
+            class="modal-close"
+        >
+            ✕
+        </button>
+
+        <h2>Create Group</h2>
+
+        <label>Group Name</label>
+
+        <input
+            type="text"
+            id="groupNameInput"
+            placeholder="Enter group name"
+        >
+
+        <label>Group Description</label>
+
+        <textarea
+            id="groupDescriptionInput"
+            placeholder="Group description"
+        ></textarea>
+
+        <label>Add Members</label>
+
+        <input
+            type="text"
+            id="groupMembersInput"
+            placeholder="Enter usernames separated by commas"
+        >
+
+        <button
+            id="saveGroupBtn"
+            class="primary-chat-btn"
+        >
+            Create Group
+        </button>
+
+    </div>
+
+</div>
 <!-- =========================
      SETTINGS
 ========================= -->
@@ -3151,8 +3509,10 @@
 
 <!-- Firebase Auth Module Script -->
 <script type="module" src="firebase-auth.js"></script>
+<script type="module" src="firebase-auth.js"></script>
 
-<!-- General Script (اگر الگ فائل ہے) -->
-<script src="script.js" defer></script>
+<script src="script.js"></script>
+<script src="chat-only.js"></script>
 </body>
 </html>
+
