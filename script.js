@@ -6765,212 +6765,174 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 /* =========================================================
    JUSTICE NOW CHAT SYSTEM
-   SEPARATE FULL SCREEN CHAT PAGE
+   Firebase based
+   DO NOT MODIFY firebase-auth.js
 ========================================================= */
 
 (function () {
 
     "use strict";
 
+    let auth = null;
+    let db = null;
 
-    /* =====================================================
-       STORAGE
-    ===================================================== */
+    let currentUser = null;
 
-    const USERS_KEY = "justiceNowUsers";
-    const REQUESTS_KEY = "justiceNowRequests";
-    const CHATS_KEY = "justiceNowChats";
-    const GROUPS_KEY = "justiceNowGroups";
-    const PROFILE_KEY = "justiceNowProfile";
+    let activePrivateUser = null;
+    let activePrivateChatId = null;
 
+    let activeGroup = null;
+    let selectedGroupMembers = [];
 
-    let users =
-        JSON.parse(
-            localStorage.getItem(USERS_KEY) || "null"
-        );
+    let unsubscribeMessages = null;
+    let unsubscribeRequests = null;
+    let unsubscribeChats = null;
+    let unsubscribeGroups = null;
 
-    let requests =
-        JSON.parse(
-            localStorage.getItem(REQUESTS_KEY) || "[]"
-        );
-
-    let chats =
-        JSON.parse(
-            localStorage.getItem(CHATS_KEY) || "{}"
-        );
-
-    let groups =
-        JSON.parse(
-            localStorage.getItem(GROUPS_KEY) || "[]"
-        );
-
-
-    let myProfile =
-        JSON.parse(
-            localStorage.getItem(PROFILE_KEY) || "null"
-        );
-
-
-    let currentChat = null;
-    let currentChatType = null;
-    let currentGroup = null;
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let recordingTimer = null;
+    let recordingSeconds = 0;
 
 
     /* =====================================================
-       DEFAULT PROFILE
+       FIREBASE INITIALIZATION
     ===================================================== */
 
-    if (!myProfile) {
+    async function initializeChatFirebase() {
 
-        myProfile = {
-            id: "me",
-            username: "justice_user",
-            name: "Justice Now User",
-            image: ""
-        };
+        try {
 
-        localStorage.setItem(
-            PROFILE_KEY,
-            JSON.stringify(myProfile)
-        );
+            const authModule =
+                await import("./firebase-auth.js");
+
+            auth = authModule.auth;
+            db = authModule.db;
+
+
+            const firestore =
+                await import(
+                    "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"
+                );
+
+
+            window.JusticeNowChatFirestore =
+                firestore;
+
+
+            auth.onAuthStateChanged(
+                async function (user) {
+
+                    currentUser = user;
+
+                    if (!user) return;
+
+                    await loadMyChatProfile();
+
+                    startRequestListener();
+
+                    startChatListListener();
+
+                    startGroupListener();
+
+                }
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "Justice Now Chat Firebase error:",
+                error
+            );
+
+        }
+
     }
 
 
     /* =====================================================
-       DEMO USERS
+       HELPERS
     ===================================================== */
 
-    if (!users) {
+    function getFirestore() {
 
-        users = [
+        return window.JusticeNowChatFirestore;
 
-            {
-                id: "u1",
-                username: "ali_khan",
-                name: "Ali Khan",
-                image: ""
-            },
+    }
 
-            {
-                id: "u2",
-                username: "sara_ahmed",
-                name: "Sara Ahmed",
-                image: ""
-            },
 
-            {
-                id: "u3",
-                username: "hamza123",
-                name: "Hamza",
-                image: ""
-            },
+    function esc(value) {
 
-            {
-                id: "u4",
-                username: "legal_helper",
-                name: "Legal Helper",
-                image: ""
-            },
+        return String(value || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
 
-            {
-                id: "u5",
-                username: "fatima",
-                name: "Fatima",
-                image: ""
-            }
+    }
 
-        ];
 
-        localStorage.setItem(
-            USERS_KEY,
-            JSON.stringify(users)
-        );
+    function makeChatId(uid1, uid2) {
+
+        return [uid1, uid2]
+            .sort()
+            .join("_");
+
+    }
+
+
+    function initials(name) {
+
+        if (!name) return "U";
+
+        return name
+            .trim()
+            .split(/\s+/)
+            .slice(0, 2)
+            .map(function (x) {
+                return x.charAt(0).toUpperCase();
+            })
+            .join("");
+
     }
 
 
     /* =====================================================
-       ELEMENTS
+       HOME -> CHAT
     ===================================================== */
 
-    let chatSection;
-    let messageSection;
-    let chatTopBtn;
-    let closeChatBtn;
-    let backFromMessageBtn;
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            const button =
+                event.target.closest("#chatTopBtn");
+
+            if (!button) return;
+
+            event.preventDefault();
+
+            openChatPage();
+
+        }
+    );
 
 
-    function getElements() {
+    function openChatPage() {
 
-        chatSection =
+        const home =
+            document.getElementById("homePage");
+
+        const chat =
             document.getElementById("chatSection");
 
-        messageSection =
-            document.getElementById("messageSection");
 
-        chatTopBtn =
-            document.getElementById("chatTopBtn");
+        if (!chat) {
 
-        closeChatBtn =
-            document.getElementById("closeChatBtn");
-
-        backFromMessageBtn =
-            document.getElementById(
-                "backFromMessageBtn"
-            );
-    }
-
-
-    /* =====================================================
-       HOME PAGE
-    ===================================================== */
-
-    function hideHomePage() {
-
-        const homePage =
-            document.getElementById("homePage");
-
-        if (homePage) {
-
-            homePage.style.display = "none";
-
-        }
-    }
-
-
-    function showHomePage() {
-
-        const homePage =
-            document.getElementById("homePage");
-
-        if (homePage) {
-
-            homePage.style.display = "block";
-
-        }
-    }
-
-
-    /* =====================================================
-       OPEN CHAT PAGE
-    ===================================================== */
-
-    function openChatPage(event) {
-
-        if (event) {
-
-            event.preventDefault();
-            event.stopPropagation();
-
-        }
-
-
-        getElements();
-
-
-        if (!chatSection) {
-
-            alert(
-                "Chat page was not found. Please make sure the Chat HTML is outside #homePage."
+            console.error(
+                "chatSection not found in index.html"
             );
 
             return;
@@ -6978,756 +6940,792 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
 
-        /* Hide Home */
+        if (home) {
 
-        hideHomePage();
-
-
-        /* Hide Message */
-
-        if (messageSection) {
-
-            messageSection.style.display =
-                "none";
+            home.style.display = "none";
 
         }
 
 
-        /* Show Chat */
+        document
+            .querySelectorAll(
+                ".app-page, .page-section"
+            )
+            .forEach(function (page) {
 
-        chatSection.style.display =
-            "block";
+                if (
+                    page.id !== "chatSection" &&
+                    page.id !== "homePage"
+                ) {
+
+                    page.dataset.chatPreviousDisplay =
+                        getComputedStyle(page).display;
+
+                    page.style.display = "none";
+
+                }
+
+            });
 
 
-        document.body.classList.add(
-            "justice-chat-open"
-        );
-
-
-        document.body.style.overflow =
-            "hidden";
-
-
-        /* Reset first tab */
-
-        activateTab("chatsTab");
-
-
-        renderChats();
-        renderRequests();
-        renderGroups();
-        loadProfile();
-
+        chat.style.display = "block";
 
         window.scrollTo(0, 0);
 
     }
 
 
-    /* =====================================================
-       CLOSE CHAT -> HOME
-    ===================================================== */
+    document.addEventListener(
+        "click",
+        function (event) {
 
-    function closeChatPage(event) {
-
-        if (event) {
-
-            event.preventDefault();
-            event.stopPropagation();
-
-        }
+            if (
+                !event.target.closest(
+                    "#closeChatBtn"
+                )
+            ) return;
 
 
-        getElements();
-
-
-        if (chatSection) {
-
-            chatSection.style.display =
-                "none";
-
-        }
-
-
-        if (messageSection) {
-
-            messageSection.style.display =
-                "none";
-
-        }
-
-
-        showHomePage();
-
-
-        document.body.classList.remove(
-            "justice-chat-open"
-        );
-
-
-        document.body.style.overflow = "";
-
-
-        window.scrollTo(0, 0);
-
-    }
-
-
-    /* =====================================================
-       CHAT BUTTON
-    ===================================================== */
-
-    function setupChatButton() {
-
-        getElements();
-
-
-        if (!chatTopBtn) {
-
-            console.warn(
-                "Justice Now: chatTopBtn not found."
-            );
-
-            return;
-
-        }
-
-
-        /*
-           Capture phase + stopImmediatePropagation
-           prevents old Home navigation code
-           from opening Chat at the bottom.
-        */
-
-        chatTopBtn.addEventListener(
-            "click",
-            openChatPage,
-            true
-        );
-
-    }
-
-
-    /* =====================================================
-       CLOSE BUTTON
-    ===================================================== */
-
-    function setupCloseButton() {
-
-        getElements();
-
-
-        if (!closeChatBtn)
-            return;
-
-
-        closeChatBtn.addEventListener(
-            "click",
-            closeChatPage
-        );
-
-    }
-
-
-    /* =====================================================
-       TABS
-    ===================================================== */
-
-    function activateTab(tabId) {
-
-        document
-            .querySelectorAll(".chat-tab")
-            .forEach(tab => {
-
-                tab.classList.toggle(
-                    "active",
-                    tab.dataset.tab === tabId
+            const chat =
+                document.getElementById(
+                    "chatSection"
                 );
 
-            });
-
-
-        document
-            .querySelectorAll(".chat-tab-content")
-            .forEach(content => {
-
-                content.classList.toggle(
-                    "active",
-                    content.id === tabId
+            const home =
+                document.getElementById(
+                    "homePage"
                 );
 
-            });
 
-    }
+            if (chat) {
+                chat.style.display = "none";
+            }
+
+            if (home) {
+                home.style.display = "";
+            }
+
+        }
+    );
 
 
-    function setupTabs() {
+    /* =====================================================
+       CHAT TABS
+    ===================================================== */
 
-        document
-            .querySelectorAll(".chat-tab")
-            .forEach(tab => {
+    document.addEventListener(
+        "click",
+        function (event) {
 
-                tab.addEventListener(
-                    "click",
-                    function () {
-
-                        activateTab(
-                            this.dataset.tab
-                        );
-
-                    }
+            const tab =
+                event.target.closest(
+                    ".jn-chat-tab"
                 );
 
-            });
+            if (!tab) return;
 
-    }
+
+            const name =
+                tab.dataset.chatTab;
+
+
+            document
+                .querySelectorAll(
+                    ".jn-chat-tab"
+                )
+                .forEach(function (x) {
+
+                    x.classList.remove(
+                        "active"
+                    );
+
+                });
+
+
+            tab.classList.add("active");
+
+
+            document
+                .querySelectorAll(
+                    ".jn-chat-page-content"
+                )
+                .forEach(function (x) {
+
+                    x.classList.remove(
+                        "active"
+                    );
+
+                });
+
+
+            const map = {
+
+                chats: "chatChatsPage",
+
+                requests: "chatRequestsPage",
+
+                groups: "chatGroupsPage",
+
+                profile: "chatProfilePage"
+
+            };
+
+
+            const target =
+                document.getElementById(
+                    map[name]
+                );
+
+
+            if (target) {
+                target.classList.add("active");
+            }
+
+        }
+    );
 
 
     /* =====================================================
        SEARCH USERNAME
     ===================================================== */
 
-    function searchUsers() {
+    document.addEventListener(
+        "click",
+        async function (event) {
+
+            if (
+                !event.target.closest(
+                    "#chatSearchBtn"
+                )
+            ) return;
+
+
+            await searchChatUser();
+
+        }
+    );
+
+
+    document.addEventListener(
+        "keydown",
+        async function (event) {
+
+            if (
+                event.target.id ===
+                "chatUsernameSearch" &&
+                event.key === "Enter"
+            ) {
+
+                await searchChatUser();
+
+            }
+
+        }
+    );
+
+
+    async function searchChatUser() {
 
         const input =
             document.getElementById(
-                "usernameSearch"
+                "chatUsernameSearch"
             );
 
-        const results =
+        const result =
             document.getElementById(
-                "userSearchResults"
+                "chatSearchResult"
             );
 
 
-        if (!input || !results)
-            return;
+        if (!input || !result) return;
 
 
-        const value =
-            input.value
-                .trim()
-                .toLowerCase()
+        const search =
+            input.value.trim()
                 .replace(/^@/, "");
 
 
-        if (!value) {
+        if (!search) {
 
-            results.innerHTML = `
-
-                <div class="empty-chat">
-
-                    <span>🔎</span>
-
-                    <p>
-                        Enter a username to search.
-                    </p>
-
-                </div>
-
-            `;
+            result.innerHTML =
+                '<div class="jn-empty-chat">' +
+                'Enter a username.' +
+                '</div>';
 
             return;
 
         }
 
 
-        const matches =
-            users.filter(user => {
+        try {
 
-                return (
-
-                    user.id !== myProfile.id &&
-
-                    (
-                        user.username
-                            .toLowerCase()
-                            .includes(value)
-
-                        ||
-
-                        user.name
-                            .toLowerCase()
-                            .includes(value)
-                    )
-
+            const authModule =
+                await import(
+                    "./firebase-auth.js"
                 );
 
-            });
+
+            const found =
+                await authModule
+                    .searchUserByUsernameOrName(
+                        search
+                    );
 
 
-        if (!matches.length) {
+            if (!found) {
 
-            results.innerHTML = `
+                result.innerHTML =
+                    '<div class="jn-empty-chat">' +
+                    '<div>🔎</div>' +
+                    '<h3>User not found</h3>' +
+                    '<p>No user matches this username.</p>' +
+                    '</div>';
 
-                <div class="empty-chat">
+                return;
 
-                    <span>😕</span>
+            }
 
-                    <p>No user found.</p>
 
-                </div>
+            if (
+                currentUser &&
+                found.uid === currentUser.uid
+            ) {
 
-            `;
+                result.innerHTML =
+                    '<div class="jn-empty-chat">' +
+                    '<div>👤</div>' +
+                    '<h3>This is your profile</h3>' +
+                    '</div>';
 
-            return;
+                return;
+
+            }
+
+
+            const username =
+                found.username ||
+                found.userName ||
+                search;
+
+
+            const name =
+                found.profileName ||
+                found.name ||
+                username;
+
+
+            result.innerHTML =
+
+                '<div class="jn-found-user">' +
+
+                '<div ' +
+                'class="jn-found-user-info" ' +
+                'data-user-profile="' +
+                esc(found.uid) +
+                '">' +
+
+                '<div class="jn-chat-avatar">' +
+                esc(
+                    initials(name)
+                ) +
+                '</div>' +
+
+                '<div>' +
+
+                '<strong>' +
+                esc(name) +
+                '</strong>' +
+
+                '<br>' +
+
+                '<span>@' +
+                esc(username) +
+                '</span>' +
+
+                '</div>' +
+
+                '</div>' +
+
+                '<button ' +
+                'class="jn-teal-btn" ' +
+                'id="sendSearchRequestBtn" ' +
+                'data-uid="' +
+                esc(found.uid) +
+                '">' +
+
+                '➕ Send Request' +
+
+                '</button>' +
+
+                '</div>';
+
+
+            window.chatSearchUser =
+                found;
+
+
+        } catch (error) {
+
+            console.error(error);
+
+            result.innerHTML =
+                '<div class="jn-empty-chat">' +
+                'Unable to search user.' +
+                '</div>';
 
         }
-
-
-        results.innerHTML =
-            matches
-                .map(user => `
-
-                    <div class="user-result">
-
-                        <div class="user-result-main">
-
-                            <div class="user-avatar">
-
-                                ${
-                                    user.image
-
-                                    ?
-
-                                    `<img
-                                        src="${user.image}"
-                                        alt=""
-                                    >`
-
-                                    :
-
-                                    "👤"
-                                }
-
-                            </div>
-
-
-                            <div class="chat-info">
-
-                                <strong>
-                                    ${escapeHTML(user.name)}
-                                </strong>
-
-                                <span>
-                                    @${escapeHTML(user.username)}
-                                </span>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="user-result-buttons">
-
-                            <button
-                                type="button"
-                                class="outline-btn profile-user-btn"
-                                data-id="${user.id}"
-                            >
-                                Profile
-                            </button>
-
-
-                            <button
-                                type="button"
-                                class="teal-btn request-user-btn"
-                                data-id="${user.id}"
-                            >
-                                Send Request
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                `)
-                .join("");
 
     }
 
 
-    function setupSearch() {
+    /* =====================================================
+       USER PROFILE FROM SEARCH
+    ===================================================== */
 
-        const button =
-            document.getElementById(
-                "searchUserBtn"
-            );
+    document.addEventListener(
+        "click",
+        async function (event) {
 
-        const input =
-            document.getElementById(
-                "usernameSearch"
-            );
+            const profile =
+                event.target.closest(
+                    "[data-user-profile]"
+                );
+
+            if (!profile) return;
 
 
-        if (button) {
+            const uid =
+                profile.dataset.userProfile;
 
-            button.addEventListener(
-                "click",
-                searchUsers
-            );
 
+            if (
+                window.chatSearchUser &&
+                window.chatSearchUser.uid === uid
+            ) {
+
+                showUserProfile(
+                    window.chatSearchUser
+                );
+
+            }
+
+        }
+    );
+
+
+    /* =====================================================
+       SEND REQUEST
+    ===================================================== */
+
+    document.addEventListener(
+        "click",
+        async function (event) {
+
+            const button =
+                event.target.closest(
+                    "#sendSearchRequestBtn"
+                );
+
+            if (!button) return;
+
+
+            if (!currentUser) {
+
+                alert(
+                    "Please sign in first."
+                );
+
+                return;
+
+            }
+
+
+            const targetUid =
+                button.dataset.uid;
+
+
+            try {
+
+                const {
+                    collection,
+                    addDoc,
+                    serverTimestamp
+                } = getFirestore();
+
+
+                const requests =
+                    collection(
+                        db,
+                        "chatRequests"
+                    );
+
+
+                await addDoc(
+                    requests,
+                    {
+
+                        fromUid:
+                            currentUser.uid,
+
+                        toUid:
+                            targetUid,
+
+                        status:
+                            "pending",
+
+                        createdAt:
+                            serverTimestamp()
+
+                    }
+                );
+
+
+                button.textContent =
+                    "✓ Request Sent";
+
+                button.disabled = true;
+
+
+            } catch (error) {
+
+                console.error(error);
+
+                alert(
+                    "Could not send request."
+                );
+
+            }
+
+        }
+    );
+
+
+    /* =====================================================
+       REQUEST LISTENER
+    ===================================================== */
+
+    function startRequestListener() {
+
+        if (!currentUser) return;
+
+
+        if (unsubscribeRequests) {
+            unsubscribeRequests();
         }
 
 
-        if (input) {
+        const {
+            collection,
+            query,
+            where,
+            onSnapshot
+        } = getFirestore();
 
-            input.addEventListener(
-                "input",
-                searchUsers
+
+        const q =
+            query(
+                collection(
+                    db,
+                    "chatRequests"
+                ),
+                where(
+                    "toUid",
+                    "==",
+                    currentUser.uid
+                ),
+                where(
+                    "status",
+                    "==",
+                    "pending"
+                )
             );
 
 
-            input.addEventListener(
-                "keydown",
-                function (event) {
+        unsubscribeRequests =
+            onSnapshot(
+                q,
+                async function (snapshot) {
 
-                    if (event.key === "Enter") {
+                    const list =
+                        document.getElementById(
+                            "chatRequestsList"
+                        );
 
-                        event.preventDefault();
 
-                        searchUsers();
+                    const count =
+                        document.getElementById(
+                            "chatRequestCount"
+                        );
+
+
+                    if (count) {
+                        count.textContent =
+                            snapshot.size;
+                    }
+
+
+                    if (!list) return;
+
+
+                    if (snapshot.empty) {
+
+                        list.innerHTML =
+                            '<div class="jn-empty-chat">' +
+                            '<div>👥</div>' +
+                            '<h3>No requests</h3>' +
+                            '<p>No pending requests.</p>' +
+                            '</div>';
+
+                        return;
 
                     }
+
+
+                    let html = "";
+
+
+                    for (
+                        const item
+                        of snapshot.docs
+                    ) {
+
+                        const data =
+                            item.data();
+
+
+                        const user =
+                            await getUser(
+                                data.fromUid
+                            );
+
+
+                        html +=
+
+                            '<div class="jn-request-card">' +
+
+                            '<div>' +
+
+                            '<strong>' +
+                            esc(
+                                user?.profileName ||
+                                user?.name ||
+                                user?.username ||
+                                "User"
+                            ) +
+                            '</strong>' +
+
+                            '<br>' +
+
+                            '<span>@' +
+                            esc(
+                                user?.username ||
+                                ""
+                            ) +
+                            '</span>' +
+
+                            '</div>' +
+
+                            '<div class="jn-request-actions">' +
+
+                            '<button ' +
+                            'data-request-action="accept" ' +
+                            'data-request-id="' +
+                            item.id +
+                            '" ' +
+                            'data-from-uid="' +
+                            data.fromUid +
+                            '">' +
+
+                            '✓ Accept' +
+
+                            '</button>' +
+
+                            '<button ' +
+                            'data-request-action="reject" ' +
+                            'data-request-id="' +
+                            item.id +
+                            '">' +
+
+                            '✕ Reject' +
+
+                            '</button>' +
+
+                            '</div>' +
+
+                            '</div>';
+
+                    }
+
+
+                    list.innerHTML =
+                        html;
 
                 }
             );
 
-        }
-
     }
 
 
     /* =====================================================
-       REQUEST
+       ACCEPT / REJECT
     ===================================================== */
 
-    function sendRequest(userId) {
+    document.addEventListener(
+        "click",
+        async function (event) {
 
-        if (
-            userId === myProfile.id
-        ) {
+            const button =
+                event.target.closest(
+                    "[data-request-action]"
+                );
 
-            alert(
-                "You cannot send a request to yourself."
-            );
-
-            return;
-
-        }
+            if (!button) return;
 
 
-        const existing =
-            requests.find(
-                r =>
-                    r.from === myProfile.id &&
-                    r.to === userId &&
-                    r.status === "pending"
-            );
+            const action =
+                button.dataset.requestAction;
+
+            const requestId =
+                button.dataset.requestId;
 
 
-        if (existing) {
+            try {
 
-            alert(
-                "Request already sent."
-            );
-
-            return;
-
-        }
-
-
-        requests.push({
-
-            id:
-                "request_" +
-                Date.now(),
-
-            from:
-                myProfile.id,
-
-            to:
-                userId,
-
-            status:
-                "pending",
-
-            created:
-                Date.now()
-
-        });
+                const {
+                    doc,
+                    updateDoc,
+                    deleteDoc,
+                    collection,
+                    addDoc,
+                    serverTimestamp
+                } = getFirestore();
 
 
-        localStorage.setItem(
-            REQUESTS_KEY,
-            JSON.stringify(requests)
-        );
+                const requestRef =
+                    doc(
+                        db,
+                        "chatRequests",
+                        requestId
+                    );
 
 
-        alert(
-            "Friend request sent."
-        );
+                if (action === "reject") {
+
+                    await deleteDoc(
+                        requestRef
+                    );
+
+                    return;
+
+                }
 
 
-        renderRequests();
+                if (action === "accept") {
 
-    }
-
-
-    function renderRequests() {
-
-        const list =
-            document.getElementById(
-                "requestList"
-            );
+                    const fromUid =
+                        button.dataset.fromUid;
 
 
-        if (!list)
-            return;
+                    await updateDoc(
+                        requestRef,
+                        {
+                            status: "accepted"
+                        }
+                    );
 
 
-        const incoming =
-            requests.filter(
-                r =>
-                    r.to === myProfile.id &&
-                    r.status === "pending"
-            );
-
-
-        if (!incoming.length) {
-
-            list.innerHTML = `
-
-                <div class="empty-chat">
-
-                    <span>👥</span>
-
-                    <p>
-                        No pending requests.
-                    </p>
-
-                </div>
-
-            `;
-
-            return;
-
-        }
-
-
-        list.innerHTML =
-            incoming
-                .map(request => {
-
-                    const user =
-                        users.find(
-                            u =>
-                                u.id ===
-                                request.from
+                    const chatId =
+                        makeChatId(
+                            currentUser.uid,
+                            fromUid
                         );
 
 
-                    if (!user)
-                        return "";
+                    await addDoc(
+                        collection(
+                            db,
+                            "chats",
+                            chatId,
+                            "members"
+                        ),
+                        {
+                            uid:
+                                currentUser.uid,
+
+                            joinedAt:
+                                serverTimestamp()
+                        }
+                    );
 
 
-                    return `
+                    openPrivateChatByUid(
+                        fromUid
+                    );
 
-                        <div class="request-item">
-
-                            <div class="user-avatar">
-                                ${
-                                    user.image
-                                    ?
-                                    `<img src="${user.image}" alt="">`
-                                    :
-                                    "👤"
-                                }
-                            </div>
+                }
 
 
-                            <div class="chat-info">
+            } catch (error) {
 
-                                <strong>
-                                    ${escapeHTML(user.name)}
-                                </strong>
+                console.error(error);
 
-                                <span>
-                                    @${escapeHTML(user.username)}
-                                </span>
+                alert(
+                    "Request action failed."
+                );
 
-                            </div>
+            }
 
-
-                            <div class="request-actions">
-
-                                <button
-                                    type="button"
-                                    class="teal-btn accept-request"
-                                    data-id="${request.id}"
-                                >
-                                    Accept
-                                </button>
-
-
-                                <button
-                                    type="button"
-                                    class="danger-btn reject-request"
-                                    data-id="${request.id}"
-                                >
-                                    Reject
-                                </button>
-
-                            </div>
-
-                        </div>
-
-                    `;
-
-                })
-                .join("");
-
-    }
+        }
+    );
 
 
     /* =====================================================
-       PRIVATE CHAT
+       GET USER
     ===================================================== */
 
-    function privateChatKey(a, b) {
+    async function getUser(uid) {
 
-        return [a, b]
-            .sort()
-            .join("__");
-
-    }
+        if (!uid || !db) return null;
 
 
-    function createPrivateChat(userId) {
+        try {
 
-        const key =
-            privateChatKey(
-                myProfile.id,
-                userId
-            );
-
-
-        if (!chats[key]) {
-
-            chats[key] = [];
-
-        }
+            const {
+                doc,
+                getDoc
+            } = getFirestore();
 
 
-        localStorage.setItem(
-            CHATS_KEY,
-            JSON.stringify(chats)
-        );
-
-    }
-
-
-    /* =====================================================
-       OPEN PRIVATE MESSAGE PAGE
-    ===================================================== */
-
-    function openPrivateChat(user) {
-
-        if (!user)
-            return;
+            const snapshot =
+                await getDoc(
+                    doc(
+                        db,
+                        "users",
+                        uid
+                    )
+                );
 
 
-        currentChatType =
-            "private";
+            if (
+                snapshot.exists()
+            ) {
 
-        currentChat =
-            user.id;
+                return {
+                    uid: uid,
+                    ...snapshot.data()
+                };
 
-        currentGroup =
-            null;
-
-
-        createPrivateChat(
-            user.id
-        );
+            }
 
 
-        getElements();
+        } catch (error) {
 
-
-        if (chatSection) {
-
-            chatSection.style.display =
-                "none";
+            console.error(error);
 
         }
 
 
-        if (messageSection) {
-
-            messageSection.style.display =
-                "block";
-
-        }
-
-
-        const title =
-            document.getElementById(
-                "messageTitle"
-            );
-
-        const status =
-            document.getElementById(
-                "messageStatus"
-            );
-
-        const avatar =
-            document.getElementById(
-                "messageAvatar"
-            );
-
-
-        if (title)
-            title.textContent =
-                user.name;
-
-
-        if (status)
-            status.textContent =
-                "@" + user.username;
-
-
-        if (avatar) {
-
-            avatar.innerHTML =
-                user.image
-
-                ?
-
-                `<img
-                    src="${user.image}"
-                    style="
-                        width:100%;
-                        height:100%;
-                        object-fit:cover;
-                        border-radius:50%;
-                    "
-                >`
-
-                :
-
-                "👤";
-
-        }
-
-
-        renderMessages();
-
-
-        window.scrollTo(
-            0,
-            0
-        );
+        return null;
 
     }
 
@@ -7736,563 +7734,375 @@ document.addEventListener("DOMContentLoaded", function () {
        CHAT LIST
     ===================================================== */
 
-    function renderChats() {
+    function startChatListListener() {
 
-        const list =
-            document.getElementById(
-                "chatList"
-            );
+        if (!currentUser) return;
 
 
-        if (!list)
-            return;
-
-
-        const privateUsers = [];
-
-
-        Object.keys(chats)
-            .forEach(key => {
-
-                const ids =
-                    key.split("__");
-
-
-                if (
-                    ids.includes(
-                        myProfile.id
-                    ) &&
-                    ids.length === 2
-                ) {
-
-                    const otherId =
-                        ids.find(
-                            id =>
-                                id !==
-                                myProfile.id
-                        );
-
-
-                    const user =
-                        users.find(
-                            u =>
-                                u.id ===
-                                otherId
-                        );
-
-
-                    if (user) {
-
-                        privateUsers.push(
-                            user
-                        );
-
-                    }
-
-                }
-
-            });
-
-
-        const groupChats =
-            groups.filter(
-                group =>
-                    group.members.includes(
-                        myProfile.id
-                    )
-            );
-
-
-        if (
-            !privateUsers.length &&
-            !groupChats.length
-        ) {
-
-            list.innerHTML = `
-
-                <div class="empty-chat">
-
-                    <span>💬</span>
-
-                    <h3>No chats yet</h3>
-
-                    <p>
-                        Search for a username or create a group.
-                    </p>
-
-                </div>
-
-            `;
-
-            return;
-
+        if (unsubscribeChats) {
+            unsubscribeChats();
         }
 
 
-        list.innerHTML = "";
+        const {
+            collection,
+            query,
+            where,
+            onSnapshot
+        } = getFirestore();
 
 
-        privateUsers.forEach(
-            user => {
-
-                const key =
-                    privateChatKey(
-                        myProfile.id,
-                        user.id
-                    );
-
-
-                const messages =
-                    chats[key] || [];
-
-
-                const last =
-                    messages[
-                        messages.length - 1
-                    ];
+        const q =
+            query(
+                collection(
+                    db,
+                    "chats"
+                ),
+                where(
+                    "memberIds",
+                    "array-contains",
+                    currentUser.uid
+                )
+            );
 
 
-                const div =
-                    document.createElement(
-                        "div"
-                    );
+        unsubscribeChats =
+            onSnapshot(
+                q,
+                async function (snapshot) {
 
-
-                div.className =
-                    "chat-item";
-
-
-                div.innerHTML = `
-
-                    <div class="chat-avatar">
-
-                        ${
-                            user.image
-
-                            ?
-
-                            `<img
-                                src="${user.image}"
-                                alt=""
-                            >`
-
-                            :
-
-                            "👤"
-                        }
-
-                    </div>
-
-
-                    <div class="chat-info">
-
-                        <strong>
-                            ${escapeHTML(user.name)}
-                        </strong>
-
-                        <span>
-
-                            ${
-                                last
-
-                                ?
-
-                                escapeHTML(
-                                    last.text ||
-                                    "Attachment"
-                                )
-
-                                :
-
-                                "Start a conversation"
-                            }
-
-                        </span>
-
-                    </div>
-
-                `;
-
-
-                div.addEventListener(
-                    "click",
-                    function () {
-
-                        openPrivateChat(
-                            user
+                    const list =
+                        document.getElementById(
+                            "privateChatList"
                         );
 
-                    }
-                );
+
+                    if (!list) return;
 
 
-                list.appendChild(
-                    div
-                );
+                    if (snapshot.empty) {
 
-            }
-        );
+                        list.innerHTML =
+                            '<div class="jn-empty-chat">' +
+                            '<div>💬</div>' +
+                            '<h3>No chats yet</h3>' +
+                            '<p>Search a username to start chatting.</p>' +
+                            '</div>';
 
-
-        groupChats.forEach(
-            group => {
-
-                const div =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                div.className =
-                    "chat-item";
-
-
-                div.innerHTML = `
-
-                    <div class="group-avatar">
-                        👥
-                    </div>
-
-
-                    <div class="chat-info">
-
-                        <strong>
-                            ${escapeHTML(group.name)}
-                        </strong>
-
-                        <span>
-                            Group •
-                            ${group.members.length}
-                            members
-                        </span>
-
-                    </div>
-
-                `;
-
-
-                div.addEventListener(
-                    "click",
-                    function () {
-
-                        openGroupChat(
-                            group
-                        );
+                        return;
 
                     }
-                );
 
 
-                list.appendChild(
-                    div
-                );
+                    let html = "";
 
-            }
-        );
+
+                    for (
+                        const item
+                        of snapshot.docs
+                    ) {
+
+                        const data =
+                            item.data();
+
+
+                        const otherUid =
+                            (data.memberIds || [])
+                                .find(
+                                    uid =>
+                                        uid !==
+                                        currentUser.uid
+                                );
+
+
+                        if (!otherUid) continue;
+
+
+                        const user =
+                            await getUser(
+                                otherUid
+                            );
+
+
+                        const name =
+                            user?.profileName ||
+                            user?.name ||
+                            user?.username ||
+                            "User";
+
+
+                        html +=
+
+                            '<div class="jn-private-chat-item" ' +
+                            'data-open-chat="' +
+                            esc(otherUid) +
+                            '">' +
+
+                            '<div class="jn-chat-avatar">' +
+                            esc(
+                                initials(name)
+                            ) +
+                            '</div>' +
+
+                            '<div>' +
+
+                            '<strong>' +
+                            esc(name) +
+                            '</strong>' +
+
+                            '<br>' +
+
+                            '<small>@' +
+                            esc(
+                                user?.username ||
+                                ""
+                            ) +
+                            '</small>' +
+
+                            '</div>' +
+
+                            '</div>';
+
+                    }
+
+
+                    list.innerHTML =
+                        html;
+
+                }
+            );
 
     }
 
 
     /* =====================================================
-       GROUP
+       OPEN PRIVATE CHAT
     ===================================================== */
 
-    function openGroupModal() {
+    document.addEventListener(
+        "click",
+        async function (event) {
 
-        const modal =
-            document.getElementById(
-                "groupModal"
+            const item =
+                event.target.closest(
+                    "[data-open-chat]"
+                );
+
+            if (!item) return;
+
+
+            await openPrivateChatByUid(
+                item.dataset.openChat
             );
 
-        const memberList =
-            document.getElementById(
-                "groupMemberList"
+        }
+    );
+
+
+    async function openPrivateChatByUid(
+        uid
+    ) {
+
+        if (!currentUser) return;
+
+
+        const user =
+            await getUser(uid);
+
+
+        if (!user) return;
+
+
+        activePrivateUser =
+            user;
+
+
+        activePrivateChatId =
+            makeChatId(
+                currentUser.uid,
+                uid
             );
 
 
-        if (!modal || !memberList)
-            return;
+        document.getElementById(
+            "noChatSelected"
+        ).style.display = "none";
 
 
-        memberList.innerHTML =
-            users
-                .filter(
-                    user =>
-                        user.id !==
-                        myProfile.id
-                )
-                .map(
-                    user => `
-
-                        <label class="group-member">
-
-                            <input
-                                type="checkbox"
-                                value="${user.id}"
-                            >
-
-                            <div class="user-avatar">
-
-                                ${
-                                    user.image
-                                    ?
-                                    `<img src="${user.image}" alt="">`
-                                    :
-                                    "👤"
-                                }
-
-                            </div>
-
-                            <span>
-
-                                ${escapeHTML(user.name)}
-
-                                (@${escapeHTML(user.username)})
-
-                            </span>
-
-                        </label>
-
-                    `
-                )
-                .join("");
-
-
-        modal.classList.add(
-            "open"
-        );
-
-    }
-
-
-    function createGroup() {
-
-        const nameInput =
-            document.getElementById(
-                "groupNameInput"
-            );
+        document.getElementById(
+            "activeChatPanel"
+        ).style.display = "flex";
 
 
         const name =
-            nameInput
-                ? nameInput.value.trim()
-                : "";
+            user.profileName ||
+            user.name ||
+            user.username ||
+            "User";
 
 
-        const selected =
-            [
-                ...document.querySelectorAll(
-                    "#groupMemberList input:checked"
-                )
-            ].map(
-                checkbox =>
-                    checkbox.value
+        document.getElementById(
+            "activeUserName"
+        ).textContent =
+            name;
+
+
+        document.getElementById(
+            "activeUsername"
+        ).textContent =
+            "@" +
+            (
+                user.username ||
+                ""
             );
 
 
-        if (!name) {
-
-            alert(
-                "Enter a group name."
-            );
-
-            return;
-
-        }
+        document.getElementById(
+            "activeUserAvatar"
+        ).textContent =
+            initials(name);
 
 
-        if (!selected.length) {
-
-            alert(
-                "Select at least one member."
-            );
-
-            return;
-
-        }
-
-
-        const group = {
-
-            id:
-                "group_" +
-                Date.now(),
-
-            name:
-                name,
-
-            creator:
-                myProfile.id,
-
-            members:
-                [
-                    myProfile.id,
-                    ...selected
-                ],
-
-            messages:
-                [],
-
-            created:
-                Date.now()
-
-        };
-
-
-        groups.push(
-            group
-        );
-
-
-        localStorage.setItem(
-            GROUPS_KEY,
-            JSON.stringify(groups)
-        );
-
-
-        const modal =
-            document.getElementById(
-                "groupModal"
-            );
-
-
-        if (modal) {
-
-            modal.classList.remove(
-                "open"
-            );
-
-        }
-
-
-        if (nameInput) {
-
-            nameInput.value = "";
-
-        }
-
-
-        renderGroups();
-        renderChats();
-
-
-        /*
-           IMPORTANT:
-           After creating group, directly open
-           the message page.
-        */
-
-        openGroupChat(
-            group
-        );
+        startMessageListener();
 
     }
 
 
-    function renderGroups() {
+    /* =====================================================
+       REALTIME MESSAGES
+    ===================================================== */
 
-        const list =
-            document.getElementById(
-                "groupList"
-            );
+    function startMessageListener() {
 
-
-        if (!list)
+        if (!activePrivateChatId)
             return;
 
 
-        const myGroups =
-            groups.filter(
-                group =>
-                    group.members.includes(
-                        myProfile.id
-                    )
-            );
-
-
-        if (!myGroups.length) {
-
-            list.innerHTML = `
-
-                <div class="empty-chat">
-
-                    <span>👥</span>
-
-                    <p>No groups yet.</p>
-
-                </div>
-
-            `;
-
-            return;
-
+        if (unsubscribeMessages) {
+            unsubscribeMessages();
         }
 
 
-        list.innerHTML =
-            myGroups
-                .map(
-                    group => `
+        const {
+            collection,
+            query,
+            orderBy,
+            onSnapshot
+        } = getFirestore();
 
-                        <div
-                            class="group-item"
-                            data-group-id="${group.id}"
-                        >
 
-                            <div class="group-avatar">
-                                👥
-                            </div>
-
-                            <div class="chat-info">
-
-                                <strong>
-                                    ${escapeHTML(group.name)}
-                                </strong>
-
-                                <span>
-                                    ${group.members.length}
-                                    members
-                                </span>
-
-                            </div>
-
-                        </div>
-
-                    `
+        const q =
+            query(
+                collection(
+                    db,
+                    "chats",
+                    activePrivateChatId,
+                    "messages"
+                ),
+                orderBy(
+                    "createdAt",
+                    "asc"
                 )
-                .join("");
+            );
 
 
-        list
-            .querySelectorAll(
-                ".group-item"
-            )
-            .forEach(
-                item => {
+        unsubscribeMessages =
+            onSnapshot(
+                q,
+                function (snapshot) {
 
-                    item.addEventListener(
-                        "click",
-                        function () {
+                    const list =
+                        document.getElementById(
+                            "chatMessageList"
+                        );
 
-                            const group =
-                                groups.find(
-                                    g =>
-                                        g.id ===
-                                        item.dataset.groupId
+
+                    if (!list) return;
+
+
+                    list.innerHTML = "";
+
+
+                    snapshot.forEach(
+                        function (item) {
+
+                            const data =
+                                item.data();
+
+
+                            const div =
+                                document.createElement(
+                                    "div"
                                 );
 
 
-                            if (group) {
-
-                                openGroupChat(
-                                    group
+                            div.className =
+                                "jn-message" +
+                                (
+                                    data.senderId ===
+                                    currentUser.uid
+                                    ? " mine"
+                                    : ""
                                 );
+
+
+                            if (
+                                data.type ===
+                                "image"
+                            ) {
+
+                                const img =
+                                    document.createElement(
+                                        "img"
+                                    );
+
+                                img.src =
+                                    data.url;
+
+                                div.appendChild(
+                                    img
+                                );
+
+                            } else if (
+                                data.type ===
+                                "audio"
+                            ) {
+
+                                const audio =
+                                    document.createElement(
+                                        "audio"
+                                    );
+
+                                audio.controls =
+                                    true;
+
+                                audio.src =
+                                    data.url;
+
+                                div.appendChild(
+                                    audio
+                                );
+
+                            } else {
+
+                                div.textContent =
+                                    data.text ||
+                                    "";
 
                             }
+
+
+                            list.appendChild(
+                                div
+                            );
 
                         }
                     );
 
+
+                    list.scrollTop =
+                        list.scrollHeight;
+
                 }
             );
 
@@ -8300,929 +8110,2031 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     /* =====================================================
-       OPEN GROUP CHAT
+       SEND TEXT
     ===================================================== */
 
-    function openGroupChat(group) {
+    document.addEventListener(
+        "click",
+        async function (event) {
 
-        if (!group)
-            return;
-
-
-        currentChatType =
-            "group";
-
-        currentGroup =
-            group;
-
-        currentChat =
-            null;
+            if (
+                !event.target.closest(
+                    "#chatSendBtn"
+                )
+            ) return;
 
 
-        getElements();
-
-
-        if (chatSection) {
-
-            chatSection.style.display =
-                "none";
+            await sendTextMessage();
 
         }
+    );
 
 
-        if (messageSection) {
+    document.addEventListener(
+        "keydown",
+        async function (event) {
 
-            messageSection.style.display =
-                "block";
+            if (
+                event.target.id ===
+                "chatMessageInput" &&
+                event.key === "Enter"
+            ) {
 
-        }
+                event.preventDefault();
 
-
-        const title =
-            document.getElementById(
-                "messageTitle"
-            );
-
-        const status =
-            document.getElementById(
-                "messageStatus"
-            );
-
-        const avatar =
-            document.getElementById(
-                "messageAvatar"
-            );
-
-
-        if (title)
-            title.textContent =
-                group.name;
-
-
-        if (status)
-            status.textContent =
-                group.members.length +
-                " members";
-
-
-        if (avatar)
-            avatar.textContent =
-                "👥";
-
-
-        renderMessages();
-
-        window.scrollTo(
-            0,
-            0
-        );
-
-    }
-
-
-    /* =====================================================
-       MESSAGES
-    ===================================================== */
-
-    function getMessages() {
-
-        if (
-            currentChatType ===
-            "group" &&
-            currentGroup
-        ) {
-
-            return currentGroup.messages ||
-                [];
-
-        }
-
-
-        const key =
-            privateChatKey(
-                myProfile.id,
-                currentChat
-            );
-
-
-        return chats[key] ||
-            [];
-
-    }
-
-
-    function saveMessages(messages) {
-
-        if (
-            currentChatType ===
-            "group" &&
-            currentGroup
-        ) {
-
-            currentGroup.messages =
-                messages;
-
-
-            const index =
-                groups.findIndex(
-                    g =>
-                        g.id ===
-                        currentGroup.id
-                );
-
-
-            if (index !== -1) {
-
-                groups[index] =
-                    currentGroup;
+                await sendTextMessage();
 
             }
 
-
-            localStorage.setItem(
-                GROUPS_KEY,
-                JSON.stringify(groups)
-            );
-
-
-            return;
-
         }
+    );
 
 
-        const key =
-            privateChatKey(
-                myProfile.id,
-                currentChat
-            );
+    async function sendTextMessage() {
 
+        if (
+            !currentUser ||
+            !activePrivateChatId
+        ) return;
 
-        chats[key] =
-            messages;
-
-
-        localStorage.setItem(
-            CHATS_KEY,
-            JSON.stringify(chats)
-        );
-
-    }
-
-
-    function renderMessages() {
-
-        const container =
-            document.getElementById(
-                "messagesContainer"
-            );
-
-
-        if (!container)
-            return;
-
-
-        const messages =
-            getMessages();
-
-
-        container.innerHTML = "";
-
-
-        messages.forEach(
-            message => {
-
-                const row =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                row.className =
-                    "message-row " +
-                    (
-                        message.sender ===
-                        myProfile.id
-                        ? "me"
-                        : ""
-                    );
-
-
-                const bubble =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                bubble.className =
-                    "message-bubble";
-
-
-                if (
-                    message.type ===
-                    "image"
-                ) {
-
-                    bubble.innerHTML = `
-
-                        <img
-                            src="${message.data}"
-                            class="message-image"
-                            alt="Image"
-                        >
-
-                        <span class="message-time">
-                            ${formatTime(message.time)}
-                        </span>
-
-                    `;
-
-                }
-
-                else if (
-                    message.type ===
-                    "voice"
-                ) {
-
-                    bubble.innerHTML = `
-
-                        <div class="voice-message">
-
-                            🎤
-
-                            <audio
-                                controls
-                                src="${message.data}"
-                            ></audio>
-
-                        </div>
-
-                        <span class="message-time">
-                            ${formatTime(message.time)}
-                        </span>
-
-                    `;
-
-                }
-
-                else {
-
-                    bubble.innerHTML = `
-
-                        ${escapeHTML(message.text)}
-
-                        <span class="message-time">
-                            ${formatTime(message.time)}
-                        </span>
-
-                    `;
-
-                }
-
-
-                row.appendChild(
-                    bubble
-                );
-
-
-                container.appendChild(
-                    row
-                );
-
-            }
-        );
-
-
-        container.scrollTop =
-            container.scrollHeight;
-
-    }
-
-
-    /* =====================================================
-       SEND MESSAGE
-    ===================================================== */
-
-    function sendTextMessage() {
 
         const input =
             document.getElementById(
-                "messageInput"
+                "chatMessageInput"
             );
-
-
-        if (!input)
-            return;
 
 
         const text =
             input.value.trim();
 
 
-        if (!text)
-            return;
+        if (!text) return;
 
 
-        if (
-            !currentChat &&
-            !currentGroup
-        ) {
+        try {
+
+            const {
+                collection,
+                addDoc,
+                doc,
+                setDoc,
+                serverTimestamp
+            } = getFirestore();
+
+
+            await setDoc(
+                doc(
+                    db,
+                    "chats",
+                    activePrivateChatId
+                ),
+                {
+
+                    memberIds: [
+                        currentUser.uid,
+                        activePrivateUser.uid
+                    ],
+
+                    updatedAt:
+                        serverTimestamp()
+
+                },
+                {
+                    merge: true
+                }
+            );
+
+
+            await addDoc(
+                collection(
+                    db,
+                    "chats",
+                    activePrivateChatId,
+                    "messages"
+                ),
+                {
+
+                    senderId:
+                        currentUser.uid,
+
+                    text: text,
+
+                    type: "text",
+
+                    createdAt:
+                        serverTimestamp()
+
+                }
+            );
+
+
+            input.value = "";
+
+
+        } catch (error) {
+
+            console.error(error);
 
             alert(
-                "Please open a chat first."
+                "Message could not be sent."
             );
-
-            return;
 
         }
-
-
-        const messages =
-            getMessages();
-
-
-        messages.push({
-
-            id:
-                "msg_" +
-                Date.now(),
-
-            sender:
-                myProfile.id,
-
-            text:
-                text,
-
-            type:
-                "text",
-
-            time:
-                Date.now()
-
-        });
-
-
-        saveMessages(
-            messages
-        );
-
-
-        input.value = "";
-
-
-        renderMessages();
-        renderChats();
-
-    }
-
-
-    /* =====================================================
-       IMAGE
-    ===================================================== */
-
-    function setupImageMessages() {
-
-        const input =
-            document.getElementById(
-                "imageMessageInput"
-            );
-
-
-        if (!input)
-            return;
-
-
-        input.addEventListener(
-            "change",
-            function (event) {
-
-                const file =
-                    event.target.files[0];
-
-
-                if (!file)
-                    return;
-
-
-                const reader =
-                    new FileReader();
-
-
-                reader.onload =
-                    function () {
-
-                        const messages =
-                            getMessages();
-
-
-                        messages.push({
-
-                            id:
-                                "img_" +
-                                Date.now(),
-
-                            sender:
-                                myProfile.id,
-
-                            type:
-                                "image",
-
-                            data:
-                                reader.result,
-
-                            time:
-                                Date.now()
-
-                        });
-
-
-                        saveMessages(
-                            messages
-                        );
-
-
-                        renderMessages();
-                        renderChats();
-
-                    };
-
-
-                reader.readAsDataURL(
-                    file
-                );
-
-
-                input.value = "";
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       VOICE
-    ===================================================== */
-
-    let mediaRecorder = null;
-    let audioChunks = [];
-    let recording = false;
-
-
-    function setupVoice() {
-
-        const voiceBtn =
-            document.getElementById(
-                "voiceBtn"
-            );
-
-
-        if (!voiceBtn)
-            return;
-
-
-        voiceBtn.addEventListener(
-            "click",
-            async function () {
-
-                if (!recording) {
-
-                    try {
-
-                        const stream =
-                            await navigator.mediaDevices
-                                .getUserMedia({
-                                    audio: true
-                                });
-
-
-                        mediaRecorder =
-                            new MediaRecorder(
-                                stream
-                            );
-
-
-                        audioChunks = [];
-
-
-                        mediaRecorder.ondataavailable =
-                            function (event) {
-
-                                audioChunks.push(
-                                    event.data
-                                );
-
-                            };
-
-
-                        mediaRecorder.onstop =
-                            function () {
-
-                                const blob =
-                                    new Blob(
-                                        audioChunks,
-                                        {
-                                            type:
-                                                "audio/webm"
-                                        }
-                                    );
-
-
-                                const reader =
-                                    new FileReader();
-
-
-                                reader.onload =
-                                    function () {
-
-                                        const messages =
-                                            getMessages();
-
-
-                                        messages.push({
-
-                                            id:
-                                                "voice_" +
-                                                Date.now(),
-
-                                            sender:
-                                                myProfile.id,
-
-                                            type:
-                                                "voice",
-
-                                            data:
-                                                reader.result,
-
-                                            time:
-                                                Date.now()
-
-                                        });
-
-
-                                        saveMessages(
-                                            messages
-                                        );
-
-
-                                        renderMessages();
-                                        renderChats();
-
-                                    };
-
-
-                                reader.readAsDataURL(
-                                    blob
-                                );
-
-
-                                stream
-                                    .getTracks()
-                                    .forEach(
-                                        track =>
-                                            track.stop()
-                                    );
-
-                            };
-
-
-                        mediaRecorder.start();
-
-                        recording = true;
-
-                        voiceBtn.textContent =
-                            "⏹️";
-
-                    }
-
-                    catch (error) {
-
-                        alert(
-                            "Microphone permission is required for voice messages."
-                        );
-
-                    }
-
-                }
-
-                else {
-
-                    if (mediaRecorder) {
-
-                        mediaRecorder.stop();
-
-                    }
-
-                    recording = false;
-
-                    voiceBtn.textContent =
-                        "🎤";
-
-                }
-
-            }
-        );
 
     }
 
 
     /* =====================================================
        EMOJIS
+       Generates a very large Unicode emoji collection.
+       It is not necessary to manually type 10,000 symbols.
     ===================================================== */
 
-    const emojiText = `
-😀 😃 😄 😁 😆 😅 😂 🤣 😊 😇 🙂 🙃 😉 😌 😍 🥰 😘 😗 😙 😚 😋 😛 😝 😜 🤪 🤨 🧐 🤓 😎 🤩 🥳 😏 😒 😞 😔 😟 😕 🙁 ☹️ 😣 😖 😫 😩 🥺 😢 😭 😤 😠 😡 🤬 🤯 😳 🥵 🥶 😱 😨 😰 😥 😓 🤗 🤔 🤭 🤫 🤥 😶 🫠 😐 😑 😬 🙄 😯 😦 😧 😮 😲 🥱 😴 🤤 😪 😵 🤐 🥴 🤢 🤮 🤧 😷 🤒 🤕
-👋 🤚 🖐️ ✋ 🖖 👌 🤌 🤏 ✌️ 🤞 🫰 🤟 🤘 🤙 👈 👉 👆 🖕 👇 ☝️ 👍 👎 ✊ 👊 🤛 🤜 👏 🙌 👐 🤲 🤝 🙏 ✍️ 💅 🤳 💪 🦾 🦿 🦵 🦶 👂 👃 🧠 🫀 🫁 🦷 🦴 👀 👁️ 👅 👄
-❤️ 🧡 💛 💚 💙 💜 🖤 🤍 🤎 💔 ❣️ 💕 💞 💓 💗 💖 💘 💝 💟 ❤️‍🔥 ❤️‍🩹 💯 💢 💥 💫 💦 💨
-🐶 🐱 🐭 🐹 🐰 🦊 🐻 🐼 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🙈 🙉 🙊 🐔 🐧 🐦 🐤 🦆 🦅 🦉 🐺 🐗 🐴 🦄 🐝 🐛 🦋 🐌 🐞 🐜 🕷️ 🦂 🐢 🐍 🦎 🦖 🦕 🐙 🦑 🦀 🐠 🐟 🐡 🐬 🐳 🐋 🦈 🐊 🐘 🦏 🦛 🦒 🦘 🦬 🐄 🐎 🐖 🐏 🐑 🦙 🐐 🦌 🐕 🐩 🐈 🐓 🦃 🕊️ 🦜 🦚 🦢 🦩
-🍏 🍎 🍐 🍊 🍋 🍌 🍉 🍇 🍓 🫐 🍈 🍒 🍑 🥭 🍍 🥥 🥝 🍅 🍆 🥑 🥦 🥬 🥒 🌶️ 🫑 🌽 🥕 🫒 🧄 🧅 🥔 🍠 🥐 🥯 🍞 🥖 🥨 🧀 🥚 🍳 🧈 🥞 🧇 🥓 🥩 🍗 🍖 🌭 🍔 🍟 🍕 🫓 🥪 🥙 🧆 🌮 🌯 🫔 🥗 🥘 🍝 🍜 🍲 🍛 🍣 🍱 🥟 🦪 🍤 🍙 🍚 🍘 🍥 🥠 🥮 🍡 🍧 🍨 🍦 🥧 🧁 🍰 🎂 🍮 🍭 🍬 🍫 🍿 ☕ 🫖 🧃 🥤 🧋 🥛 🍵
-⚽ 🏀 🏈 ⚾ 🥎 🎾 🏐 🏉 🥏 🎱 🪀 🏓 🏸 🏒 🏑 🥍 🏏 🪃 🥊 🥋 🎽 🛹 🛷 ⛸️ 🥌 🎿 ⛷️ 🏂 🪂 🏋️ 🤼 🤸 ⛹️ 🤺 🤾 🏌️ 🏇 🧘 🏄 🏊 🤽 🚣 🧗 🚵 🚴 🏆 🥇 🥈 🥉 🏅 🎖️
-🚗 🚕 🚙 🚌 🚎 🏎️ 🚓 🚑 🚒 🚐 🛻 🚚 🚛 🚜 🛵 🏍️ 🚲 🛴 🚨 🚔 🚍 🚘 🚖 ✈️ 🛫 🛬 🚀 🛸 🚁 🚂 🚆 🚇 🚊 🚉 🚞 🚋 🚃 🚄 🚅 🚈 🚝 🚡 🚠 🚟 🚢 ⛵ 🚤 🛥️ 🛳️ ⚓
-📱 💻 🖥️ 🖨️ ⌨️ 🖱️ 🖲️ 💾 💿 📀 📷 📸 📹 🎥 📞 ☎️ 📺 📻 🎙️ 🎚️ 🎛️ ⏱️ ⏰ ⌚ 🔋 🔌 💡 🔦 🕯️ 📖 📚 📕 📗 📘 📙 📓 📔 📒 📝 ✏️ ✒️ 🖊️ 🖋️ 📌 📍 📎 🔗 🔒 🔓 🔑 🛡️ ⚖️
-🎉 🎊 🎈 🎂 🎁 🎀 🎗️ 🎟️ 🎫 🎪 🎭 🎨 🎬 🎤 🎧 🎼 🎵 🎶 🎹 🥁 🎷 🎺 🎸 🎻 🎲 ♟️ 🎮 🕹️ 🎯 🎳
-☀️ 🌤️ ⛅ 🌥️ 🌦️ 🌧️ ⛈️ 🌩️ 🌨️ ❄️ ☃️ ⛄ 🌬️ 💨 🌪️ 🌫️ 🌈 🌙 ⭐ 🌟 ✨ ⚡ 🔥 🌊 🌍 🌎 🌏 🌱 🌿 ☘️ 🍀 🌷 🌹 🌺 🌸 🌼 🌻 🌞
-`;
+    function generateAllEmojis() {
 
-
-    function buildEmojiPicker() {
-
-        const picker =
+        const container =
             document.getElementById(
-                "emojiPicker"
+                "allEmojiContainer"
             );
 
 
-        const input =
-            document.getElementById(
-                "messageInput"
-            );
+        if (!container) return;
 
 
-        if (!picker || !input)
-            return;
+        const ranges = [
 
+            [0x1F300, 0x1F5FF],
 
-        const emojis =
-            emojiText
-                .trim()
-                .split(/\s+/);
+            [0x1F600, 0x1F64F],
 
+            [0x1F680, 0x1F6FF],
 
-        picker.innerHTML = "";
+            [0x1F700, 0x1F77F],
 
+            [0x1F780, 0x1F7FF],
 
-        emojis.forEach(
-            emoji => {
+            [0x1F800, 0x1F8FF],
 
-                const button =
-                    document.createElement(
-                        "button"
-                    );
+            [0x1F900, 0x1F9FF],
 
+            [0x1FA00, 0x1FAFF],
 
-                button.type =
-                    "button";
+            [0x2600, 0x26FF],
 
+            [0x2700, 0x27BF]
 
-                button.className =
-                    "emoji";
+        ];
 
 
-                button.textContent =
-                    emoji;
+        const fragment =
+            document.createDocumentFragment();
 
 
-                button.addEventListener(
-                    "click",
-                    function () {
+        ranges.forEach(
+            function (range) {
 
-                        input.value +=
-                            emoji;
+                for (
+                    let code =
+                        range[0];
 
-                        input.focus();
+                    code <= range[1];
 
-                    }
-                );
+                    code++
+                ) {
 
-
-                picker.appendChild(
-                    button
-                );
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       PROFILE
-    ===================================================== */
-
-    function loadProfile() {
-
-        const name =
-            document.getElementById(
-                "profileNameInput"
-            );
-
-        const username =
-            document.getElementById(
-                "profileUsernameInput"
-            );
-
-        const image =
-            document.getElementById(
-                "myProfileImage"
-            );
-
-        const defaultIcon =
-            document.getElementById(
-                "defaultProfileIcon"
-            );
-
-
-        if (name)
-            name.value =
-                myProfile.name;
-
-
-        if (username)
-            username.value =
-                myProfile.username;
-
-
-        if (
-            image &&
-            defaultIcon
-        ) {
-
-            if (myProfile.image) {
-
-                image.src =
-                    myProfile.image;
-
-                image.style.display =
-                    "block";
-
-                defaultIcon.style.display =
-                    "none";
-
-            }
-
-            else {
-
-                image.removeAttribute(
-                    "src"
-                );
-
-                image.style.display =
-                    "none";
-
-                defaultIcon.style.display =
-                    "flex";
-
-            }
-
-        }
-
-    }
-
-
-    function saveProfile() {
-
-        const nameInput =
-            document.getElementById(
-                "profileNameInput"
-            );
-
-        const usernameInput =
-            document.getElementById(
-                "profileUsernameInput"
-            );
-
-
-        if (!nameInput || !usernameInput)
-            return;
-
-
-        const name =
-            nameInput.value.trim();
-
-
-        const username =
-            usernameInput.value
-                .trim()
-                .replace(/^@/, "")
-                .toLowerCase();
-
-
-        if (!name || !username) {
-
-            alert(
-                "Please enter your name and username."
-            );
-
-            return;
-
-        }
-
-
-        const exists =
-            users.some(
-                user =>
-                    user.username ===
-                    username &&
-                    user.id !==
-                    myProfile.id
-            );
-
-
-        if (exists) {
-
-            alert(
-                "This username is already used."
-            );
-
-            return;
-
-        }
-
-
-        myProfile.name =
-            name;
-
-        myProfile.username =
-            username;
-
-
-        localStorage.setItem(
-            PROFILE_KEY,
-            JSON.stringify(myProfile)
-        );
-
-
-        alert(
-            "Profile saved successfully."
-        );
-
-    }
-
-
-    /* =====================================================
-       PROFILE IMAGE
-    ===================================================== */
-
-    function setupProfileImage() {
-
-        const input =
-            document.getElementById(
-                "profileImageInput"
-            );
-
-
-        if (!input)
-            return;
-
-
-        input.addEventListener(
-            "change",
-            function (event) {
-
-                const file =
-                    event.target.files[0];
-
-
-                if (!file)
-                    return;
-
-
-                const reader =
-                    new FileReader();
-
-
-                reader.onload =
-                    function () {
-
-                        myProfile.image =
-                            reader.result;
-
-
-                        localStorage.setItem(
-                            PROFILE_KEY,
-                            JSON.stringify(
-                                myProfile
-                            )
+                    const emoji =
+                        String.fromCodePoint(
+                            code
                         );
 
 
-                        loadProfile();
+                    const button =
+                        document.createElement(
+                            "button"
+                        );
+
+
+                    button.type =
+                        "button";
+
+                    button.textContent =
+                        emoji;
+
+                    button.className =
+                        "jn-generated-emoji";
+
+
+                    fragment.appendChild(
+                        button
+                    );
+
+                }
+
+            }
+        );
+
+
+        container.appendChild(
+            fragment
+        );
+
+    }
+
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            if (
+                !event.target.closest(
+                    "#chatEmojiBtn"
+                )
+            ) return;
+
+
+            const panel =
+                document.getElementById(
+                    "chatEmojiPanel"
+                );
+
+
+            if (!panel) return;
+
+
+            if (
+                panel.style.display ===
+                "none"
+            ) {
+
+                panel.style.display =
+                    "block";
+
+            } else {
+
+                panel.style.display =
+                    "none";
+
+            }
+
+        }
+    );
+
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            const emoji =
+                event.target.closest(
+                    ".jn-generated-emoji"
+                );
+
+
+            if (!emoji) return;
+
+
+            const input =
+                document.getElementById(
+                    "chatMessageInput"
+                );
+
+
+            if (!input) return;
+
+
+            input.value +=
+                emoji.textContent;
+
+
+            input.focus();
+
+        }
+    );
+
+
+    /* =====================================================
+       IMAGE SEND
+    ===================================================== */
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            if (
+                !event.target.closest(
+                    "#chatPictureBtn"
+                )
+            ) return;
+
+
+            const input =
+                document.getElementById(
+                    "chatPictureInput"
+                );
+
+
+            if (input) {
+                input.click();
+            }
+
+        }
+    );
+
+
+    document.addEventListener(
+        "change",
+        async function (event) {
+
+            if (
+                event.target.id !==
+                "chatPictureInput"
+            ) return;
+
+
+            const file =
+                event.target.files[0];
+
+
+            if (!file) return;
+
+
+            await sendFileMessage(
+                file,
+                "image"
+            );
+
+        }
+    );
+
+
+    /* =====================================================
+       FILE SEND
+    ===================================================== */
+
+    async function sendFileMessage(
+        file,
+        type
+    ) {
+
+        if (
+            !currentUser ||
+            !activePrivateChatId
+        ) return;
+
+
+        try {
+
+            const storage =
+                await import(
+                    "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js"
+                );
+
+
+            const {
+                getStorage,
+                ref,
+                uploadBytes,
+                getDownloadURL
+            } = storage;
+
+
+            const storageInstance =
+                getStorage();
+
+
+            const path =
+                "chatFiles/" +
+                currentUser.uid +
+                "/" +
+                Date.now() +
+                "_" +
+                file.name;
+
+
+            const storageRef =
+                ref(
+                    storageInstance,
+                    path
+                );
+
+
+            await uploadBytes(
+                storageRef,
+                file
+            );
+
+
+            const url =
+                await getDownloadURL(
+                    storageRef
+                );
+
+
+            const {
+                collection,
+                addDoc,
+                serverTimestamp
+            } = getFirestore();
+
+
+            await addDoc(
+                collection(
+                    db,
+                    "chats",
+                    activePrivateChatId,
+                    "messages"
+                ),
+                {
+
+                    senderId:
+                        currentUser.uid,
+
+                    type: type,
+
+                    url: url,
+
+                    fileName:
+                        file.name,
+
+                    createdAt:
+                        serverTimestamp()
+
+                }
+            );
+
+
+        } catch (error) {
+
+            console.error(error);
+
+            alert(
+                "File could not be sent."
+            );
+
+        }
+
+    }
+
+
+    /* =====================================================
+       VOICE MESSAGE
+    ===================================================== */
+
+    document.addEventListener(
+        "click",
+        async function (event) {
+
+            if (
+                !event.target.closest(
+                    "#chatVoiceMessageBtn"
+                )
+            ) return;
+
+
+            try {
+
+                const stream =
+                    await navigator
+                        .mediaDevices
+                        .getUserMedia({
+                            audio: true
+                        });
+
+
+                audioChunks = [];
+
+
+                mediaRecorder =
+                    new MediaRecorder(
+                        stream
+                    );
+
+
+                mediaRecorder
+                    .ondataavailable =
+                    function (event) {
+
+                        audioChunks.push(
+                            event.data
+                        );
 
                     };
 
 
-                reader.readAsDataURL(
-                    file
+                mediaRecorder
+                    .onstop =
+                    async function () {
+
+                        stream
+                            .getTracks()
+                            .forEach(
+                                function (track) {
+                                    track.stop();
+                                }
+                            );
+
+
+                        const blob =
+                            new Blob(
+                                audioChunks,
+                                {
+                                    type:
+                                        "audio/webm"
+                                }
+                            );
+
+
+                        const file =
+                            new File(
+                                [blob],
+                                "voice-message.webm",
+                                {
+                                    type:
+                                        "audio/webm"
+                                }
+                            );
+
+
+                        await sendFileMessage(
+                            file,
+                            "audio"
+                        );
+
+                    };
+
+
+                mediaRecorder.start();
+
+                recordingSeconds = 0;
+
+                document.getElementById(
+                    "voiceRecorderBox"
+                ).style.display =
+                    "flex";
+
+
+                recordingTimer =
+                    setInterval(
+                        function () {
+
+                            recordingSeconds++;
+
+
+                            const minutes =
+                                String(
+                                    Math.floor(
+                                        recordingSeconds /
+                                        60
+                                    )
+                                )
+                                .padStart(
+                                    2,
+                                    "0"
+                                );
+
+
+                            const seconds =
+                                String(
+                                    recordingSeconds %
+                                    60
+                                )
+                                .padStart(
+                                    2,
+                                    "0"
+                                );
+
+
+                            document.getElementById(
+                                "voiceRecordTime"
+                            ).textContent =
+                                minutes +
+                                ":" +
+                                seconds;
+
+                        },
+                        1000
+                    );
+
+
+            } catch (error) {
+
+                alert(
+                    "Microphone permission is required."
                 );
+
+            }
+
+        }
+    );
+
+
+    function stopVoiceRecorder() {
+
+        if (mediaRecorder) {
+
+            mediaRecorder.stop();
+
+            mediaRecorder = null;
+
+        }
+
+
+        clearInterval(
+            recordingTimer
+        );
+
+
+        recordingTimer = null;
+
+
+        const box =
+            document.getElementById(
+                "voiceRecorderBox"
+            );
+
+
+        if (box) {
+            box.style.display =
+                "none";
+        }
+
+    }
+
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            if (
+                event.target.closest(
+                    "#cancelVoiceBtn"
+                )
+            ) {
+
+                audioChunks = [];
+
+                stopVoiceRecorder();
+
+            }
+
+
+            if (
+                event.target.closest(
+                    "#sendVoiceBtn"
+                )
+            ) {
+
+                stopVoiceRecorder();
+
+            }
+
+        }
+    );
+
+
+    /* =====================================================
+       MUTE
+    ===================================================== */
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            if (
+                !event.target.closest(
+                    "#chatMoreBtn"
+                )
+            ) return;
+
+
+            const menu =
+                document.getElementById(
+                    "chatMoreMenu"
+                );
+
+
+            if (!menu) return;
+
+
+            menu.style.display =
+                menu.style.display ===
+                "none"
+                    ? "block"
+                    : "none";
+
+        }
+    );
+
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            if (
+                !event.target.closest(
+                    "#muteChatBtn"
+                )
+            ) return;
+
+
+            if (!activePrivateChatId)
+                return;
+
+
+            const key =
+                "muted_" +
+                activePrivateChatId;
+
+
+            const current =
+                localStorage.getItem(
+                    key
+                ) === "true";
+
+
+            localStorage.setItem(
+                key,
+                String(!current)
+            );
+
+
+            alert(
+                !current
+                    ? "Chat muted."
+                    : "Chat unmuted."
+            );
+
+        }
+    );
+
+
+    /* =====================================================
+       DELETE CHAT
+    ===================================================== */
+
+    document.addEventListener(
+        "click",
+        async function (event) {
+
+            if (
+                !event.target.closest(
+                    "#deleteChatBtn"
+                )
+            ) return;
+
+
+            if (!activePrivateChatId)
+                return;
+
+
+            if (
+                !confirm(
+                    "Delete this chat?"
+                )
+            ) return;
+
+
+            try {
+
+                const {
+                    doc,
+                    updateDoc
+                } = getFirestore();
+
+
+                await updateDoc(
+                    doc(
+                        db,
+                        "chats",
+                        activePrivateChatId
+                    ),
+                    {
+
+                        deletedFor:
+                            [
+                                currentUser.uid
+                            ]
+
+                    }
+                );
+
+
+                document.getElementById(
+                    "chatMessageList"
+                ).innerHTML = "";
+
+
+            } catch (error) {
+
+                console.error(error);
+
+            }
+
+        }
+    );
+
+
+    /* =====================================================
+       BLOCK USER
+    ===================================================== */
+
+    document.addEventListener(
+        "click",
+        async function (event) {
+
+            if (
+                !event.target.closest(
+                    "#blockUserBtn"
+                )
+            ) return;
+
+
+            if (
+                !activePrivateUser ||
+                !currentUser
+            ) return;
+
+
+            if (
+                !confirm(
+                    "Block this user?"
+                )
+            ) return;
+
+
+            try {
+
+                const {
+                    collection,
+                    addDoc,
+                    serverTimestamp
+                } = getFirestore();
+
+
+                await addDoc(
+                    collection(
+                        db,
+                        "blockedUsers"
+                    ),
+                    {
+
+                        blockerUid:
+                            currentUser.uid,
+
+                        blockedUid:
+                            activePrivateUser.uid,
+
+                        createdAt:
+                            serverTimestamp()
+
+                    }
+                );
+
+
+                alert(
+                    "User blocked."
+                );
+
+
+            } catch (error) {
+
+                console.error(error);
+
+            }
+
+        }
+    );
+
+
+    /* =====================================================
+       USER PROFILE MODAL
+    ===================================================== */
+
+    async function showUserProfile(
+        user
+    ) {
+
+        if (!user) return;
+
+
+        const modal =
+            document.getElementById(
+                "chatUserProfileModal"
+            );
+
+
+        if (!modal) return;
+
+
+        const name =
+            user.profileName ||
+            user.name ||
+            user.username ||
+            "User";
+
+
+        document.getElementById(
+            "chatModalName"
+        ).textContent =
+            name;
+
+
+        document.getElementById(
+            "chatModalUsername"
+        ).textContent =
+            "@" +
+            (
+                user.username ||
+                ""
+            );
+
+
+        document.getElementById(
+            "chatModalAvatar"
+        ).textContent =
+            initials(name);
+
+
+        window.chatModalUser =
+            user;
+
+
+        modal.style.display =
+            "flex";
+
+    }
+
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            if (
+                event.target.closest(
+                    "#userProfileBtn"
+                ) ||
+                event.target.closest(
+                    "#viewProfileBtn"
+                )
+            ) {
+
+                if (activePrivateUser) {
+
+                    showUserProfile(
+                        activePrivateUser
+                    );
+
+                }
+
+            }
+
+
+            if (
+                event.target.closest(
+                    "#closeChatUserProfile"
+                )
+            ) {
+
+                document.getElementById(
+                    "chatUserProfileModal"
+                ).style.display =
+                    "none";
+
+            }
+
+        }
+    );
+
+
+    /* =====================================================
+       MODAL MESSAGE
+    ===================================================== */
+
+    document.addEventListener(
+        "click",
+        async function (event) {
+
+            if (
+                !event.target.closest(
+                    "#chatModalMessageBtn"
+                )
+            ) return;
+
+
+            const user =
+                window.chatModalUser;
+
+
+            if (!user) return;
+
+
+            document.getElementById(
+                "chatUserProfileModal"
+            ).style.display =
+                "none";
+
+
+            await openPrivateChatByUid(
+                user.uid
+            );
+
+        }
+    );
+
+
+    /* =====================================================
+       MODAL REQUEST
+    ===================================================== */
+
+    document.addEventListener(
+        "click",
+        async function (event) {
+
+            if (
+                !event.target.closest(
+                    "#chatModalRequestBtn"
+                )
+            ) return;
+
+
+            const user =
+                window.chatModalUser;
+
+
+            if (!user || !currentUser)
+                return;
+
+
+            try {
+
+                const {
+                    collection,
+                    addDoc,
+                    serverTimestamp
+                } = getFirestore();
+
+
+                await addDoc(
+                    collection(
+                        db,
+                        "chatRequests"
+                    ),
+                    {
+
+                        fromUid:
+                            currentUser.uid,
+
+                        toUid:
+                            user.uid,
+
+                        status:
+                            "pending",
+
+                        createdAt:
+                            serverTimestamp()
+
+                    }
+                );
+
+
+                alert(
+                    "Message request sent."
+                );
+
+
+            } catch (error) {
+
+                console.error(error);
+
+                alert(
+                    "Could not send request."
+                );
+
+            }
+
+        }
+    );
+
+
+    /* =====================================================
+       CREATE GROUP MODAL
+    ===================================================== */
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            if (
+                event.target.closest(
+                    "#createGroupBtn"
+                )
+            ) {
+
+                document.getElementById(
+                    "chatGroupModal"
+                ).style.display =
+                    "flex";
+
+                selectedGroupMembers = [];
+
+                renderSelectedMembers();
+
+            }
+
+
+            if (
+                event.target.closest(
+                    "#closeChatGroupModal"
+                )
+            ) {
+
+                document.getElementById(
+                    "chatGroupModal"
+                ).style.display =
+                    "none";
+
+            }
+
+        }
+    );
+
+
+    /* =====================================================
+       GROUP MEMBER SEARCH
+    ===================================================== */
+
+    let groupSearchTimer = null;
+
+
+    document.addEventListener(
+        "input",
+        function (event) {
+
+            if (
+                event.target.id !==
+                "groupMemberSearch"
+            ) return;
+
+
+            clearTimeout(
+                groupSearchTimer
+            );
+
+
+            groupSearchTimer =
+                setTimeout(
+                    async function () {
+
+                        await searchGroupMember(
+                            event.target.value
+                        );
+
+                    },
+                    400
+                );
+
+        }
+    );
+
+
+    async function searchGroupMember(
+        value
+    ) {
+
+        const result =
+            document.getElementById(
+                "groupSearchResults"
+            );
+
+
+        if (!result) return;
+
+
+        const search =
+            value.trim();
+
+
+        if (!search) {
+
+            result.innerHTML = "";
+
+            return;
+
+        }
+
+
+        try {
+
+            const authModule =
+                await import(
+                    "./firebase-auth.js"
+                );
+
+
+            const user =
+                await authModule
+                    .searchUserByUsernameOrName(
+                        search
+                    );
+
+
+            if (!user) {
+
+                result.innerHTML =
+                    '<div class="jn-empty-chat">' +
+                    'User not found.' +
+                    '</div>';
+
+                return;
+
+            }
+
+
+            if (
+                user.uid ===
+                currentUser.uid
+            ) {
+
+                result.innerHTML = "";
+
+                return;
+
+            }
+
+
+            result.innerHTML =
+
+                '<div class="jn-member-result">' +
+
+                '<div>' +
+
+                '<strong>' +
+                esc(
+                    user.profileName ||
+                    user.name ||
+                    user.username
+                ) +
+                '</strong>' +
+
+                '<br>' +
+
+                '<small>@' +
+                esc(
+                    user.username ||
+                    ""
+                ) +
+                '</small>' +
+
+                '</div>' +
+
+                '<button ' +
+                'data-add-group-user="' +
+                esc(user.uid) +
+                '">' +
+
+                'Add' +
+
+                '</button>' +
+
+                '</div>';
+
+
+            window.lastGroupSearchUser =
+                user;
+
+
+        } catch (error) {
+
+            console.error(error);
+
+        }
+
+    }
+
+
+    /* =====================================================
+       ADD GROUP MEMBER BEFORE CREATE
+    ===================================================== */
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            const button =
+                event.target.closest(
+                    "[data-add-group-user]"
+                );
+
+
+            if (!button) return;
+
+
+            const uid =
+                button.dataset.addGroupUser;
+
+
+            const user =
+                window.lastGroupSearchUser;
+
+
+            if (!user) return;
+
+
+            if (
+                selectedGroupMembers.some(
+                    x => x.uid === uid
+                )
+            ) return;
+
+
+            selectedGroupMembers.push(
+                user
+            );
+
+
+            renderSelectedMembers();
+
+        }
+    );
+
+
+    function renderSelectedMembers() {
+
+        const box =
+            document.getElementById(
+                "selectedGroupMembers"
+            );
+
+
+        if (!box) return;
+
+
+        box.innerHTML = "";
+
+
+        selectedGroupMembers
+            .forEach(
+                function (user) {
+
+                    const div =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    div.className =
+                        "jn-selected-member";
+
+
+                    div.innerHTML =
+
+                        '<span>@' +
+                        esc(
+                            user.username ||
+                            ""
+                        ) +
+                        '</span>' +
+
+                        '<button ' +
+                        'data-remove-selected="' +
+                        esc(user.uid) +
+                        '">' +
+
+                        'Remove' +
+
+                        '</button>';
+
+
+                    box.appendChild(
+                        div
+                    );
+
+                }
+            );
+
+    }
+
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            const button =
+                event.target.closest(
+                    "[data-remove-selected]"
+                );
+
+
+            if (!button) return;
+
+
+            selectedGroupMembers =
+                selectedGroupMembers.filter(
+                    function (user) {
+
+                        return (
+                            user.uid !==
+                            button.dataset
+                                .removeSelected
+                        );
+
+                    }
+                );
+
+
+            renderSelectedMembers();
+
+        }
+    );
+
+
+    /* =====================================================
+       CREATE GROUP
+       MEMBER SELECT -> IMMEDIATELY OPEN GROUP CHAT
+    ===================================================== */
+
+    document.addEventListener(
+        "click",
+        async function (event) {
+
+            if (
+                !event.target.closest(
+                    "#createGroupFinalBtn"
+                )
+            ) return;
+
+
+            const name =
+                document.getElementById(
+                    "chatGroupName"
+                ).value.trim();
+
+
+            if (!name) {
+
+                alert(
+                    "Please enter group name."
+                );
+
+                return;
+
+            }
+
+
+            if (
+                selectedGroupMembers.length === 0
+            ) {
+
+                alert(
+                    "Please select at least one member."
+                );
+
+                return;
+
+            }
+
+
+            try {
+
+                const {
+                    collection,
+                    addDoc,
+                    serverTimestamp
+                } = getFirestore();
+
+
+                const memberIds =
+                    [
+                        currentUser.uid
+                    ].concat(
+                        selectedGroupMembers
+                            .map(
+                                x => x.uid
+                            )
+                    );
+
+
+                const groupRef =
+                    await addDoc(
+                        collection(
+                            db,
+                            "groups"
+                        ),
+                        {
+
+                            name: name,
+
+                            description:
+                                document
+                                .getElementById(
+                                    "chatGroupDescription"
+                                )
+                                .value
+                                .trim(),
+
+                            ownerId:
+                                currentUser.uid,
+
+                            memberIds:
+                                memberIds,
+
+                            createdAt:
+                                serverTimestamp(),
+
+                            updatedAt:
+                                serverTimestamp()
+
+                        }
+                    );
+
+
+                document.getElementById(
+                    "chatGroupModal"
+                ).style.display =
+                    "none";
+
+
+                selectedGroupMembers =
+                    [];
+
+
+                openGroupChat(
+                    groupRef.id,
+                    name,
+                    memberIds
+                );
+
+
+            } catch (error) {
+
+                console.error(error);
+
+                alert(
+                    "Group could not be created."
+                );
+
+            }
+
+        }
+    );
+
+
+    /* =====================================================
+       GROUP LIST
+    ===================================================== */
+
+    function startGroupListener() {
+
+        if (!currentUser) return;
+
+
+        if (unsubscribeGroups) {
+            unsubscribeGroups();
+        }
+
+
+        const {
+            collection,
+            query,
+            where,
+            onSnapshot
+        } = getFirestore();
+
+
+        const q =
+            query(
+                collection(
+                    db,
+                    "groups"
+                ),
+                where(
+                    "memberIds",
+                    "array-contains",
+                    currentUser.uid
+                )
+            );
+
+
+        unsubscribeGroups =
+            onSnapshot(
+                q,
+                function (snapshot) {
+
+                    const list =
+                        document.getElementById(
+                            "chatGroupsList"
+                        );
+
+
+                    if (!list) return;
+
+
+                    if (snapshot.empty) {
+
+                        list.innerHTML =
+                            '<div class="jn-empty-chat">' +
+                            '<div>👥</div>' +
+                            '<h3>No groups yet</h3>' +
+                            '<p>Create a group to start chatting.</p>' +
+                            '</div>';
+
+                        return;
+
+                    }
+
+
+                    list.innerHTML = "";
+
+
+                    snapshot.forEach(
+                        function (item) {
+
+                            const data =
+                                item.data();
+
+
+                            const div =
+                                document.createElement(
+                                    "div"
+                                );
+
+
+                            div.className =
+                                "jn-group-card-item";
+
+
+                            div.innerHTML =
+
+                                '<div>' +
+
+                                '<strong>' +
+                                esc(data.name) +
+                                '</strong>' +
+
+                                '<br>' +
+
+                                '<small>' +
+                                (
+                                    data.memberIds
+                                    ?.length ||
+                                    0
+                                ) +
+                                ' members</small>' +
+
+                                '</div>' +
+
+                                '<button ' +
+                                'class="jn-teal-btn" ' +
+                                'data-open-group="' +
+                                item.id +
+                                '">' +
+
+                                '💬 Open' +
+
+                                '</button>';
+
+
+                            list.appendChild(
+                                div
+                            );
+
+                        }
+                    );
+
+                }
+            );
+
+    }
+
+
+    /* =====================================================
+       OPEN GROUP
+    ===================================================== */
+
+    document.addEventListener(
+        "click",
+        async function (event) {
+
+            const button =
+                event.target.closest(
+                    "[data-open-group]"
+                );
+
+
+            if (!button) return;
+
+
+            const id =
+                button.dataset.openGroup;
+
+
+            const {
+                doc,
+                getDoc
+            } = getFirestore();
+
+
+            const snapshot =
+                await getDoc(
+                    doc(
+                        db,
+                        "groups",
+                        id
+                    )
+                );
+
+
+            if (!snapshot.exists())
+                return;
+
+
+            const group =
+                {
+                    id: id,
+                    ...snapshot.data()
+                };
+
+
+            openGroupChat(
+                group.id,
+                group.name,
+                group.memberIds
+            );
+
+        }
+    );
+
+
+    /* =====================================================
+       GROUP MESSAGE PANEL
+       Uses same message panel.
+    ===================================================== */
+
+    function openGroupChat(
+        groupId,
+        groupName,
+        memberIds
+    ) {
+
+        activeGroup = {
+
+            id: groupId,
+
+            name: groupName,
+
+            memberIds:
+                memberIds || []
+
+        };
+
+
+        document.querySelector(
+            '[data-chat-tab="chats"]'
+        ).click();
+
+
+        document.getElementById(
+            "noChatSelected"
+        ).style.display =
+            "none";
+
+
+        document.getElementById(
+            "activeChatPanel"
+        ).style.display =
+            "flex";
+
+
+        document.getElementById(
+            "activeUserName"
+        ).textContent =
+            groupName;
+
+
+        document.getElementById(
+            "activeUsername"
+        ).textContent =
+            "Group";
+
+
+        document.getElementById(
+            "activeUserAvatar"
+        ).textContent =
+            "👥";
+
+
+        startGroupMessageListener();
+
+    }
+
+
+    /* =====================================================
+       GROUP MESSAGES
+    ===================================================== */
+
+    function startGroupMessageListener() {
+
+        if (!activeGroup)
+            return;
+
+
+        if (unsubscribeMessages) {
+            unsubscribeMessages();
+        }
+
+
+        const {
+            collection,
+            query,
+            orderBy,
+            onSnapshot
+        } = getFirestore();
+
+
+        const q =
+            query(
+                collection(
+                    db,
+                    "groups",
+                    activeGroup.id,
+                    "messages"
+                ),
+                orderBy(
+                    "createdAt",
+                    "asc"
+                )
+            );
+
+
+        unsubscribeMessages =
+            onSnapshot(
+                q,
+                async function (snapshot) {
+
+                    const list =
+                        document.getElementById(
+                            "chatMessageList"
+                        );
+
+
+                    list.innerHTML = "";
+
+
+                    for (
+                        const item
+                        of snapshot.docs
+                    ) {
+
+                        const data =
+                            item.data();
+
+
+                        const div =
+                            document.createElement(
+                                "div"
+                            );
+
+
+                        div.className =
+                            "jn-message" +
+                            (
+                                data.senderId ===
+                                currentUser.uid
+                                ? " mine"
+                                : ""
+                            );
+
+
+                        if (
+                            data.senderId !==
+                            currentUser.uid
+                        ) {
+
+                            const sender =
+                                await getUser(
+                                    data.senderId
+                                );
+
+
+                            const senderName =
+                                sender?.profileName ||
+                                sender?.name ||
+                                sender?.username ||
+                                "User";
+
+
+                            div.innerHTML =
+                                '<small style="color:#16c7bd">' +
+                                esc(senderName) +
+                                '</small><br>';
+
+                        }
+
+
+                        if (
+                            data.type ===
+                            "image"
+                        ) {
+
+                            const img =
+                                document.createElement(
+                                    "img"
+                                );
+
+                            img.src =
+                                data.url;
+
+                            div.appendChild(
+                                img
+                            );
+
+                        } else if (
+                            data.type ===
+                            "audio"
+                        ) {
+
+                            const audio =
+                                document.createElement(
+                                    "audio"
+                                );
+
+                            audio.controls =
+                                true;
+
+                            audio.src =
+                                data.url;
+
+                            div.appendChild(
+                                audio
+                            );
+
+                        } else {
+
+                            div.appendChild(
+                                document.createTextNode(
+                                    data.text ||
+                                    ""
+                                )
+                            );
+
+                        }
+
+
+                        list.appendChild(
+                            div
+                        );
+
+                    }
+
+
+                    list.scrollTop =
+                        list.scrollHeight;
+
+                }
+            );
+
+    }
+
+
+    /* =====================================================
+       GROUP SEND MESSAGE
+    ===================================================== */
+
+    async function sendGroupMessage(
+        text
+    ) {
+
+        if (
+            !activeGroup ||
+            !currentUser
+        ) return;
+
+
+        const {
+            collection,
+            addDoc,
+            serverTimestamp
+        } = getFirestore();
+
+
+        await addDoc(
+            collection(
+                db,
+                "groups",
+                activeGroup.id,
+                "messages"
+            ),
+            {
+
+                senderId:
+                    currentUser.uid,
+
+                text: text,
+
+                type: "text",
+
+                createdAt:
+                    serverTimestamp()
 
             }
         );
@@ -9231,1336 +10143,670 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     /* =====================================================
-       DELETE ACCOUNT
+       OVERRIDE SEND FOR GROUP
     ===================================================== */
 
-    function deleteAccount() {
+    document.addEventListener(
+        "click",
+        async function (event) {
 
-        const yes =
-            confirm(
-                "Delete your local Justice Now chat profile?"
+            if (
+                !event.target.closest(
+                    "#chatSendBtn"
+                )
+            ) return;
+
+
+            if (!activeGroup)
+                return;
+
+
+            const input =
+                document.getElementById(
+                    "chatMessageInput"
+                );
+
+
+            const text =
+                input.value.trim();
+
+
+            if (!text) return;
+
+
+            try {
+
+                await sendGroupMessage(
+                    text
+                );
+
+                input.value = "";
+
+            } catch (error) {
+
+                console.error(error);
+
+            }
+
+        },
+        true
+    );
+
+
+    /* =====================================================
+       MY PROFILE
+    ===================================================== */
+
+    async function loadMyChatProfile() {
+
+        if (!currentUser) return;
+
+
+        const user =
+            await getUser(
+                currentUser.uid
             );
 
 
-        if (!yes)
-            return;
+        if (!user) return;
 
 
-        localStorage.removeItem(
-            PROFILE_KEY
-        );
-
-        localStorage.removeItem(
-            REQUESTS_KEY
-        );
-
-        localStorage.removeItem(
-            CHATS_KEY
-        );
+        const username =
+            user.username ||
+            "";
 
 
-        alert(
-            "Profile deleted from this browser."
-        );
+        const name =
+            user.profileName ||
+            user.name ||
+            "";
 
 
-        location.reload();
+        const usernameInput =
+            document.getElementById(
+                "chatMyUsername"
+            );
+
+
+        const nameInput =
+            document.getElementById(
+                "chatMyProfileName"
+            );
+
+
+        const emailInput =
+            document.getElementById(
+                "chatMyEmail"
+            );
+
+
+        if (usernameInput) {
+            usernameInput.value =
+                username;
+        }
+
+
+        if (nameInput) {
+            nameInput.value =
+                name;
+        }
+
+
+        if (emailInput) {
+            emailInput.value =
+                currentUser.email ||
+                "";
+        }
+
+
+        const avatar =
+            document.getElementById(
+                "chatMyAvatar"
+            );
+
+
+        if (avatar) {
+
+            avatar.textContent =
+                initials(
+                    name ||
+                    username
+                );
+
+        }
 
     }
 
 
     /* =====================================================
-       PROFILE MODAL
+       SAVE PROFILE
     ===================================================== */
 
-    function showUserProfile(user) {
+    document.addEventListener(
+        "click",
+        async function (event) {
 
-        const modal =
-            document.getElementById(
-                "userProfileModal"
-            );
-
-        const content =
-            document.getElementById(
-                "profileModalContent"
-            );
+            if (
+                !event.target.closest(
+                    "#saveChatProfileBtn"
+                )
+            ) return;
 
 
-        if (!modal || !content)
-            return;
+            if (!currentUser)
+                return;
 
 
-        content.innerHTML = `
+            const username =
+                document.getElementById(
+                    "chatMyUsername"
+                ).value
+                .trim()
+                .toLowerCase();
 
-            <div style="text-align:center;">
 
-                <div class="profile-image-area">
+            const profileName =
+                document.getElementById(
+                    "chatMyProfileName"
+                ).value
+                .trim();
 
-                    ${
-                        user.image
 
-                        ?
+            if (!username) {
 
-                        `<img
-                            src="${user.image}"
-                            style="
-                                display:block;
-                                width:110px;
-                                height:110px;
-                                border-radius:50%;
-                                object-fit:cover;
-                                margin:auto;
-                            "
-                        >`
+                alert(
+                    "Username is required."
+                );
 
-                        :
+                return;
 
-                        `
-                        <div class="default-profile-icon"
-                             style="margin:auto;">
-                            👤
-                        </div>
-                        `
+            }
+
+
+            try {
+
+                const {
+                    doc,
+                    updateDoc
+                } = getFirestore();
+
+
+                await updateDoc(
+                    doc(
+                        db,
+                        "users",
+                        currentUser.uid
+                    ),
+                    {
+
+                        username:
+                            username,
+
+                        profileName:
+                            profileName
+
                     }
-
-                </div>
-
-
-                <h2>
-                    ${escapeHTML(user.name)}
-                </h2>
+                );
 
 
-                <p style="color:#16c7b7;">
-                    @${escapeHTML(user.username)}
-                </p>
+                alert(
+                    "Profile saved successfully."
+                );
 
 
-                <div style="
-                    display:flex;
-                    gap:10px;
-                    justify-content:center;
-                    margin-top:20px;
-                    flex-wrap:wrap;
-                ">
+            } catch (error) {
 
-                    <button
-                        type="button"
-                        id="modalMessageBtn"
-                        class="teal-btn"
-                    >
-                        💬 Message
-                    </button>
+                console.error(error);
 
+                alert(
+                    "Profile could not be saved."
+                );
 
-                    <button
-                        type="button"
-                        id="modalRequestBtn"
-                        class="outline-btn"
-                    >
-                        👥 Send Request
-                    </button>
-
-                </div>
-
-            </div>
-
-        `;
-
-
-        modal.classList.add(
-            "open"
-        );
-
-
-        const messageBtn =
-            document.getElementById(
-                "modalMessageBtn"
-            );
-
-        const requestBtn =
-            document.getElementById(
-                "modalRequestBtn"
-            );
-
-
-        if (messageBtn) {
-
-            messageBtn.addEventListener(
-                "click",
-                function () {
-
-                    modal.classList.remove(
-                        "open"
-                    );
-
-                    openPrivateChat(
-                        user
-                    );
-
-                }
-            );
+            }
 
         }
+    );
 
 
-        if (requestBtn) {
+    /* =====================================================
+       PROFILE PICTURE
+    ===================================================== */
 
-            requestBtn.addEventListener(
-                "click",
-                function () {
+    document.addEventListener(
+        "click",
+        function (event) {
 
-                    sendRequest(
-                        user.id
-                    );
+            if (
+                !event.target.closest(
+                    "#changeChatPictureBtn"
+                )
+            ) return;
 
-                }
-            );
+
+            document.getElementById(
+                "chatProfilePictureInput"
+            ).click();
 
         }
+    );
 
-    }
+
+    document.addEventListener(
+        "change",
+        async function (event) {
+
+            if (
+                event.target.id !==
+                "chatProfilePictureInput"
+            ) return;
+
+
+            const file =
+                event.target.files[0];
+
+
+            if (!file || !currentUser)
+                return;
+
+
+            try {
+
+                const storage =
+                    await import(
+                        "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js"
+                    );
+
+
+                const {
+                    getStorage,
+                    ref,
+                    uploadBytes,
+                    getDownloadURL
+                } = storage;
+
+
+                const storageRef =
+                    ref(
+                        getStorage(),
+                        "profilePictures/" +
+                        currentUser.uid +
+                        "/" +
+                        Date.now()
+                    );
+
+
+                await uploadBytes(
+                    storageRef,
+                    file
+                );
+
+
+                const url =
+                    await getDownloadURL(
+                        storageRef
+                    );
+
+
+                const {
+                    doc,
+                    updateDoc
+                } = getFirestore();
+
+
+                await updateDoc(
+                    doc(
+                        db,
+                        "users",
+                        currentUser.uid
+                    ),
+                    {
+
+                        profilePicture:
+                            url
+
+                    }
+                );
+
+
+                const avatar =
+                    document.getElementById(
+                        "chatMyAvatar"
+                    );
+
+
+                avatar.style.backgroundImage =
+                    "url('" +
+                    url +
+                    "')";
+
+
+                avatar.textContent = "";
+
+
+            } catch (error) {
+
+                console.error(error);
+
+                alert(
+                    "Profile picture could not be uploaded."
+                );
+
+            }
+
+        }
+    );
 
 
     /* =====================================================
        GROUP MANAGEMENT
     ===================================================== */
 
-    function saveGroup() {
-
-        if (!currentGroup)
-            return;
+    let manageGroup = null;
 
 
-        const index =
-            groups.findIndex(
-                group =>
-                    group.id ===
-                    currentGroup.id
-            );
+    document.addEventListener(
+        "click",
+        async function (event) {
 
-
-        if (index !== -1) {
-
-            groups[index] =
-                currentGroup;
-
-        }
-
-
-        localStorage.setItem(
-            GROUPS_KEY,
-            JSON.stringify(groups)
-        );
-
-
-        renderGroups();
-        renderChats();
-
-    }
-
-
-    /* =====================================================
-       GROUP MEMBERS
-    ===================================================== */
-
-    function addGroupMember() {
-
-        if (!currentGroup)
-            return;
-
-
-        const available =
-            users.filter(
-                user =>
-                    user.id !==
-                    myProfile.id &&
-
-                    !currentGroup.members.includes(
-                        user.id
-                    )
-            );
-
-
-        if (!available.length) {
-
-            alert(
-                "No more users available."
-            );
-
-            return;
-
-        }
-
-
-        const names =
-            available
-                .map(
-                    (user, index) =>
-                        `${index + 1}. ${user.name} (@${user.username})`
+            if (
+                !event.target.closest(
+                    "#closeGroupManageModal"
                 )
-                .join("\n");
+            ) return;
 
 
-        const answer =
-            prompt(
-                "Enter member number to add:\n\n" +
-                names
-            );
-
-
-        const number =
-            parseInt(
-                answer,
-                10
-            );
-
-
-        if (
-            !number ||
-            number < 1 ||
-            number > available.length
-        )
-            return;
-
-
-        const user =
-            available[
-                number - 1
-            ];
-
-
-        currentGroup.members.push(
-            user.id
-        );
-
-
-        saveGroup();
-
-
-        const status =
-            document.getElementById(
-                "messageStatus"
-            );
-
-
-        if (status) {
-
-            status.textContent =
-                currentGroup.members.length +
-                " members";
-
-        }
-
-
-        alert(
-            user.name +
-            " added to the group."
-        );
-
-    }
-
-
-    function removeGroupMember() {
-
-        if (!currentGroup)
-            return;
-
-
-        const available =
-            currentGroup.members
-                .filter(
-                    id =>
-                        id !==
-                        myProfile.id
-                )
-                .map(
-                    id =>
-                        users.find(
-                            user =>
-                                user.id ===
-                                id
-                        )
-                )
-                .filter(Boolean);
-
-
-        if (!available.length) {
-
-            alert(
-                "There are no other members to remove."
-            );
-
-            return;
-
-        }
-
-
-        const names =
-            available
-                .map(
-                    (user, index) =>
-                        `${index + 1}. ${user.name}`
-                )
-                .join("\n");
-
-
-        const answer =
-            prompt(
-                "Enter member number to remove:\n\n" +
-                names
-            );
-
-
-        const number =
-            parseInt(
-                answer,
-                10
-            );
-
-
-        if (
-            !number ||
-            number < 1 ||
-            number > available.length
-        )
-            return;
-
-
-        const user =
-            available[
-                number - 1
-            ];
-
-
-        currentGroup.members =
-            currentGroup.members.filter(
-                id =>
-                    id !==
-                    user.id
-            );
-
-
-        saveGroup();
-
-
-        alert(
-            user.name +
-            " removed."
-        );
-
-    }
-
-
-    function leaveGroup() {
-
-        if (!currentGroup)
-            return;
-
-
-        const yes =
-            confirm(
-                "Leave this group?"
-            );
-
-
-        if (!yes)
-            return;
-
-
-        currentGroup.members =
-            currentGroup.members.filter(
-                id =>
-                    id !==
-                    myProfile.id
-            );
-
-
-        saveGroup();
-
-
-        const modal =
             document.getElementById(
                 "groupManageModal"
-            );
-
-
-        if (modal) {
-
-            modal.classList.remove(
-                "open"
-            );
-
-        }
-
-
-        backToChat();
-
-    }
-
-
-    function deleteGroup() {
-
-        if (!currentGroup)
-            return;
-
-
-        if (
-            currentGroup.creator !==
-            myProfile.id
-        ) {
-
-            alert(
-                "Only the group creator can delete the group."
-            );
-
-            return;
-
-        }
-
-
-        const yes =
-            confirm(
-                "Delete this group permanently?"
-            );
-
-
-        if (!yes)
-            return;
-
-
-        groups =
-            groups.filter(
-                group =>
-                    group.id !==
-                    currentGroup.id
-            );
-
-
-        localStorage.setItem(
-            GROUPS_KEY,
-            JSON.stringify(groups)
-        );
-
-
-        const modal =
-            document.getElementById(
-                "groupManageModal"
-            );
-
-
-        if (modal) {
-
-            modal.classList.remove(
-                "open"
-            );
-
-        }
-
-
-        currentGroup =
-            null;
-
-
-        backToChat();
-
-
-        renderGroups();
-        renderChats();
-
-    }
-
-
-    /* =====================================================
-       BACK TO CHAT
-    ===================================================== */
-
-    function backToChat() {
-
-        getElements();
-
-
-        if (messageSection) {
-
-            messageSection.style.display =
+            ).style.display =
                 "none";
 
         }
-
-
-        if (chatSection) {
-
-            chatSection.style.display =
-                "block";
-
-        }
-
-
-        renderChats();
-        renderGroups();
-
-
-        window.scrollTo(
-            0,
-            0
-        );
-
-    }
+    );
 
 
     /* =====================================================
-       PRIVATE MENU
+       DELETE / LEAVE GROUP
     ===================================================== */
 
-    function showPrivateMenu() {
+    document.addEventListener(
+        "click",
+        async function (event) {
 
-        if (!currentChat)
-            return;
+            if (
+                event.target.closest(
+                    "#leaveGroupBtn"
+                )
+            ) {
 
-
-        const user =
-            users.find(
-                u =>
-                    u.id ===
-                    currentChat
-            );
-
-
-        if (!user)
-            return;
+                if (!activeGroup)
+                    return;
 
 
-        const choice =
-            prompt(
-                "Choose an option:\n\n" +
-                "1 - User Profile\n" +
-                "2 - Delete Chat\n" +
-                "3 - Block User\n" +
-                "4 - Mute"
-            );
+                try {
+
+                    const {
+                        doc,
+                        updateDoc,
+                        arrayRemove
+                    } = getFirestore();
 
 
-        if (choice === "1") {
+                    await updateDoc(
+                        doc(
+                            db,
+                            "groups",
+                            activeGroup.id
+                        ),
+                        {
 
-            showUserProfile(
-                user
-            );
+                            memberIds:
+                                arrayRemove(
+                                    currentUser.uid
+                                )
+
+                        }
+                    );
+
+
+                    document.getElementById(
+                        "groupManageModal"
+                    ).style.display =
+                        "none";
+
+
+                    activeGroup = null;
+
+
+                } catch (error) {
+
+                    console.error(error);
+
+                }
+
+            }
+
+
+            if (
+                event.target.closest(
+                    "#deleteGroupBtn"
+                )
+            ) {
+
+                if (!activeGroup)
+                    return;
+
+
+                if (
+                    !confirm(
+                        "Delete this group?"
+                    )
+                ) return;
+
+
+                try {
+
+                    const {
+                        doc,
+                        deleteDoc
+                    } = getFirestore();
+
+
+                    await deleteDoc(
+                        doc(
+                            db,
+                            "groups",
+                            activeGroup.id
+                        )
+                    );
+
+
+                    document.getElementById(
+                        "groupManageModal"
+                    ).style.display =
+                        "none";
+
+
+                    activeGroup = null;
+
+
+                } catch (error) {
+
+                    console.error(error);
+
+                }
+
+            }
 
         }
+    );
 
-        else if (choice === "2") {
 
-            deletePrivateChat(
-                user.id
-            );
+    /* =====================================================
+       DELETE ACCOUNT / USERNAME
+    ===================================================== */
+
+    document.addEventListener(
+        "click",
+        async function (event) {
+
+            if (
+                !event.target.closest(
+                    "#deleteChatAccountBtn"
+                )
+            ) return;
+
+
+            if (!currentUser)
+                return;
+
+
+            if (
+                !confirm(
+                    "Are you sure you want to delete your account/username?"
+                )
+            ) return;
+
+
+            try {
+
+                const {
+                    doc,
+                    deleteDoc
+                } = getFirestore();
+
+
+                await deleteDoc(
+                    doc(
+                        db,
+                        "users",
+                        currentUser.uid
+                    )
+                );
+
+
+                await currentUser.delete();
+
+
+                alert(
+                    "Account deleted."
+                );
+
+
+            } catch (error) {
+
+                console.error(error);
+
+                alert(
+                    "For security, Firebase may require you to sign in again before deleting the account."
+                );
+
+            }
 
         }
+    );
 
-        else if (choice === "3") {
 
-            blockUser(
-                user.id
-            );
+    /* =====================================================
+       VOICE / VIDEO CALL
+    ===================================================== */
+
+    document.addEventListener(
+        "click",
+        async function (event) {
+
+            if (
+                event.target.closest(
+                    "#voiceCallBtn"
+                )
+            ) {
+
+                await startWebRTCCall(
+                    "audio"
+                );
+
+            }
+
+
+            if (
+                event.target.closest(
+                    "#videoCallBtn"
+                )
+            ) {
+
+                await startWebRTCCall(
+                    "video"
+                );
+
+            }
 
         }
+    );
 
-        else if (choice === "4") {
+
+    async function startWebRTCCall(
+        type
+    ) {
+
+        if (
+            !activePrivateUser
+        ) {
 
             alert(
-                "Chat muted."
+                "Open a private chat first."
             );
 
-        }
-
-    }
-
-
-    function deletePrivateChat(userId) {
-
-        const key =
-            privateChatKey(
-                myProfile.id,
-                userId
-            );
-
-
-        delete chats[key];
-
-
-        localStorage.setItem(
-            CHATS_KEY,
-            JSON.stringify(chats)
-        );
-
-
-        alert(
-            "Chat deleted."
-        );
-
-
-        backToChat();
-
-    }
-
-
-    function blockUser(userId) {
-
-        let blocked =
-            JSON.parse(
-                localStorage.getItem(
-                    "justiceNowBlocked"
-                ) || "[]"
-            );
-
-
-        if (!blocked.includes(userId)) {
-
-            blocked.push(
-                userId
-            );
-
-        }
-
-
-        localStorage.setItem(
-            "justiceNowBlocked",
-            JSON.stringify(blocked)
-        );
-
-
-        alert(
-            "User blocked."
-        );
-
-    }
-
-
-    /* =====================================================
-       EVENTS
-    ===================================================== */
-
-    function setupEvents() {
-
-        getElements();
-
-
-        /* Chat button */
-
-        setupChatButton();
-
-
-        /* Close */
-
-        setupCloseButton();
-
-
-        /* Back from message */
-
-        if (backFromMessageBtn) {
-
-            backFromMessageBtn.addEventListener(
-                "click",
-                backToChat
-            );
-
-        }
-
-
-        /* Tabs */
-
-        setupTabs();
-
-
-        /* Search */
-
-        setupSearch();
-
-
-        /* Create group */
-
-        const createGroupBtn =
-            document.getElementById(
-                "createGroupBtn"
-            );
-
-        const createGroupBtn2 =
-            document.getElementById(
-                "createGroupBtn2"
-            );
-
-
-        if (createGroupBtn) {
-
-            createGroupBtn.addEventListener(
-                "click",
-                openGroupModal
-            );
-
-        }
-
-
-        if (createGroupBtn2) {
-
-            createGroupBtn2.addEventListener(
-                "click",
-                openGroupModal
-            );
-
-        }
-
-
-        /* Create group confirm */
-
-        const createGroupConfirm =
-            document.getElementById(
-                "createGroupConfirm"
-            );
-
-
-        if (createGroupConfirm) {
-
-            createGroupConfirm.addEventListener(
-                "click",
-                createGroup
-            );
-
-        }
-
-
-        /* Close group modal */
-
-        const closeGroupModal =
-            document.getElementById(
-                "closeGroupModal"
-            );
-
-
-        if (closeGroupModal) {
-
-            closeGroupModal.addEventListener(
-                "click",
-                function () {
-
-                    document
-                        .getElementById(
-                            "groupModal"
-                        )
-                        ?.classList.remove(
-                            "open"
-                        );
-
-                }
-            );
-
-        }
-
-
-        /* Close profile */
-
-        const closeUserProfile =
-            document.getElementById(
-                "closeUserProfile"
-            );
-
-
-        if (closeUserProfile) {
-
-            closeUserProfile.addEventListener(
-                "click",
-                function () {
-
-                    document
-                        .getElementById(
-                            "userProfileModal"
-                        )
-                        ?.classList.remove(
-                            "open"
-                        );
-
-                }
-            );
-
-        }
-
-
-        /* Save profile */
-
-        document
-            .getElementById(
-                "saveProfileBtn"
-            )
-            ?.addEventListener(
-                "click",
-                saveProfile
-            );
-
-
-        /* Profile picture */
-
-        setupProfileImage();
-
-
-        /* Delete account */
-
-        document
-            .getElementById(
-                "deleteAccountBtn"
-            )
-            ?.addEventListener(
-                "click",
-                deleteAccount
-            );
-
-
-        /* Send message */
-
-        document
-            .getElementById(
-                "sendMessageBtn"
-            )
-            ?.addEventListener(
-                "click",
-                sendTextMessage
-            );
-
-
-        /* Enter message */
-
-        document
-            .getElementById(
-                "messageInput"
-            )
-            ?.addEventListener(
-                "keydown",
-                function (event) {
-
-                    if (
-                        event.key ===
-                        "Enter" &&
-                        !event.shiftKey
-                    ) {
-
-                        event.preventDefault();
-
-                        sendTextMessage();
-
-                    }
-
-                }
-            );
-
-
-        /* Image */
-
-        setupImageMessages();
-
-
-        /* Voice */
-
-        setupVoice();
-
-
-        /* Emoji */
-
-        buildEmojiPicker();
-
-
-        document
-            .getElementById(
-                "emojiBtn"
-            )
-            ?.addEventListener(
-                "click",
-                function () {
-
-                    document
-                        .getElementById(
-                            "emojiPicker"
-                        )
-                        ?.classList.toggle(
-                            "open"
-                        );
-
-                }
-            );
-
-
-        /* Profile / More / Call */
-
-        document
-            .getElementById(
-                "messageProfileBtn"
-            )
-            ?.addEventListener(
-                "click",
-                function () {
-
-                    if (
-                        currentChatType ===
-                        "private"
-                    ) {
-
-                        const user =
-                            users.find(
-                                u =>
-                                    u.id ===
-                                    currentChat
-                            );
-
-
-                        if (user) {
-
-                            showUserProfile(
-                                user
-                            );
-
-                        }
-
-                    }
-
-                }
-            );
-
-
-        document
-            .getElementById(
-                "messageMoreBtn"
-            )
-            ?.addEventListener(
-                "click",
-                function () {
-
-                    if (
-                        currentChatType ===
-                        "group"
-                    ) {
-
-                        document
-                            .getElementById(
-                                "groupManageModal"
-                            )
-                            ?.classList.add(
-                                "open"
-                            );
-
-                    }
-
-                    else {
-
-                        showPrivateMenu();
-
-                    }
-
-                }
-            );
-
-
-        document
-            .getElementById(
-                "callBtn"
-            )
-            ?.addEventListener(
-                "click",
-                function () {
-
-                    if (
-                        currentChatType ===
-                        "private"
-                    ) {
-
-                        const user =
-                            users.find(
-                                u =>
-                                    u.id ===
-                                    currentChat
-                            );
-
-
-                        if (user) {
-
-                            alert(
-                                "Calling " +
-                                user.name +
-                                "..."
-                            );
-
-                        }
-
-                    }
-
-                    else {
-
-                        alert(
-                            "Group call selected."
-                        );
-
-                    }
-
-                }
-            );
-
-
-        /* Group management */
-
-        document
-            .getElementById(
-                "closeGroupManage"
-            )
-            ?.addEventListener(
-                "click",
-                function () {
-
-                    document
-                        .getElementById(
-                            "groupManageModal"
-                        )
-                        ?.classList.remove(
-                            "open"
-                        );
-
-                }
-            );
-
-
-        document
-            .getElementById(
-                "addGroupMemberBtn"
-            )
-            ?.addEventListener(
-                "click",
-                addGroupMember
-            );
-
-
-        document
-            .getElementById(
-                "removeGroupMemberBtn"
-            )
-            ?.addEventListener(
-                "click",
-                removeGroupMember
-            );
-
-
-        document
-            .getElementById(
-                "leaveGroupBtn"
-            )
-            ?.addEventListener(
-                "click",
-                leaveGroup
-            );
-
-
-        document
-            .getElementById(
-                "deleteGroupBtn"
-            )
-            ?.addEventListener(
-                "click",
-                deleteGroup
-            );
-
-
-        /* Dynamic profile/request buttons */
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                const profileBtn =
-                    event.target.closest(
-                        ".profile-user-btn"
-                    );
-
-
-                if (profileBtn) {
-
-                    const user =
-                        users.find(
-                            u =>
-                                u.id ===
-                                profileBtn.dataset.id
-                        );
-
-
-                    if (user) {
-
-                        showUserProfile(
-                            user
-                        );
-
-                    }
-
-                    return;
-
-                }
-
-
-                const requestBtn =
-                    event.target.closest(
-                        ".request-user-btn"
-                    );
-
-
-                if (requestBtn) {
-
-                    sendRequest(
-                        requestBtn.dataset.id
-                    );
-
-                    return;
-
-                }
-
-
-                const acceptBtn =
-                    event.target.closest(
-                        ".accept-request"
-                    );
-
-
-                if (acceptBtn) {
-
-                    acceptRequest(
-                        acceptBtn.dataset.id
-                    );
-
-                    return;
-
-                }
-
-
-                const rejectBtn =
-                    event.target.closest(
-                        ".reject-request"
-                    );
-
-
-                if (rejectBtn) {
-
-                    rejectRequest(
-                        rejectBtn.dataset.id
-                    );
-
-                }
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       ACCEPT REQUEST
-    ===================================================== */
-
-    function acceptRequest(requestId) {
-
-        const request =
-            requests.find(
-                r =>
-                    r.id ===
-                    requestId
-            );
-
-
-        if (!request)
             return;
 
-
-        request.status =
-            "accepted";
+        }
 
 
-        localStorage.setItem(
-            REQUESTS_KEY,
-            JSON.stringify(requests)
-        );
+        try {
+
+            const constraints =
+                type === "video"
+                    ? {
+                        audio: true,
+                        video: true
+                    }
+                    : {
+                        audio: true,
+                        video: false
+                    };
 
 
-        createPrivateChat(
-            request.from
-        );
+            const stream =
+                await navigator
+                    .mediaDevices
+                    .getUserMedia(
+                        constraints
+                    );
 
 
-        renderRequests();
-        renderChats();
-
-    }
-
-
-    /* =====================================================
-       REJECT REQUEST
-    ===================================================== */
-
-    function rejectRequest(requestId) {
-
-        requests =
-            requests.filter(
-                r =>
-                    r.id !==
-                    requestId
+            alert(
+                type === "video"
+                    ? "Camera and microphone are ready. WebRTC call signaling is required for the other user to receive the call."
+                    : "Microphone is ready. WebRTC call signaling is required for the other user to receive the call."
             );
 
 
-        localStorage.setItem(
-            REQUESTS_KEY,
-            JSON.stringify(requests)
-        );
+            stream
+                .getTracks()
+                .forEach(
+                    function (track) {
+                        track.stop();
+                    }
+                );
 
 
-        renderRequests();
+        } catch (error) {
 
-    }
+            console.error(error);
 
-
-    /* =====================================================
-       ESCAPE HTML
-    ===================================================== */
-
-    function escapeHTML(value) {
-
-        return String(value)
-            .replaceAll(
-                "&",
-                "&amp;"
-            )
-            .replaceAll(
-                "<",
-                "&lt;"
-            )
-            .replaceAll(
-                ">",
-                "&gt;"
-            )
-            .replaceAll(
-                '"',
-                "&quot;"
-            )
-            .replaceAll(
-                "'",
-                "&#039;"
+            alert(
+                "Please allow microphone/camera permission."
             );
 
-    }
-
-
-    /* =====================================================
-       TIME
-    ===================================================== */
-
-    function formatTime(timestamp) {
-
-        return new Date(
-            timestamp
-        ).toLocaleTimeString(
-            [],
-            {
-                hour: "2-digit",
-                minute: "2-digit"
-            }
-        );
+        }
 
     }
 
@@ -10569,47 +10815,16 @@ document.addEventListener("DOMContentLoaded", function () {
        INITIALIZE
     ===================================================== */
 
-    function initializeChat() {
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
 
-        getElements();
+            generateAllEmojis();
 
-        setupEvents();
+            initializeChatFirebase();
 
-        renderChats();
-        renderRequests();
-        renderGroups();
-        loadProfile();
+        }
+    );
 
-    }
-
-
-    if (
-        document.readyState ===
-        "loading"
-    ) {
-
-        document.addEventListener(
-            "DOMContentLoaded",
-            initializeChat
-        );
-
-    }
-
-    else {
-
-        initializeChat();
-
-    }
-
-
-    /* =====================================================
-       GLOBAL FUNCTIONS
-    ===================================================== */
-
-    window.openJusticeNowChat =
-        openChatPage;
-
-    window.closeJusticeNowChat =
-        closeChatPage;
 
 })();
