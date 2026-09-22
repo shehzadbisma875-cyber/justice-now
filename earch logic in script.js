@@ -1,0 +1,569 @@
+[33mcommit e2de8acb22bcd826069b6144b327f2c121d769d0[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Tue Sep 22 02:41:55 2026 -0700
+
+    Aapka commit message yahan
+
+[33mcommit 92408e743a77c6ee460d30c0beff43b946f14bfc[m[33m ([m[1;31morigin/main[m[33m)[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Mon Sep 21 17:16:10 2026 -0700
+
+    Update chat module and topbar navigation
+
+[33mcommit 1a0cbfb335abb67a7a2c44a768fa2643b9ac9768[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Sun Sep 20 17:27:59 2026 -0700
+
+    Update chat module and topbar navigation
+
+[33mcommit 1fbc249a852e62e6c2c25e052abd9da51d14853d[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Sat Sep 19 19:18:01 2026 -0700
+
+    Update chat module and topbar navigation
+
+[33mcommit e6ba662a442a2efea6ee4160731435a897b50b61[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Sat Sep 19 17:17:49 2026 -0700
+
+    Added Google Sign-In and full chat system integration
+
+[33mcommit f5b01ef078531dd52524ae2b1c4efd432ed95796[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Sat Sep 19 17:13:57 2026 -0700
+
+    Fixed Firebase chat real-time messaging and user search
+
+[33mcommit 542e68b60097ff12b02f4b59a876ea337cfed679[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Fri Sep 18 17:57:06 2026 -0700
+
+    Fixed chat option issue
+
+[33mcommit 696d15b8859bbe6187fc028fdc8158ded77827ea[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Fri Sep 18 17:51:28 2026 -0700
+
+    Fixed chat option issue
+
+[33mcommit 16d5aea4bddf8a5e7cc954b5b660c63c9a6a9ed1[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Fri Sep 18 17:40:56 2026 -0700
+
+    Fixed Google Sign-In issue
+
+[33mcommit 3165af5970ff74b476e9452dfa806abf12d65e1e[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Fri Sep 18 17:33:30 2026 -0700
+
+    Integrated TikTok style custom chat UI and real-time request badge counter
+
+[33mcommit 8faf8633ee2a9cd809f41e5dbb23d0873cae2e6e[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Fri Sep 18 17:13:44 2026 -0700
+
+    Removed dummy google alert and fixed auth
+
+[33mcommit 14b4d82ea695d8b7d7268e9e288fffbb7f015e6f[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Fri Sep 18 17:09:13 2026 -0700
+
+    Fixed Google Sign In issue
+
+[33mcommit 093facefbf16c8498e5c12734cbf223c6703b2ce[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Fri Sep 18 16:29:38 2026 -0700
+
+    Fixed chat bottom UI and syntax errors
+
+[33mcommit ca2cbea95c800be82f3b6cd3b9dda83d1dbd1db5[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 17 16:45:32 2026 -0700
+
+    Integrated TikTok style custom chat UI and real-time request badge counter
+
+[33mcommit 40d42a107a73cc0198fd166ce96d720604311f45[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 17 16:35:05 2026 -0700
+
+    Fixed profile image persistence and chat button interaction
+
+[33mcommit 8d3b49c5a2cc0f0436b25e7a0d564b6f7692f7b4[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 17 16:28:08 2026 -0700
+
+    Added 1-message chat request and accept logic
+
+[33mcommit ba11d7f51a5ded58c96636e9c281d9e031e6b682[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 17 16:20:53 2026 -0700
+
+    Fix profile picture save, auto login, and chat button functionality
+
+[33mcommit 8bb8e48258325cead79ce3bf3d40095bec84fc3f[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 17 16:06:18 2026 -0700
+
+    Fixed profile picture persistence and working search chat button navigation
+
+[33mcommit 2e527ded72c4edba8e409e709640b62f9cd4a1b5[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 17 16:03:33 2026 -0700
+
+    Fixed permanent profile photo save, search photo display and working chat button
+
+[33mcommit c0dfd24343586825a8a1dce77aeda55375729cf0[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 17 15:56:54 2026 -0700
+
+    Added safe null check for chat button and global click delegation
+
+[33mcommit 013955c9b55e0e1bcb50845351b7b9d74309af8e[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 17 15:49:35 2026 -0700
+
+    Fixed null reference error on liveChatTopButton in script.js
+
+[33mcommit 58c5bedd2dc7443da745fdb6a56cd7c2636d49bd[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 17 15:45:03 2026 -0700
+
+    Fixed full firebase script stability, photo URL check and event listeners
+
+[33mcommit 39e07879d2e34a3c29055c778c701d40eeb598f1[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 17 15:42:03 2026 -0700
+
+    Fixed blank page crash by updating script type and module bindings
+
+[33mcommit 3fdb329df4dac9938ac407dee7ef6042002bfefa[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 17 15:40:39 2026 -0700
+
+    Fixed blank page crash by updating script type and module bindings
+
+[33mcommit 366a9b3a15f99a9b544a206e9f164ad3509e4ea1[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 17 15:38:18 2026 -0700
+
+    Fixed script loading and global module references to unblock UI
+
+[33mcommit d7fe46e8d950e8e675b64f279efd179bbe22eb11[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 17 15:36:26 2026 -0700
+
+    Fixed page crash, profile image saving, and search UI
+
+[33mcommit aacd85517d4dda92fe87eb37e34d0dbad60ff4eb[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 17 15:28:50 2026 -0700
+
+    Fixed image upload base64 encoding and chat button click handler
+
+[33mcommit 88c6a379588611f705b4be647992005a070058a4[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 17 15:22:08 2026 -0700
+
+    Fixed user photo loading and chat button click handler
+
+[33mcommit e3c905943b8c4105be3cbd411839f1ff5d4b6eed[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 17 15:07:20 2026 -0700
+
+    Fixed user search logic and integrated chat functionality
+
+[33mcommit c73ef7d03c65757753c0482488742d87faf01215[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 17 15:03:59 2026 -0700
+
+    Fixed search keydown binding using event delegation
+
+[33mcommit b27a7f30a7ce2dc68bcf61992a18c44ba71c74c6[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 17 04:26:19 2026 -0700
+
+    Fixed enter key event and UI container target
+
+[33mcommit 4e91a705d038be4a54b6e2f95a28d862f244a77a[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 17 04:21:56 2026 -0700
+
+    Updated search logic to display user card UI on screen
+
+[33mcommit 77c5840b53c0aa4e09039667a3c66b59da3028bf[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 17 04:16:16 2026 -0700
+
+    Updated search logic to match username and name
+
+[33mcommit 70f71b26481583fb4de98f4c3e5b4ff5237c0d2c[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 17 04:10:02 2026 -0700
+
+    Connected search input with Firebase user search function
+
+[33mcommit 7e11ca8b1d3f23af1578850854d3efeaae2ae6e8[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 17 04:03:09 2026 -0700
+
+    Added save profile and search user logic
+
+[33mcommit 40163d4731d78e438990ca207387b6aed243f07b[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 17 03:36:47 2026 -0700
+
+    Fixed code blank page and added firestore profile save logic
+
+[33mcommit 6558315977c52a7dda2d228e9fed82f8aed71a09[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 17 03:31:32 2026 -0700
+
+    Added Firestore profile creation code on login
+
+[33mcommit e6bb29b9ee477995dacf5f135a248fb3c837ce3f[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Wed Sep 16 17:29:17 2026 -0700
+
+    Fixed and updated chat option
+
+[33mcommit 57f3b78797d2d7b8d4ee49892d287bc2eae2c496[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Wed Sep 16 17:26:23 2026 -0700
+
+    Save profile data to Firestore
+
+[33mcommit 266660323321dd6b7779f0dadcd0ab17170f7260[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Wed Sep 16 17:18:56 2026 -0700
+
+    Fixed and updated chat option
+
+[33mcommit 84ab9cc62e2d3b9bc3eba1496c569701964bf3b7[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Wed Sep 16 17:08:55 2026 -0700
+
+    Added profile and chat code from ChatGPT
+
+[33mcommit a89f7408c9134f2caf715cbb67c87aaf093253fa[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Tue Sep 15 15:50:32 2026 -0700
+
+    Updated and fixed chat functionality
+
+[33mcommit 25e332d04e6261c472aca2c7f95df0de5c3fe429[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Tue Sep 15 15:42:05 2026 -0700
+
+    Updated and fixed chat functionality
+
+[33mcommit f23a301b2198610a3014272d70c1b093d62d204f[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Tue Sep 15 15:32:32 2026 -0700
+
+    Updated and fixed chat functionality
+
+[33mcommit 8c3e78fbd7163e4f00db1580a591061faf28c94f[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Mon Sep 14 16:10:56 2026 -0700
+
+    Fixed Google sign-in, sign-in form, and forget password code
+
+[33mcommit 3d7d8da44f97c016f40a4be97267e3219c93a520[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Mon Sep 14 16:06:29 2026 -0700
+
+    Fixed Google sign-in, sign-in form, and forget password code
+
+[33mcommit 3f37ba07ab1225f6429fd5a218c8bdd3bade079e[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Mon Sep 14 15:47:55 2026 -0700
+
+    Fixed Google sign-in, sign-in form, and forget password code
+
+[33mcommit fb4ec3500fccb3d7a347b481fb47bf16efd036db[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Mon Sep 14 15:36:27 2026 -0700
+
+    Removed extra duplicate google button
+
+[33mcommit ae0c1fedb60c7324199b717ad170ece92e2c6dbb[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Sun Sep 13 15:52:11 2026 -0700
+
+    Updated sign in sign up and google authentication functionality
+
+[33mcommit 9979267509d7a5ef93cef105ad3019c053e3ace8[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Sun Sep 13 15:48:50 2026 -0700
+
+    Fix 404 error by correcting destination page filename
+
+[33mcommit bad206593cd2a2a8d536e97a77bc95095bdbb31a[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Sun Sep 13 15:17:02 2026 -0700
+
+    Fix 404 error by correcting destination page filename
+
+[33mcommit a8bc05c4613aca396d5597edabe73bb93aa2cf64[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Sun Sep 13 15:08:13 2026 -0700
+
+    Redirect user immediately after Google sign in
+
+[33mcommit 6552dd351b279ff604139eed77460fa3de85d61e[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Sat Sep 12 15:57:07 2026 -0700
+
+    Update redirect target page
+
+[33mcommit f9ef32b37ad857f4524dc83841dad4f1592b27dd[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Sat Sep 12 15:54:51 2026 -0700
+
+    Fix duplicate getAuth declaration
+
+[33mcommit 879faaeb6ea3c9e796c5c7939ff653b85c303629[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Sat Sep 12 15:53:11 2026 -0700
+
+    Fix duplicate getAuth declaration
+
+[33mcommit d3ec9cf1318c045b77bdb494c37ecbf60cecb250[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Sat Sep 12 15:47:26 2026 -0700
+
+    Add console log and redirect for email password login
+
+[33mcommit 2cf28ded932e75b1643486b99d30bed7ae826314[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Fri Sep 11 17:14:59 2026 -0700
+
+    Direct redirect on sign in and persistent login session
+
+[33mcommit 0bead829e80a2b908c211ae0c138223d79971ee0[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Fri Sep 11 17:10:17 2026 -0700
+
+    Add auto redirect on login page if user session exists
+
+[33mcommit 9c5499a4ef234a29b0a2eb327c81625c1c82d01b[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Fri Sep 11 17:08:23 2026 -0700
+
+    Auto login system updated
+
+[33mcommit be1b0aad8625e36f911eca384a515329013a10cc[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Fri Sep 11 16:56:24 2026 -0700
+
+    Fix blank screen issue on dashboard
+
+[33mcommit 941688423ae03c668cafcc4d0e5aeb2e606afbf0[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Fri Sep 11 16:52:49 2026 -0700
+
+    Fix script tags and clear cache
+
+[33mcommit 27b20bed8e123a3d7baa0e3b6ec48d77b68f317c[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Fri Sep 11 16:48:50 2026 -0700
+
+    Wrap dashboard script inside module script tags
+
+[33mcommit 70e2ecbe6920eec87d33fd4e6ffc415c9402629a[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Fri Sep 11 16:45:34 2026 -0700
+
+    Fix auto sign in persistence and redirect flow
+
+[33mcommit 1bb50defac4aded162cc7392076a07186576bdc9[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 10 17:46:12 2026 -0700
+
+    Fix duplicate variable error without removing code
+
+[33mcommit c7f471fc86c962db4360db99ceb8a828f35ede2d[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 10 17:26:33 2026 -0700
+
+    Add redirection after google sign in
+
+[33mcommit 6a050e997194e2618c5c6661b7a99a5a32634743[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 10 17:23:07 2026 -0700
+
+    Add redirection after google sign in
+
+[33mcommit 88fb08d30c89e09216380b25f28a2d1de30365fa[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 10 17:17:56 2026 -0700
+
+    Added final working firebase keys
+
+[33mcommit eed8f918f7d5c68cffdb75b2d9e8d46e525551fd[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 10 17:04:24 2026 -0700
+
+    Update API key and config
+
+[33mcommit 072872a897c3be311e3f2dc77a4cc26b92e26057[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 10 16:54:50 2026 -0700
+
+    Fix module script error
+
+[33mcommit 32cebfe061705bfb495811918747186d29798533[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Thu Sep 10 16:51:33 2026 -0700
+
+    Fix Google sign in popup
+
+[33mcommit 5519a1df17f8ce7d2cdf86ed7e1e2e60f97558c5[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Tue Sep 8 17:55:22 2026 -0700
+
+    Updated Google Sign-In logic and fixed link
+
+[33mcommit 655041d564e1466d5ccd5f7957248e53855cc792[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Tue Sep 8 17:46:37 2026 -0700
+
+    Added Forget Password, Sign Up pages, and fixed Sign In layout
+
+[33mcommit 6f16458cca090841a13839dd29e26cd0a1628df0[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Tue Sep 8 17:41:16 2026 -0700
+
+    Added Forget Password, Sign Up pages, and fixed Sign In layout
+
+[33mcommit 0e711e481596f2c9a6f5e38cc066ccca2e23d4a7[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Mon Sep 7 17:09:42 2026 -0700
+
+    Fixed navigation links and layout matching screenshot exact view
+
+[33mcommit f66fb6c9feac418e76bbb29cbb103dc9f55303e0[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Mon Sep 7 17:06:55 2026 -0700
+
+    Added invalid email/password validation message
+
+[33mcommit b9ecd67bce360f6277d853c222398ebf65658951[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Mon Sep 7 16:25:26 2026 -0700
+
+    Restored original layout and fixed page navigation
+
+[33mcommit dca454cd4c29661af98dce04333de2a940ced914[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Mon Sep 7 16:24:37 2026 -0700
+
+    Restored original layout and fixed page navigation
+
+[33mcommit 0f4b4522226198e19183ac68be2cf1f7744b6212[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Mon Sep 7 16:23:36 2026 -0700
+
+    Restored original layout and fixed page navigation
+
+[33mcommit f8b78cab071b421f1e1606f90c6fe21fce610556[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Mon Sep 7 16:21:25 2026 -0700
+
+    Restored original layout and fixed page navigation
+
+[33mcommit ed8905e4fdaeda4d5e0de664cbf96ca020688f6d[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Mon Sep 7 16:18:10 2026 -0700
+
+    Restored original layout and fixed page navigation
+
+[33mcommit ea59e7f423413de7a8ce2001aeb5e5a55be0f253[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Sun Sep 6 17:45:39 2026 -0700
+
+    Fixed home-content wrapper display layout
+
+[33mcommit 1ce58556d1dfa8eb668aee55d86956ab2c6d54b0[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Sun Sep 6 17:40:43 2026 -0700
+
+    Added 4 detailed articles for AdSense
+
+[33mcommit ea445c374c78ab27d934c7abb88ea53fdef9b383[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Sun Sep 6 17:40:20 2026 -0700
+
+    Cleaned up footer structure and home navigation link
+
+[33mcommit e2fbb0e2941731651d84488ebb513f8421425eb7[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Sun Sep 6 17:32:45 2026 -0700
+
+    Removed duplicate legal section
+
+[33mcommit 3864df63a663b50a747597d54f5e580b46c3faf3[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Sun Sep 6 17:31:03 2026 -0700
+
+    Removed duplicate legal section
+
+[33mcommit fb15e617d8fcfe6aa3c958066aef60d878dcd6f2[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Sun Sep 6 17:24:45 2026 -0700
+
+    Cleaned up footer structure and home navigation link
+
+[33mcommit f57fbedbd3d123bbf95f62c76e956d0cb466eb9a[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Sun Sep 6 17:07:54 2026 -0700
+
+    Added Header navigation and legal content section
+
+[33mcommit 1934feb268c01e04e9226be338af0f76d373851b[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Sun Sep 6 17:02:19 2026 -0700
+
+    Updated real email address
+
+[33mcommit 02d7af737e1177922a5768bc219b9e0ff513d3a2[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Sun Sep 6 16:53:59 2026 -0700
+
+    Fixed policy pages layout and styling
+
+[33mcommit 26234083e4160f0dcac98227763998ff5c259aea[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Sun Sep 6 16:47:52 2026 -0700
+
+    Added footer links
+
+[33mcommit 9ded3742a0e640c52048989c41efeecbe7fa1368[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Sun Sep 6 16:44:47 2026 -0700
+
+    Fixed About Us layout alignment
+
+[33mcommit 5ec28ce57295833aaacdeecd5ad5b647c087de14[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Sun Sep 6 16:40:39 2026 -0700
+
+    Added Privacy Policy, Terms, and Contact pages
+
+[33mcommit 8799822991393653bbc5a954429c18ca999b8d41[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Sun Sep 6 16:26:24 2026 -0700
+
+    Added signin validation
+
+[33mcommit 8e9bef89869b8009e82b195d1a410f667a2902fa[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Sun Sep 6 16:24:58 2026 -0700
+
+    Fixed tag and updated About Us
+
+[33mcommit d68efb4f64e1e6ca36bd508b9a05c4af45e3e833[m
+Author: unknown <shehzadbisma875@gmail.com>
+Date:   Sun Sep 6 15:41:38 2026 -0700
+
+    First commit
