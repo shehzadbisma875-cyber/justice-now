@@ -9639,34 +9639,33 @@ document.addEventListener("DOMContentLoaded", function () {
     renderGroups();
 
 })();
-const searchInput = document.getElementById('searchInput');
+const searchInput = document.getElementById('jnUserSearchInput');
 
 if (searchInput) {
-    searchInput.addEventListener('input', async (e) => {
+    searchInput.addEventListener('input', (e) => {
         const searchText = e.target.value.trim().toLowerCase();
-        
-        if (!searchText) {
-            renderSearchResults([]); // Clear list
+
+        if (searchText === "") {
+            renderSearchResults([]); // Clear search list
             return;
         }
 
-        try {
-            // Case 1: Search by 'username'
-            const usernameSnapshot = await db.collection("users")
-                .where("username", ">=", searchText)
-                .where("username", "<=", searchText + "\uf8ff")
-                .get();
-
-            let matchedUsers = [];
-            usernameSnapshot.forEach(doc => {
-                matchedUsers.push({ id: doc.id, ...doc.data() });
-            });
-
-            console.log("Matched Users:", matchedUsers);
-            renderSearchResults(matchedUsers);
-
-        } catch (error) {
-            console.error("Search failed:", error);
-        }
+        // Firestore Query (username field par search)
+        db.collection("users")
+          .where("username", ">=", searchText)
+          .where("username", "<=", searchText + "\uf8ff")
+          .get()
+          .then((querySnapshot) => {
+              let userList = [];
+              querySnapshot.forEach((doc) => {
+                  userList.push({ id: doc.id, ...doc.data() });
+              });
+              
+              console.log("Found users:", userList);
+              renderSearchResults(userList);
+          })
+          .catch((error) => {
+              console.error("Search Error: ", error);
+          });
     });
 }
