@@ -9730,3 +9730,120 @@ function resetSearchState() {
         `;
     }
 }
+// Global variable to cache users list
+let cachedUsersList = [];
+
+// 1. App start hotay hi ya page load par Firestore se users fetch karein
+async function loadAllUsersForSearch() {
+    try {
+        const snapshot = await db.collection("users").get();
+        cachedUsersList = [];
+        
+        snapshot.forEach((doc) => {
+            cachedUsersList.push({ id: doc.id, ...doc.data() });
+        });
+        console.log("Total users loaded for search:", cachedUsersList.length);
+    } catch (error) {
+        console.error("Error loading users:", error);
+    }
+}
+
+// Page load hone par runs automatically
+document.addEventListener("DOMContentLoaded", () => {
+    loadAllUsersForSearch();
+});
+
+// 2. Search Input Event Listener
+searchInput = document.getElementById('jnUserSearchInput');
+
+if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+        const searchText = e.target.value.trim().toLowerCase();
+
+        // Agar search box khali ho to reset kar dein
+        if (searchText === "") {
+            resetSearchState();
+            return;
+        }
+
+        // Agar cached list khali ho (pehle fetch na hui ho) to dobara load karein
+        if (cachedUsersList.length === 0) {
+            loadAllUsersForSearch();
+        }
+
+        // Search logic: Check across username, profileName, name, and email (Case Insensitive)
+        const matchedUsers = cachedUsersList.filter(user => {
+            const username = (user.username || "").toLowerCase();
+            const profileName = (user.profileName || "").toLowerCase();
+            const name = (user.name || "").toLowerCase();
+            const email = (user.email || "").toLowerCase();
+
+            return username.includes(searchText) || 
+                   profileName.includes(searchText) || 
+                   name.includes(searchText) || 
+                   email.includes(searchText);
+        });
+
+        console.log("Matched Users Found:", matchedUsers);
+        renderSearchResults(matchedUsers);
+    });
+}
+
+// 3. UI Render Function (Aapke Container ID 'jnSearchResults' ke mutabiq)
+function renderSearchResults(users) {
+    const resultsContainer = document.getElementById('jnSearchResults');
+    if (!resultsContainer) return;
+
+    resultsContainer.innerHTML = ''; // Clear existing content
+
+    if (users.length === 0) {
+        resultsContainer.innerHTML = `
+            <div class="jn-empty-state">
+                <span>⚠️</span>
+                <h3>No user found</h3>
+                <p>No matching profile found with that name.</p>
+            </div>
+        `;
+        return;
+    }
+
+    users.forEach(user => {
+        const userCard = document.createElement('div');
+        userCard.className = 'jn-user-card';
+        userCard.style.cssText = "padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; align-items: center; gap: 10px;";
+
+        const displayName = user.username || user.profileName || user.name || "User";
+        const displaySub = user.email || user.username || "";
+
+        userCard.innerHTML = `
+            <div class="user-details">
+                <h4 style="margin:0; font-size:15px; color:#333;">${displayName}</h4>
+                ${displaySub ? `<small style="color:#777;">${displaySub}</small>` : ''}
+            </div>
+        `;
+
+        // Click event to start chat
+        userCard.addEventListener('click', () => {
+            console.log("Selected User:", user);
+            if (typeof openChatWithUser === 'function') {
+                openChatWithUser(user);
+            }
+        });
+
+        resultsContainer.appendChild(userCard);
+    });
+}
+
+// 4. Empty State Reset Function
+function resetSearchState() {
+    const resultsContainer = document.getElementById('jnSearchResults');
+    if (resultsContainer) {
+        resultsContainer.innerHTML = `
+            <div class="jn-empty-state">
+                <span>🔍</span>
+                <h3>Search for a user</h3>
+                <p>Enter a username or profile name above.</p>
+            </div>
+        `;
+    }
+}
