@@ -9639,3 +9639,25 @@ document.addEventListener("DOMContentLoaded", function () {
     renderGroups();
 
 })();
+const searchText = document.getElementById('searchInput').value.trim().toLowerCase();
+
+if (searchText !== "") {
+    // Note: Yahan field name 'username' use karein
+    db.collection("users")
+      .where("username", ">=", searchText)
+      .where("username", "<=", searchText + "\uf8ff")
+      .get()
+      .then((querySnapshot) => {
+        // CHECK 2: Dekhein kitne documents match hue
+          console.log("Total matched docs:", querySnapshot.size);
+          let userList = [];
+          querySnapshot.forEach((doc) => {
+              userList.push({ id: doc.id, ...doc.data() });
+          });
+          console.log("Found Users:", userList);
+          renderSearchResults(userList);
+      })
+      .catch((error) => {
+          console.error("Firebase Search Error: ", error);
+      });
+}
