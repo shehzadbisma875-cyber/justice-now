@@ -9730,120 +9730,88 @@ function resetSearchState() {
         `;
     }
 }
-// Global variable to cache users list
-let cachedUsersList = [];
+// Global Cached Users List
+let jnCachedUsers = [];
 
-// 1. App start hotay hi ya page load par Firestore se users fetch karein
-async function loadAllUsersForSearch() {
+// 1. Users list fetch function
+async function jnFetchAllUsers() {
     try {
         const snapshot = await db.collection("users").get();
-        cachedUsersList = [];
-        
-        snapshot.forEach((doc) => {
-            cachedUsersList.push({ id: doc.id, ...doc.data() });
+        jnCachedUsers = [];
+        snapshot.forEach(doc => {
+            jnCachedUsers.push({ id: doc.id, ...doc.data() });
         });
-        console.log("Total users loaded for search:", cachedUsersList.length);
-    } catch (error) {
-        console.error("Error loading users:", error);
+        console.log("Search system loaded users:", jnCachedUsers.length);
+    } catch (err) {
+        console.error("Firestore user fetch error:", err);
     }
 }
 
-// Page load hone par runs automatically
-document.addEventListener("DOMContentLoaded", () => {
-    loadAllUsersForSearch();
-});
-
-// 2. Search Input Event Listener
-searchInput = document.getElementById('jnUserSearchInput');
-
-if (searchInput) {
-    searchInput.addEventListener('input', (e) => {
+// 2. Global Event Listener using Delegation (Taaki HTML load hone ke baad bhi trigger ho)
+document.addEventListener('input', function (e) {
+    if (e.target && e.target.id === 'jnUserSearchInput') {
         const searchText = e.target.value.trim().toLowerCase();
+        const resultsContainer = document.getElementById('jnSearchResults');
 
-        // Agar search box khali ho to reset kar dein
+        if (!resultsContainer) return;
+
+        // Reset state agar input khali ho
         if (searchText === "") {
-            resetSearchState();
+            resultsContainer.innerHTML = `
+                <div class="jn-empty-state">
+                    <span>🔍</span>
+                    <h3>Search for a user</h3>
+                    <p>Enter a username or profile name above.</p>
+                </div>`;
             return;
         }
 
-        // Agar cached list khali ho (pehle fetch na hui ho) to dobara load karein
-        if (cachedUsersList.length === 0) {
-            loadAllUsersForSearch();
+        // Search in cached data
+        const matched = jnCachedUsers.filter(user => {
+            const uName = (user.username || "").toLowerCase();
+            const pName = (user.profileName || "").toLowerCase();
+            const email = (user.email || "").toLowerCase();
+            return uName.includes(searchText) || pName.includes(searchText) || email.includes(searchText);
+        });
+
+        // Display results
+        if (matched.length === 0) {
+            resultsContainer.innerHTML = `
+                <div class="jn-empty-state">
+                    <span>⚠️</span>
+                    <h3>No user found</h3>
+                    <p>No matching profile found with that name.</p>
+                </div>`;
+            return;
         }
 
-        // Search logic: Check across username, profileName, name, and email (Case Insensitive)
-        const matchedUsers = cachedUsersList.filter(user => {
-            const username = (user.username || "").toLowerCase();
-            const profileName = (user.profileName || "").toLowerCase();
-            const name = (user.name || "").toLowerCase();
-            const email = (user.email || "").toLowerCase();
+        resultsContainer.innerHTML = '';
+        matched.forEach(user => {
+            const displayName = user.username || user.profileName || user.name || "User";
+            const subTitle = user.email || user.username || "";
 
-            return username.includes(searchText) || 
-                   profileName.includes(searchText) || 
-                   name.includes(searchText) || 
-                   email.includes(searchText);
-        });
-
-        console.log("Matched Users Found:", matchedUsers);
-        renderSearchResults(matchedUsers);
-    });
-}
-
-// 3. UI Render Function (Aapke Container ID 'jnSearchResults' ke mutabiq)
-function renderSearchResults(users) {
-    const resultsContainer = document.getElementById('jnSearchResults');
-    if (!resultsContainer) return;
-
-    resultsContainer.innerHTML = ''; // Clear existing content
-
-    if (users.length === 0) {
-        resultsContainer.innerHTML = `
-            <div class="jn-empty-state">
-                <span>⚠️</span>
-                <h3>No user found</h3>
-                <p>No matching profile found with that name.</p>
-            </div>
-        `;
-        return;
-    }
-
-    users.forEach(user => {
-        const userCard = document.createElement('div');
-        userCard.className = 'jn-user-card';
-        userCard.style.cssText = "padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; align-items: center; gap: 10px;";
-
-        const displayName = user.username || user.profileName || user.name || "User";
-        const displaySub = user.email || user.username || "";
-
-        userCard.innerHTML = `
-            <div class="user-details">
+            const userCard = document.createElement('div');
+            userCard.className = 'jn-user-card';
+            userCard.style.cssText = "padding: 12px; border-bottom: 1px solid #eee; cursor: pointer;";
+            userCard.innerHTML = `
                 <h4 style="margin:0; font-size:15px; color:#333;">${displayName}</h4>
-                ${displaySub ? `<small style="color:#777;">${displaySub}</small>` : ''}
-            </div>
-        `;
+                ${subTitle ? `<small style="color:#777;">${subTitle}</small>` : ''}
+            `;
 
-        // Click event to start chat
-        userCard.addEventListener('click', () => {
-            console.log("Selected User:", user);
-            if (typeof openChatWithUser === 'function') {
-                openChatWithUser(user);
-            }
+            userCard.addEventListener('click', () => {
+                if (typeof openChatWithUser === 'function') {
+                    openChatWithUser(user);
+                }
+            });
+
+            resultsContainer.appendChild(userCard);
         });
-
-        resultsContainer.appendChild(userCard);
-    });
-}
-
-// 4. Empty State Reset Function
-function resetSearchState() {
-    const resultsContainer = document.getElementById('jnSearchResults');
-    if (resultsContainer) {
-        resultsContainer.innerHTML = `
-            <div class="jn-empty-state">
-                <span>🔍</span>
-                <h3>Search for a user</h3>
-                <p>Enter a username or profile name above.</p>
-            </div>
-        `;
     }
+});
+
+// Init on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', jnFetchAllUsers);
+} else {
+    jnFetchAllUsers();
 }
