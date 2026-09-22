@@ -355,7 +355,7 @@
     <div class="header-actions">
 
          
-<button id="chatTopBtn" class="jn-home-chat-btn" type="button">
+<button type="button" id="openChatBtn" class="jn-chat-top-btn">
     💬 Chat
 </button>
         <div class="menu-wrapper">
@@ -2316,517 +2316,558 @@
 
 <!-- =========================================================
      JUSTICE NOW CHAT
-     PASTE THIS WHERE YOUR EXISTING CHAT PLACEHOLDER IS
+     ADD THIS SECTION AFTER YOUR HOME PAGE
 ========================================================= -->
 
-<section id="chatSection" class="jn-chat-page" style="display:none;">
+<section id="justiceChatPage" class="jn-chat-page">
 
-    <div class="jn-chat-container">
+    <!-- CHAT HEADER -->
+    <header class="jn-chat-header">
 
-        <!-- CHAT HEADER -->
-        <header class="jn-chat-header">
+        <div class="jn-chat-brand">
+
+            <div class="jn-chat-logo">⚖</div>
 
             <div>
-                <h1>💬 Chat</h1>
-                <p>Connect and communicate securely</p>
+                <h2>Justice Now Chat</h2>
+                <span>Private &amp; Secure Communication</span>
             </div>
 
-            <button id="closeChatBtn" class="jn-close-chat">
-                ✕
+        </div>
+
+        <button type="button" id="closeChatBtn" class="jn-chat-close">
+            ✕
+        </button>
+
+    </header>
+
+
+    <!-- CHAT BODY -->
+    <div class="jn-chat-layout">
+
+        <!-- SIDEBAR -->
+        <aside class="jn-chat-sidebar">
+
+            <button
+                type="button"
+                class="jn-sidebar-btn active"
+                data-chat-view="profile">
+                <span>👤</span>
+                <strong>My Profile</strong>
             </button>
 
-        </header>
-
-
-        <!-- CHAT NAVIGATION -->
-        <nav class="jn-chat-tabs">
-
-            <button class="jn-chat-tab active" data-chat-tab="chats">
-                💬 Chats
+            <button
+                type="button"
+                class="jn-sidebar-btn"
+                data-chat-view="search">
+                <span>🔍</span>
+                <strong>Search</strong>
             </button>
 
-            <button class="jn-chat-tab" data-chat-tab="requests">
-                👥 Requests
-                <span id="chatRequestCount">0</span>
+            <button
+                type="button"
+                class="jn-sidebar-btn"
+                data-chat-view="chats">
+                <span>💬</span>
+                <strong>Chat</strong>
             </button>
 
-            <button class="jn-chat-tab" data-chat-tab="groups">
-                👥 Groups
+            <button
+                type="button"
+                class="jn-sidebar-btn"
+                data-chat-view="groups">
+                <span>👥</span>
+                <strong>Group Chat</strong>
             </button>
 
-            <button class="jn-chat-tab" data-chat-tab="profile">
-                👤 My Profile
-            </button>
-
-        </nav>
+        </aside>
 
 
-        <!-- =================================================
-             CHATS
-        ================================================== -->
+        <!-- CONTENT -->
+        <main class="jn-chat-content">
 
-        <div id="chatChatsPage" class="jn-chat-page-content active">
+            <!-- PROFILE -->
+            <section
+                id="jnViewProfile"
+                class="jn-chat-view active">
 
-            <!-- USER SEARCH -->
+                <div class="jn-view-heading">
 
-            <div class="jn-user-search">
+                    <div>
+                        <h1>My Profile</h1>
+                        <p>Manage your Justice Now chat profile.</p>
+                    </div>
 
-                <div class="jn-search-input-wrap">
-
-                    <span>🔎</span>
-
-                    <input
-                        id="chatUsernameSearch"
-                        type="text"
-                        placeholder="Search username..."
-                        autocomplete="off"
-                    >
+                    <span class="jn-online-label">
+                        ● Account
+                    </span>
 
                 </div>
 
-                <button id="chatSearchBtn" class="jn-teal-btn">
-                    Search
-                </button>
 
-            </div>
+                <div class="jn-profile-card">
 
+                    <div class="jn-profile-picture-area">
 
-            <!-- SEARCH RESULT -->
-
-            <div id="chatSearchResult"></div>
-
-
-            <!-- CHAT BODY -->
-
-            <div class="jn-chat-body">
-
-                <!-- CHAT LIST -->
-
-                <aside class="jn-chat-list">
-
-                    <div class="jn-list-header">
-
-                        <h3>Chats</h3>
-
-                        <button
-                            id="newPrivateChatBtn"
-                            type="button">
-                            ＋
-                        </button>
-
-                    </div>
-
-                    <div id="privateChatList">
-
-                        <div class="jn-empty-chat">
-                            <div>💬</div>
-                            <h3>No chats yet</h3>
-                            <p>
-                                Search a username to start chatting.
-                            </p>
+                        <div
+                            id="jnProfilePreview"
+                            class="jn-profile-picture">
+                            <span>👤</span>
                         </div>
 
+                        <label
+                            for="jnProfileImageInput"
+                            class="jn-outline-btn">
+                            Change Picture
+                        </label>
+
+                        <input
+                            type="file"
+                            id="jnProfileImageInput"
+                            accept="image/*"
+                            hidden>
+
                     </div>
 
-                </aside>
+
+                    <div class="jn-profile-fields">
+
+                        <label>
+                            Username
+
+                            <input
+                                type="text"
+                                id="jnUsernameInput"
+                                placeholder="Enter username"
+                                autocomplete="off">
+                        </label>
 
 
-                <!-- MESSAGE AREA -->
+                        <label>
+                            Profile Name
 
-                <main class="jn-message-panel">
+                            <input
+                                type="text"
+                                id="jnProfileNameInput"
+                                placeholder="Enter profile name"
+                                autocomplete="off">
+                        </label>
 
-                    <!-- NO CHAT -->
 
-                    <div id="noChatSelected" class="jn-no-chat">
+                        <div class="jn-profile-actions">
 
-                        <div>💬</div>
+                            <button
+                                type="button"
+                                id="jnSaveProfile"
+                                class="jn-primary-btn">
+                                Save Profile
+                            </button>
 
-                        <h2>Select a chat</h2>
+                            <button
+                                type="button"
+                                id="jnDeleteProfile"
+                                class="jn-danger-btn">
+                                Delete Profile
+                            </button>
 
-                        <p>
-                            Select a conversation to start messaging.
+                        </div>
+
+
+                        <p
+                            id="jnProfileStatus"
+                            class="jn-status-text">
                         </p>
 
                     </div>
 
+                </div>
 
-                    <!-- ACTIVE CHAT -->
+            </section>
+
+
+            <!-- SEARCH -->
+            <section
+                id="jnViewSearch"
+                class="jn-chat-view">
+
+                <div class="jn-view-heading">
+
+                    <div>
+                        <h1>Search Users</h1>
+                        <p>
+                            Search by username or profile name.
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <div class="jn-search-box">
+
+                    <input
+                        type="search"
+                        id="jnUserSearchInput"
+                        placeholder="Search username or profile name..."
+                        autocomplete="off">
+
+                    <button
+                        type="button"
+                        id="jnSearchUserBtn"
+                        class="jn-primary-btn">
+                        🔍 Search
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="jnSearchResults"
+                    class="jn-search-results">
+
+                    <div class="jn-empty-state">
+                        <span>🔍</span>
+                        <h3>Search for a user</h3>
+                        <p>
+                            Enter a username or profile name above.
+                        </p>
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- CHATS -->
+            <section
+                id="jnViewChats"
+                class="jn-chat-view">
+
+                <div class="jn-view-heading">
+
+                    <div>
+                        <h1>Chats</h1>
+                        <p>Your private conversations.</p>
+                    </div>
+
+                    <button
+                        type="button"
+                        id="jnNewChatSearchBtn"
+                        class="jn-primary-btn">
+                        + New Chat
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="jnChatList"
+                    class="jn-conversation-list">
+                </div>
+
+            </section>
+
+
+            <!-- GROUPS -->
+            <section
+                id="jnViewGroups"
+                class="jn-chat-view">
+
+                <div class="jn-view-heading">
+
+                    <div>
+                        <h1>Group Chat</h1>
+                        <p>Create and manage your groups.</p>
+                    </div>
+
+                    <button
+                        type="button"
+                        id="jnCreateGroupBtn"
+                        class="jn-primary-btn">
+                        + Create Group
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="jnGroupList"
+                    class="jn-group-list">
+                </div>
+
+
+                <!-- CREATE GROUP -->
+
+                <div
+                    id="jnCreateGroupPanel"
+                    class="jn-create-group-panel">
+
+                    <div class="jn-modal-heading">
+
+                        <div>
+                            <h2>Create New Group</h2>
+                            <p>Add as many users as you want.</p>
+                        </div>
+
+                        <button
+                            type="button"
+                            id="jnCloseGroupPanel"
+                            class="jn-icon-btn">
+                            ✕
+                        </button>
+
+                    </div>
+
+
+                    <label>
+                        Group Name
+
+                        <input
+                            type="text"
+                            id="jnGroupNameInput"
+                            placeholder="Enter group name">
+                    </label>
+
+
+                    <div class="jn-group-picture-row">
+
+                        <div
+                            id="jnGroupPicturePreview"
+                            class="jn-group-picture">
+                            👥
+                        </div>
+
+                        <label
+                            for="jnGroupImageInput"
+                            class="jn-outline-btn">
+                            Choose Group Picture
+                        </label>
+
+                        <input
+                            type="file"
+                            id="jnGroupImageInput"
+                            accept="image/*"
+                            hidden>
+
+                    </div>
+
+
+                    <div class="jn-member-search">
+
+                        <label>
+                            Add Members by Username
+
+                            <input
+                                type="text"
+                                id="jnGroupMemberSearch"
+                                placeholder="Type username...">
+                        </label>
+
+                        <button
+                            type="button"
+                            id="jnAddGroupMemberBtn"
+                            class="jn-secondary-btn">
+                            + Add Member
+                        </button>
+
+                    </div>
+
 
                     <div
-                        id="activeChatPanel"
-                        class="jn-active-chat"
-                        style="display:none;">
-
-                        <!-- ACTIVE CHAT HEADER -->
-
-                        <div class="jn-active-chat-header">
-
-                            <div class="jn-active-user">
-
-                                <div
-                                    id="activeUserAvatar"
-                                    class="jn-chat-avatar">
-                                    U
-                                </div>
-
-                                <div>
-
-                                    <h3 id="activeUserName">
-                                        User
-                                    </h3>
-
-                                    <span id="activeUsername">
-                                        @username
-                                    </span>
-
-                                </div>
-
-                            </div>
+                        id="jnGroupMemberResults"
+                        class="jn-member-results">
+                    </div>
 
 
-                            <div class="jn-call-buttons">
+                    <div class="jn-selected-members">
 
-                                <button
-                                    id="voiceCallBtn"
-                                    title="Voice Call">
-                                    📞
-                                </button>
+                        <h3>Selected Members</h3>
 
-                                <button
-                                    id="videoCallBtn"
-                                    title="Video Call">
-                                    🎥
-                                </button>
+                        <div id="jnSelectedMembersList">
+                        </div>
 
-                                <button
-                                    id="userProfileBtn"
-                                    title="User Profile">
-                                    👤
-                                </button>
+                    </div>
 
-                                <button
-                                    id="chatMoreBtn"
-                                    title="More">
-                                    ⋮
-                                </button>
 
-                            </div>
+                    <button
+                        type="button"
+                        id="jnSaveGroupBtn"
+                        class="jn-primary-btn jn-full-btn">
+                        Save Group &amp; Open Chat
+                    </button>
+
+                </div>
+
+            </section>
+
+
+            <!-- MESSAGE -->
+            <section
+                id="jnViewMessages"
+                class="jn-chat-view jn-message-view">
+
+                <div class="jn-message-header">
+
+                    <button
+                        type="button"
+                        id="jnBackFromMessage"
+                        class="jn-icon-btn">
+                        ←
+                    </button>
+
+
+                    <div class="jn-message-user">
+
+                        <div
+                            id="jnMessageAvatar"
+                            class="jn-message-avatar">
+                            👤
+                        </div>
+
+                        <div>
+
+                            <h2 id="jnMessageTitle">
+                                Chat
+                            </h2>
+
+                            <p id="jnMessageStatus">
+                                Offline
+                            </p>
 
                         </div>
 
+                    </div>
 
-                        <!-- CHAT MENU -->
+
+                    <div class="jn-message-actions">
+
+                        <!-- CALL -->
+                        <button
+                            type="button"
+                            id="jnCallBtn"
+                            class="jn-icon-btn"
+                            title="Call">
+                            📞
+                        </button>
+
+
+                        <button
+                            type="button"
+                            id="jnMessageMenuBtn"
+                            class="jn-icon-btn"
+                            title="More">
+                            ⋮
+                        </button>
+
 
                         <div
-                            id="chatMoreMenu"
-                            class="jn-chat-more-menu"
-                            style="display:none;">
+                            id="jnMessageMenu"
+                            class="jn-message-menu">
 
-                            <button id="muteChatBtn">
-                                🔇 Mute
+                            <button
+                                type="button"
+                                data-menu-action="mute">
+                                🔕 Mute / On Notifications
                             </button>
 
-                            <button id="deleteChatBtn">
-                                🗑️ Delete Chat
+                            <button
+                                type="button"
+                                data-menu-action="delete-chat">
+                                🗑 Delete Chat
                             </button>
 
-                            <button id="blockUserBtn">
+                            <button
+                                type="button"
+                                data-menu-action="delete-messages">
+                                🧹 Delete My Messages
+                            </button>
+
+                            <button
+                                type="button"
+                                data-menu-action="block">
                                 🚫 Block User
                             </button>
 
-                            <button id="viewProfileBtn">
-                                👤 User Profile
-                            </button>
-
-                        </div>
-
-
-                        <!-- MESSAGES -->
-
-                        <div
-                            id="chatMessageList"
-                            class="jn-message-list">
-                        </div>
-
-
-                        <!-- TYPING -->
-
-                        <div
-                            id="chatTyping"
-                            class="jn-chat-typing"
-                            style="display:none;">
-                            typing...
-                        </div>
-
-
-                        <!-- COMPOSER -->
-
-                        <div class="jn-message-composer">
-
-                            <button
-                                id="chatEmojiBtn"
-                                title="Emoji">
-                                😊
-                            </button>
-
-                            <button
-                                id="chatPictureBtn"
-                                title="Picture">
-                                🖼️
-                            </button>
-
-                            <input
-                                id="chatPictureInput"
-                                type="file"
-                                accept="image/*"
-                                hidden
-                            >
-
-                            <button
-                                id="chatVoiceMessageBtn"
-                                title="Voice Message">
-                                🎤
-                            </button>
-
-                            <input
-                                id="chatMessageInput"
-                                type="text"
-                                placeholder="Write a message..."
-                                autocomplete="off"
-                            >
-
-                            <button
-                                id="chatSendBtn"
-                                class="jn-send-btn"
-                                title="Send">
-                                ➤
-                            </button>
-
-                        </div>
-
-
-                        <!-- EMOJI PANEL -->
-
-                        <div
-                            id="chatEmojiPanel"
-                            class="jn-emoji-panel"
-                            style="display:none;">
-
-                            <div class="jn-emoji-title">
-                                Emojis
-                            </div>
-
-                            <div
-                                id="allEmojiContainer"
-                                class="jn-all-emojis">
-                            </div>
-
-                        </div>
-
-
-                        <!-- VOICE RECORDER -->
-
-                        <div
-                            id="voiceRecorderBox"
-                            class="jn-voice-box"
-                            style="display:none;">
-
-                            <span>🔴 Recording</span>
-
-                            <span id="voiceRecordTime">
-                                00:00
-                            </span>
-
-                            <button id="cancelVoiceBtn">
-                                Cancel
-                            </button>
-
-                            <button id="sendVoiceBtn">
-                                Send
-                            </button>
-
                         </div>
 
                     </div>
 
-                </main>
-
-            </div>
-
-        </div>
-
-
-        <!-- =================================================
-             REQUESTS
-        ================================================== -->
-
-        <div
-            id="chatRequestsPage"
-            class="jn-chat-page-content">
-
-            <div class="jn-chat-heading">
-
-                <h2>👥 Requests</h2>
-
-                <p>
-                    Accept or reject connection requests.
-                </p>
-
-            </div>
-
-            <div id="chatRequestsList">
-
-                <div class="jn-empty-chat">
-                    <div>👥</div>
-                    <h3>No requests</h3>
-                    <p>No pending requests.</p>
                 </div>
 
-            </div>
 
-        </div>
+                <!-- MESSAGES -->
 
-
-        <!-- =================================================
-             GROUPS
-        ================================================== -->
-
-        <div
-            id="chatGroupsPage"
-            class="jn-chat-page-content">
-
-            <div class="jn-chat-heading jn-groups-heading">
-
-                <div>
-
-                    <h2>👥 Groups</h2>
-
-                    <p>
-                        Create groups and chat with multiple users.
-                    </p>
-
+                <div
+                    id="jnMessagesContainer"
+                    class="jn-messages-container">
                 </div>
 
-                <button
-                    id="createGroupBtn"
-                    class="jn-teal-btn">
-                    ＋ Create Group
-                </button>
 
-            </div>
+                <!-- COMPOSER -->
 
-
-            <div id="chatGroupsList">
-
-                <div class="jn-empty-chat">
-                    <div>👥</div>
-                    <h3>No groups yet</h3>
-                    <p>Create a group to start chatting.</p>
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!-- =================================================
-             MY PROFILE
-        ================================================== -->
-
-        <div
-            id="chatProfilePage"
-            class="jn-chat-page-content">
-
-            <div class="jn-chat-heading">
-
-                <h2>👤 My Profile</h2>
-
-                <p>
-                    Manage your Chat profile.
-                </p>
-
-            </div>
-
-
-            <div class="jn-my-profile">
-
-                <div class="jn-profile-photo">
-
-                    <div
-                        id="chatMyAvatar"
-                        class="jn-big-avatar">
-                        U
-                    </div>
-
-                    <button
-                        id="changeChatPictureBtn"
-                        class="jn-teal-btn">
-                        Change Picture
-                    </button>
+                <div class="jn-message-composer">
 
                     <input
-                        id="chatProfilePictureInput"
                         type="file"
+                        id="jnImageInput"
                         accept="image/*"
-                        hidden
-                    >
-
-                </div>
+                        hidden>
 
 
-                <div class="jn-profile-fields">
-
-                    <label>Username</label>
-
-                    <div class="jn-username-field">
-
-                        <span>@</span>
-
-                        <input
-                            id="chatMyUsername"
-                            type="text"
-                            placeholder="Username"
-                        >
-
-                    </div>
+                    <button
+                        type="button"
+                        id="jnImageBtn"
+                        class="jn-composer-btn"
+                        title="Send image">
+                        🖼
+                    </button>
 
 
-                    <label>Profile Name</label>
+                    <button
+                        type="button"
+                        id="jnEmojiBtn"
+                        class="jn-composer-btn"
+                        title="Emoji">
+                        😊
+                    </button>
+
+
+                    <!-- VOICE -->
+                    <button
+                        type="button"
+                        id="jnVoiceBtn"
+                        class="jn-composer-btn"
+                        title="Voice message">
+                        🎤
+                    </button>
+
 
                     <input
-                        id="chatMyProfileName"
                         type="text"
-                        placeholder="Profile name"
-                    >
-
-
-                    <label>Email</label>
-
-                    <input
-                        id="chatMyEmail"
-                        type="email"
-                        readonly
-                    >
+                        id="jnMessageInput"
+                        placeholder="Type a message..."
+                        autocomplete="off">
 
 
                     <button
-                        id="saveChatProfileBtn"
-                        class="jn-teal-btn">
-                        Save Profile
-                    </button>
-
-
-                    <button
-                        id="deleteChatAccountBtn"
-                        class="jn-delete-btn">
-                        🗑️ Delete Account / Username
+                        type="button"
+                        id="jnSendMessageBtn"
+                        class="jn-send-btn">
+                        ➤
                     </button>
 
                 </div>
 
-            </div>
 
-        </div>
+                <!-- EMOJI -->
+
+                <div
+                    id="jnEmojiPanel"
+                    class="jn-emoji-panel">
+                </div>
+
+            </section>
+
+        </main>
 
     </div>
 
@@ -2834,172 +2875,38 @@
 
 
 <!-- =========================================================
-     USER PROFILE MODAL
+     CALL WINDOW
 ========================================================= -->
 
-<div
-    id="chatUserProfileModal"
-    class="jn-modal"
-    style="display:none;">
+<div id="jnCallOverlay" class="jn-call-overlay">
 
-    <div class="jn-modal-card">
+    <div class="jn-call-box">
 
-        <button
-            id="closeChatUserProfile"
-            class="jn-modal-close">
-            ✕
-        </button>
-
-        <div
-            id="chatModalAvatar"
-            class="jn-modal-avatar">
-            U
+        <div id="jnCallAvatar" class="jn-call-avatar">
+            👤
         </div>
 
-        <h2 id="chatModalName">
-            User
-        </h2>
+        <h2 id="jnCallName">Calling...</h2>
 
-        <p id="chatModalUsername">
-            @username
-        </p>
+        <p id="jnCallStatus">Calling...</p>
 
-        <button
-            id="chatModalMessageBtn"
-            class="jn-teal-btn">
-            💬 Message
-        </button>
+        <div class="jn-call-controls">
 
-        <button
-            id="chatModalRequestBtn"
-            class="jn-teal-btn">
-            ➕ Send Request
-        </button>
+            <button
+                type="button"
+                id="jnMuteCallBtn"
+                class="jn-call-control">
+                🎤
+            </button>
 
-        <button
-            id="chatModalBlockBtn"
-            class="jn-delete-btn">
-            🚫 Block User
-        </button>
+            <button
+                type="button"
+                id="jnEndCallBtn"
+                class="jn-call-end">
+                📞
+            </button>
 
-    </div>
-
-</div>
-
-
-<!-- =========================================================
-     CREATE GROUP
-========================================================= -->
-
-<div
-    id="chatGroupModal"
-    class="jn-modal"
-    style="display:none;">
-
-    <div class="jn-modal-card jn-group-card">
-
-        <button
-            id="closeChatGroupModal"
-            class="jn-modal-close">
-            ✕
-        </button>
-
-        <h2>Create Group</h2>
-
-
-        <label>Group Name</label>
-
-        <input
-            id="chatGroupName"
-            type="text"
-            placeholder="Enter group name"
-        >
-
-
-        <label>Group Description</label>
-
-        <textarea
-            id="chatGroupDescription"
-            placeholder="Group description">
-        </textarea>
-
-
-        <h3>Select Members</h3>
-
-        <input
-            id="groupMemberSearch"
-            type="text"
-            placeholder="Search username..."
-        >
-
-
-        <div id="groupSearchResults">
         </div>
-
-
-        <h3>Selected Members</h3>
-
-        <div id="selectedGroupMembers">
-        </div>
-
-
-        <button
-            id="createGroupFinalBtn"
-            class="jn-teal-btn">
-            Create Group & Open Chat
-        </button>
-
-    </div>
-
-</div>
-
-
-<!-- =========================================================
-     GROUP MEMBER MANAGEMENT
-========================================================= -->
-
-<div
-    id="groupManageModal"
-    class="jn-modal"
-    style="display:none;">
-
-    <div class="jn-modal-card">
-
-        <button
-            id="closeGroupManageModal"
-            class="jn-modal-close">
-            ✕
-        </button>
-
-        <h2 id="manageGroupTitle">
-            Group Members
-        </h2>
-
-        <input
-            id="addGroupMemberSearch"
-            type="text"
-            placeholder="Search username to add..."
-        >
-
-        <div id="addGroupMemberResults">
-        </div>
-
-        <h3>Current Members</h3>
-
-        <div id="currentGroupMembers">
-        </div>
-
-        <button
-            id="leaveGroupBtn"
-            class="jn-delete-btn">
-            🚪 Leave Group
-        </button>
-
-        <button
-            id="deleteGroupBtn"
-            class="jn-delete-btn">
-            🗑️ Delete Group
-        </button>
 
     </div>
 
