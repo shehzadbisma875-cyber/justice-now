@@ -9639,33 +9639,94 @@ document.addEventListener("DOMContentLoaded", function () {
     renderGroups();
 
 })();
+// 1. Search Bar Event Listener
 const searchInput = document.getElementById('jnUserSearchInput');
 
 if (searchInput) {
-    searchInput.addEventListener('input', (e) => {
+    searchInput.addEventListener('input', async (e) => {
         const searchText = e.target.value.trim().toLowerCase();
 
+        // Agar input khali ho to default empty state wapas dikhayein
         if (searchText === "") {
-            renderSearchResults([]); // Clear search list
+            resetSearchState();
             return;
         }
 
-        // Firestore Query (username field par search)
-        db.collection("users")
-          .where("username", ">=", searchText)
-          .where("username", "<=", searchText + "\uf8ff")
-          .get()
-          .then((querySnapshot) => {
-              let userList = [];
-              querySnapshot.forEach((doc) => {
-                  userList.push({ id: doc.id, ...doc.data() });
-              });
-              
-              console.log("Found users:", userList);
-              renderSearchResults(userList);
-          })
-          .catch((error) => {
-              console.error("Search Error: ", error);
-          });
+        try {
+            // Firestore Query (username field par prefix search)
+            const querySnapshot = await db.collection("users")
+                .where("username", ">=", searchText)
+                .where("username", "<=", searchText + "\uf8ff")
+                .get();
+
+            let userList = [];
+            querySnapshot.forEach((doc) => {
+                userList.push({ id: doc.id, ...doc.data() });
+            });
+
+            console.log("Search Results:", userList);
+            renderSearchResults(userList);
+
+        } catch (error) {
+            console.error("Firestore Search Error:", error);
+        }
     });
+}
+
+// 2. Search Results Render Function (Aapke Container ID 'jnSearchResults' ke sath)
+function renderSearchResults(users) {
+    const resultsContainer = document.getElementById('jnSearchResults');
+    if (!resultsContainer) return;
+
+    resultsContainer.innerHTML = ''; // Pehle wale results/empty state clear karein
+
+    if (users.length === 0) {
+        resultsContainer.innerHTML = `
+            <div class="jn-empty-state">
+                <span>⚠️</span>
+                <h3>No user found</h3>
+                <p>Try searching with another username.</p>
+            </div>
+        `;
+        return;
+    }
+
+    users.forEach(user => {
+        const userElement = document.createElement('div');
+        userElement.classList.add('jn-user-card'); // Aapki CSS classes ke mutabiq adjust kar sakte hain
+
+        // Display name setup
+        const displayName = user.username || user.profileName || user.name || "User";
+
+        userElement.innerHTML = `
+            <div class="user-info" style="padding: 10px; border-bottom: 1px solid #ccc; cursor: pointer;">
+                <p style="margin:0;"><strong>${displayName}</strong></p>
+                <small style="color: #666;">${user.email || ''}</small>
+            </div>
+        `;
+
+        // User par click karke chat start karne ki logic
+        userElement.addEventListener('click', () => {
+            console.log("Selected user for chat:", user);
+            if (typeof openChatWithUser === 'function') {
+                openChatWithUser(user);
+            }
+        });
+
+        resultsContainer.appendChild(userElement);
+    });
+}
+
+// 3. Reset Function (Jab Search box clear ho jaye)
+function resetSearchState() {
+    const resultsContainer = document.getElementById('jnSearchResults');
+    if (resultsContainer) {
+        resultsContainer.innerHTML = `
+            <div class="jn-empty-state">
+                <span>🔍</span>
+                <h3>Search for a user</h3>
+                <p>Enter a username or profile name above.</p>
+            </div>
+        `;
+    }
 }
