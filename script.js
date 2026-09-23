@@ -11624,45 +11624,89 @@ document.addEventListener("DOMContentLoaded", function () {
 
 })();
 /* =====================================================
-    SEARCH SYSTEM (USERS & CHATS)
+    USER SEARCH & CHAT CREATION SYSTEM
 ===================================================== */
 const userSearchInput = document.getElementById("jnUserSearchInput");
+const searchResultsContainer = document.getElementById("jnUserSearchResults"); // Search results dikhane ke liye container
 
 if (userSearchInput) {
     userSearchInput.addEventListener("input", function (e) {
         const query = e.target.value.toLowerCase().trim();
-        filterChatsAndUsers(query);
+
+        // 1. Existing Chats / Groups filter karein
+        filterExistingChats(query);
+
+        // 2. Register hue baki Users mein se search karein
+        if (query.length > 0) {
+            searchRegisteredUsers(query);
+        } else if (searchResultsContainer) {
+            searchResultsContainer.innerHTML = ""; // Search clear hone par clear kar dein
+        }
     });
 }
 
-function filterChatsAndUsers(query) {
-    // Active Chats List filtering
-    const chatItems = document.querySelectorAll("#jnChatsList .jn-chat-item");
-    
+// Active chats filter karne ka function
+function filterExistingChats(query) {
+    const chatItems = document.querySelectorAll("#jnChatsList .jn-chat-item, #jnGroupsList .jn-chat-item");
     chatItems.forEach(function (item) {
         const titleElement = item.querySelector("h3");
         if (titleElement) {
             const titleText = titleElement.textContent.toLowerCase();
-            if (titleText.includes(query)) {
-                item.style.display = "flex";
-            } else {
-                item.style.display = "none";
-            }
+            item.style.display = titleText.includes(query) ? "flex" : "none";
         }
     });
+}
 
-    // Groups List filtering (Agar Groups screen par search kar rahe hain)
-    const groupItems = document.querySelectorAll("#jnGroupsList .jn-chat-item");
-    
-    groupItems.forEach(function (item) {
-        const titleElement = item.querySelector("h3");
-        if (titleElement) {
-            const titleText = titleElement.textContent.toLowerCase();
-            if (titleText.includes(query)) {
-                item.style.display = "flex";
-            } else {
-                item.style.display = "none";
-            }
-        }
+// Database / LocalStorage ke users search karke nayi chat start karne ka function
+function searchRegisteredUsers(query) {
+    if (!searchResultsContainer) return;
+
+    const allUsers = getUsers(); // LocalStorage se users retrieve karne ke liye
+    const currentAcc = currentUsername().toLowerCase();
+
+    // Matching users filter karein (apne ilawa)
+    const matchedUsers = allUsers.filter(function (user) {
+        const isNotSelf = user.username.toLowerCase() !== currentAcc;
+        const matchesQuery = user.name.toLowerCase().includes(query) || user.username.toLowerCase().includes(query);
+        return isNotSelf && matchesQuery;
+    });
+
+    if (!matchedUsers.length) {
+        searchResultsContainer.innerHTML = `<div class="jn-empty-state"><p>No user found</p></div>`;
+        return;
+    }
+
+    searchResultsContainer.innerHTML = "";
+
+    matchedUsers.forEach(function (user) {
+        const item = document.createElement("div");
+        item.className = "jn-chat-item";
+
+        const avatarHTML = user.image ? `<img src="${user.image}" alt="Avatar">` : "👤";
+
+        item.innerHTML = `
+            <div class="jn-chat-avatar">${avatarHTML}</div>
+            <div class="jn-chat-info">
+                <div class="jn-chat-top">
+                    <h3>${escapeHTML(user.name)}</h3>
+                </div>
+                <p>@${escapeHTML(user.username)}</p>
+            </div>
+        `;
+
+        // User par click karke direct chat open karne ke liye
+        item.addEventListener("click", function () {
+            activeConversation = {
+                type: "private",
+                id: user.username,
+                title: user.name,
+                image: user.image || ""
+            };
+            openMessageView();
+            userSearchInput.value = "";
+            searchResultsContainer.innerHTML = "";
+        });
+
+        searchResultsContainer.appendChild(item);
     });
 }
