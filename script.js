@@ -6765,1399 +6765,1420 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 /* =========================================================
    JUSTICE NOW CHAT
-   COMPLETE WORKING CHAT SYSTEM
-   PROFILE + FIRESTORE SEARCH + PRIVATE CHAT
-   GROUP CHAT + IMAGE + VOICE + EMOJI + CALL
+   COMPLETE FIXED CHAT SCRIPT
+   PROFILE + SEARCH + DIRECT MESSAGE + GROUP
+   IMAGE + VOICE + EMOJI + MUTE + BLOCK
+   NO LOADING TEXT
 ========================================================= */
 
 (function () {
     "use strict";
 
     /* =====================================================
-       PREVENT DOUBLE INITIALIZATION
+       FIREBASE
     ===================================================== */
 
-    if (window.__justiceNowChatLoaded) {
+    const firebaseConfig = {
+        apiKey: "AIzaSyDqR4opYs45_yVoWV28vXmLLWYKbAKkrKw",
+        authDomain: "justice-now-406e9.firebaseapp.com",
+        projectId: "justice-now-406e9",
+        storageBucket: "justice-now-406e9.firebasestorage.app",
+        messagingSenderId: "651828513296",
+        appId: "1:651828513296:web:41f7491a9e92fddb641895"
+    };
+
+    if (typeof firebase === "undefined") {
+        console.error("Firebase SDK is not loaded.");
         return;
     }
 
-    window.__justiceNowChatLoaded = true;
+    try {
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+    } catch (error) {
+        console.error("Firebase initialization error:", error);
+        return;
+    }
 
-
-    /* =====================================================
-       STORAGE KEYS
-    ===================================================== */
-
-    const PROFILE_KEY = "justiceNowChatProfile";
-    const USERS_KEY = "justiceNowChatUsers";
-    const CHATS_KEY = "justiceNowChatConversations";
-    const GROUPS_KEY = "justiceNowChatGroups";
-    const BLOCKED_KEY = "justiceNowBlockedUsers";
-    const MUTED_KEY = "justiceNowMutedUsers";
-
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
 
     /* =====================================================
-       INITIALIZATION
+       ELEMENTS
     ===================================================== */
 
-    function startJusticeNowChat() {
+    const chatPage =
+        document.getElementById("justiceChatPage");
 
-        const chatPage = document.getElementById("justiceChatPage");
+    const openChatBtn =
+        document.getElementById("openChatBtn");
+
+    const closeChatBtn =
+        document.getElementById("closeChatBtn");
+
+    if (!chatPage) {
+        console.warn("justiceChatPage not found.");
+        return;
+    }
+
+    /* =====================================================
+       STATE
+    ===================================================== */
+
+    let currentUser = null;
+    let currentProfile = null;
+
+    let activeChat = null;
+    let activeListener = null;
+
+    let pendingProfileImage = "";
+
+    let selectedGroupMembers = [];
+
+    let mediaRecorder = null;
+    let recordedChunks = [];
+
+    /* =====================================================
+       AUTH READY
+       THIS FIXES "PLEASE SIGN IN FIRST"
+    ===================================================== */
+
+    let authReadyPromise = new Promise(function (resolve) {
+
+        let finished = false;
+
+        const unsubscribe =
+            auth.onAuthStateChanged(function (user) {
+
+                if (finished) {
+                    return;
+                }
+
+                finished = true;
+
+                try {
+                    unsubscribe();
+                } catch (e) {}
+
+                currentUser = user || null;
+
+                if (currentUser) {
+                    ensureUserProfile(currentUser)
+                        .then(function () {
+                            return setOnlineStatus(true);
+                        })
+                        .catch(console.error)
+                        .finally(function () {
+                            resolve(currentUser);
+                        });
+                } else {
+                    resolve(null);
+                }
+            });
+
+        setTimeout(function () {
+
+            if (finished) {
+                return;
+            }
+
+            finished = true;
+
+            try {
+                unsubscribe();
+            } catch (e) {}
+
+            currentUser =
+                auth.currentUser || null;
+
+            resolve(currentUser);
+
+        }, 8000);
+    });
+
+    /* =====================================================
+       HELPERS
+    ===================================================== */
+
+    function escapeHTML(value) {
+
+        return String(value || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function normalize(value) {
+
+        return String(value || "")
+            .trim()
+            .replace(/^@+/, "")
+            .toLowerCase();
+    }
+
+    function getUID() {
+
+        return currentUser
+            ? currentUser.uid
+            : "";
+    }
+
+    function makeChatId(a, b) {
+
+        return [a, b]
+            .sort()
+            .join("_");
+    }
+
+    function avatarHTML(image) {
+
+        if (!image) {
+            return "👤";
+        }
+
+        return `
+            <img
+                src="${escapeHTML(image)}"
+                alt="Profile"
+                loading="eager">
+        `;
+    }
+
+    function showStatus(text, error) {
+
+        const status =
+            document.getElementById(
+                "jnProfileStatus"
+            );
+
+        if (!status) {
+            return;
+        }
+
+        status.textContent = text || "";
+
+        status.style.color =
+            error
+                ? "#ff7676"
+                : "#12cfc0";
+    }
+
+    /* =====================================================
+       USER PROFILE
+    ===================================================== */
+
+    async function ensureUserProfile(user) {
+
+        if (!user) {
+            return;
+        }
+
+        const ref =
+            db
+                .collection("users")
+                .doc(user.uid);
+
+        const snap =
+            await ref.get();
+
+        if (!snap.exists) {
+
+            await ref.set({
+
+                uid: user.uid,
+
+                email:
+                    user.email || "",
+
+                name:
+                    user.displayName || "",
+
+                username:
+                    "",
+
+                image:
+                    "",
+
+                online:
+                    true,
+
+                lastSeen:
+                    firebase.firestore
+                        .FieldValue
+                        .serverTimestamp(),
+
+                createdAt:
+                    firebase.firestore
+                        .FieldValue
+                        .serverTimestamp(),
+
+                updatedAt:
+                    firebase.firestore
+                        .FieldValue
+                        .serverTimestamp()
+
+            });
+        }
+
+        const latest =
+            await ref.get();
+
+        currentProfile =
+            latest.exists
+                ? latest.data()
+                : null;
+    }
+
+    async function waitForUser() {
+
+        if (auth.currentUser) {
+
+            currentUser =
+                auth.currentUser;
+
+            await ensureUserProfile(
+                currentUser
+            );
+
+            return currentUser;
+        }
+
+        const user =
+            await authReadyPromise;
+
+        if (user) {
+
+            currentUser =
+                user;
+
+            await ensureUserProfile(
+                user
+            );
+        }
+
+        return currentUser;
+    }
+
+    async function setOnlineStatus(isOnline) {
+
+        const user =
+            auth.currentUser ||
+            currentUser;
+
+        if (!user) {
+            return;
+        }
+
+        try {
+
+            await db
+                .collection("users")
+                .doc(user.uid)
+                .set({
+
+                    online:
+                        isOnline,
+
+                    lastSeen:
+                        firebase.firestore
+                            .FieldValue
+                            .serverTimestamp()
+
+                }, {
+                    merge: true
+                });
+
+        } catch (error) {
+
+            console.error(
+                "Online status error:",
+                error
+            );
+        }
+    }
+
+    auth.onAuthStateChanged(
+        async function (user) {
+
+            currentUser =
+                user || null;
+
+            if (user) {
+
+                try {
+
+                    await ensureUserProfile(
+                        user
+                    );
+
+                    await setOnlineStatus(
+                        true
+                    );
+
+                } catch (error) {
+
+                    console.error(error);
+                }
+
+            } else {
+
+                currentProfile =
+                    null;
+            }
+        }
+    );
+
+    window.addEventListener(
+        "beforeunload",
+        function () {
+
+            if (auth.currentUser) {
+
+                db
+                    .collection("users")
+                    .doc(auth.currentUser.uid)
+                    .set({
+
+                        online: false,
+
+                        lastSeen:
+                            firebase.firestore
+                                .FieldValue
+                                .serverTimestamp()
+
+                    }, {
+                        merge: true
+                    })
+                    .catch(function () {});
+            }
+        }
+    );
+
+    document.addEventListener(
+        "visibilitychange",
+        function () {
+
+            if (!auth.currentUser) {
+                return;
+            }
+
+            setOnlineStatus(
+                !document.hidden
+            );
+        }
+    );
+
+    /* =====================================================
+       OPEN CHAT
+    ===================================================== */
+
+    if (openChatBtn) {
+
+        openChatBtn.addEventListener(
+            "click",
+            function (event) {
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                openChat();
+            }
+        );
+    }
+
+    async function openChat() {
+
+        hideAllMainPages();
+
+        chatPage.classList.add(
+            "active"
+        );
+
+        document.body.style.overflow =
+            "hidden";
 
         /*
-         * Do NOT stop the whole script when the chat page
-         * is not found.
-         *
-         * This was one of the main problems in the old code.
-         */
+           IMPORTANT:
+           Wait silently for Firebase Auth.
+           No loading text.
+        */
 
-        initializeChat(chatPage);
+        await waitForUser();
+
+        if (currentUser) {
+
+            await refreshMyProfile();
+
+        } else {
+
+            showStatus(
+                "Please sign in to use Chat.",
+                true
+            );
+        }
+
+        showChatView("profile");
+
+        renderChatList();
+
+        renderGroups();
+
+        buildEmojiPicker();
     }
 
+    function hideAllMainPages() {
 
-    if (document.readyState === "loading") {
+        document
+            .querySelectorAll(".page")
+            .forEach(function (page) {
 
-        document.addEventListener(
-            "DOMContentLoaded",
-            startJusticeNowChat
-        );
+                if (
+                    page.id !==
+                    "justiceChatPage"
+                ) {
 
-    } else {
-
-        startJusticeNowChat();
-
+                    page.classList.remove(
+                        "active"
+                    );
+                }
+            });
     }
-
 
     /* =====================================================
-       MAIN INITIALIZER
+       CLOSE CHAT
     ===================================================== */
 
-    function initializeChat(chatPage) {
+    if (closeChatBtn) {
 
-        /* =================================================
-           HELPERS
-        ================================================= */
+        closeChatBtn.addEventListener(
+            "click",
+            closeChat
+        );
+    }
 
-        function getJSON(key, fallback) {
+    function closeChat() {
 
-            try {
-
-                const value = localStorage.getItem(key);
-
-                return value
-                    ? JSON.parse(value)
-                    : fallback;
-
-            } catch (error) {
-
-                console.error(
-                    "Justice Now JSON error:",
-                    error
-                );
-
-                return fallback;
-            }
-        }
-
-
-        function setJSON(key, value) {
-
-            try {
-
-                localStorage.setItem(
-                    key,
-                    JSON.stringify(value)
-                );
-
-                return true;
-
-            } catch (error) {
-
-                console.error(
-                    "Justice Now storage error:",
-                    error
-                );
-
-                return false;
-            }
-        }
-
-
-        function escapeHTML(value) {
-
-            return String(value ?? "")
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-
-
-        function makeId(prefix) {
-
-            return (
-                prefix +
-                "_" +
-                Date.now() +
-                "_" +
-                Math.random()
-                    .toString(36)
-                    .slice(2, 9)
-            );
-        }
-
-
-        function normalizeUsername(value) {
-
-            return String(value || "")
-                .trim()
-                .replace(/^@/, "")
-                .toLowerCase();
-        }
-
-
-        function getProfile() {
-
-            return getJSON(
-                PROFILE_KEY,
-                null
-            );
-        }
-
-
-        function getUsers() {
-
-            return getJSON(
-                USERS_KEY,
-                []
-            );
-        }
-
-
-        function getChats() {
-
-            return getJSON(
-                CHATS_KEY,
-                {}
-            );
-        }
-
-
-        function getGroups() {
-
-            return getJSON(
-                GROUPS_KEY,
-                []
-            );
-        }
-
-
-        function saveChats(chats) {
-
-            setJSON(
-                CHATS_KEY,
-                chats
-            );
-        }
-
-
-        function currentUsername() {
-
-            const profile = getProfile();
-
-            if (
-                profile &&
-                profile.username
-            ) {
-
-                return profile.username;
-            }
-
-            return "me";
-        }
-
-
-        function chatKey(type, id) {
-
-            return (
-                type +
-                ":" +
-                id
-            );
-        }
-
-
-        /* =================================================
-           ELEMENTS
-        ================================================= */
-
-        const openChatBtn =
-            document.getElementById(
-                "openChatBtn"
-            );
-
-        const closeChatBtn =
-            document.getElementById(
-                "closeChatBtn"
-            );
-
-
-        /* =================================================
-           OPEN / CLOSE
-        ================================================= */
-
-        function openChat() {
-
-            if (!chatPage) {
-                return;
-            }
-
-            chatPage.classList.add(
-                "active"
-            );
-
-            chatPage.style.display = "";
-
-
-            loadProfile();
-
-            showChatView("profile");
-
-            renderChatList();
-
-            renderGroups();
-
-        }
-
-
-        function closeChat() {
-
-            if (!chatPage) {
-                return;
-            }
-
-            chatPage.classList.remove(
-                "active"
-            );
-
-
-            const homePage =
-                document.getElementById(
-                    "homePage"
-                );
-
-            if (homePage) {
-
-                homePage.style.display = "";
-
-                homePage.classList.add(
-                    "active"
-                );
-            }
-
-        }
-
-
-        if (openChatBtn) {
-
-            openChatBtn.addEventListener(
-                "click",
-                function (event) {
-
-                    event.preventDefault();
-                    event.stopPropagation();
-
-                    openChat();
-
-                }
-            );
-
-        }
-
-
-        if (closeChatBtn) {
-
-            closeChatBtn.addEventListener(
-                "click",
-                function (event) {
-
-                    event.preventDefault();
-
-                    closeChat();
-
-                }
-            );
-
-        }
-
-
-        /* =================================================
-           SIDEBAR / CHAT OPTIONS
-        ================================================= */
-
-        const sidebarButtons =
-            document.querySelectorAll(
-                "[data-chat-view]"
-            );
-
-
-        sidebarButtons.forEach(
-            function (button) {
-
-                button.addEventListener(
-                    "click",
-                    function (event) {
-
-                        event.preventDefault();
-                        event.stopPropagation();
-
-                        const view =
-                            button.getAttribute(
-                                "data-chat-view"
-                            );
-
-                        showChatView(view);
-
-                    }
-                );
-
-            }
+        chatPage.classList.remove(
+            "active"
         );
 
+        document.body.style.overflow =
+            "";
 
-        function showChatView(view) {
+        if (activeListener) {
 
-            const views =
-                document.querySelectorAll(
-                    ".jn-chat-view"
-                );
+            activeListener();
 
-
-            views.forEach(
-                function (section) {
-
-                    section.classList.remove(
-                        "active"
-                    );
-
-                    /*
-                     * Do not permanently hide pages
-                     * through inline styles.
-                     */
-
-                }
-            );
-
-
-            const buttons =
-                document.querySelectorAll(
-                    ".jn-sidebar-btn"
-                );
-
-
-            buttons.forEach(
-                function (button) {
-
-                    button.classList.remove(
-                        "active"
-                    );
-
-                }
-            );
-
-
-            let targetId = "";
-
-
-            switch (view) {
-
-                case "profile":
-
-                    targetId =
-                        "jnViewProfile";
-
-                    loadProfile();
-
-                    break;
-
-
-                case "search":
-
-                    targetId =
-                        "jnViewSearch";
-
-                    break;
-
-
-                case "chats":
-
-                    targetId =
-                        "jnViewChats";
-
-                    renderChatList();
-
-                    break;
-
-
-                case "groups":
-
-                    targetId =
-                        "jnViewGroups";
-
-                    renderGroups();
-
-                    break;
-
-
-                case "messages":
-
-                    targetId =
-                        "jnViewMessages";
-
-                    renderActiveConversation();
-
-                    break;
-
-
-                default:
-
-                    targetId =
-                        "jnViewProfile";
-
-            }
-
-
-            const target =
-                document.getElementById(
-                    targetId
-                );
-
-
-            if (target) {
-
-                target.classList.add(
-                    "active"
-                );
-
-            }
-
-
-            const activeButton =
-                document.querySelector(
-                    '[data-chat-view="' +
-                    view +
-                    '"]'
-                );
-
-
-            if (activeButton) {
-
-                activeButton.classList.add(
-                    "active"
-                );
-
-            }
-
+            activeListener = null;
         }
 
+        const home =
+            document.getElementById(
+                "homePage"
+            );
 
-        /* =================================================
-           PROFILE
-        ================================================= */
+        if (home) {
+
+            document
+                .querySelectorAll(".page")
+                .forEach(function (page) {
+
+                    page.classList.remove(
+                        "active"
+                    );
+                });
+
+            home.classList.add(
+                "active"
+            );
+        }
+    }
+
+    /* =====================================================
+       CHAT SIDEBAR
+    ===================================================== */
+
+    document
+        .querySelectorAll(
+            "[data-chat-view]"
+        )
+        .forEach(function (button) {
+
+            button.addEventListener(
+                "click",
+                function () {
+
+                    showChatView(
+                        button.getAttribute(
+                            "data-chat-view"
+                        )
+                    );
+                }
+            );
+        });
+
+    function showChatView(view) {
+
+        document
+            .querySelectorAll(
+                ".jn-chat-view"
+            )
+            .forEach(function (section) {
+
+                section.classList.remove(
+                    "active"
+                );
+            });
+
+        document
+            .querySelectorAll(
+                ".jn-sidebar-btn"
+            )
+            .forEach(function (button) {
+
+                button.classList.remove(
+                    "active"
+                );
+            });
+
+        const map = {
+
+            profile:
+                "jnViewProfile",
+
+            search:
+                "jnViewSearch",
+
+            chats:
+                "jnViewChats",
+
+            groups:
+                "jnViewGroups",
+
+            messages:
+                "jnViewMessages"
+        };
+
+        const target =
+            document.getElementById(
+                map[view]
+            );
+
+        if (target) {
+
+            target.classList.add(
+                "active"
+            );
+        }
+
+        const button =
+            document.querySelector(
+                '[data-chat-view="' +
+                view +
+                '"]'
+            );
+
+        if (button) {
+
+            button.classList.add(
+                "active"
+            );
+        }
+
+        if (view === "profile") {
+            refreshMyProfile();
+        }
+
+        if (view === "chats") {
+            renderChatList();
+        }
+
+        if (view === "groups") {
+            renderGroups();
+        }
+    }
+
+    /* =====================================================
+       PROFILE LOAD
+    ===================================================== */
+
+    async function refreshMyProfile() {
+
+        const user =
+            await waitForUser();
+
+        if (!user) {
+            return;
+        }
+
+        const snap =
+            await db
+                .collection("users")
+                .doc(user.uid)
+                .get();
+
+        if (!snap.exists) {
+
+            await ensureUserProfile(
+                user
+            );
+
+            return refreshMyProfile();
+        }
+
+        currentProfile =
+            snap.data();
+
+        const username =
+            document.getElementById(
+                "jnUsernameInput"
+            );
+
+        const name =
+            document.getElementById(
+                "jnProfileNameInput"
+            );
+
+        if (username) {
+
+            username.value =
+                currentProfile.username ||
+                "";
+        }
+
+        if (name) {
+
+            name.value =
+                currentProfile.name ||
+                "";
+        }
+
+        pendingProfileImage =
+            currentProfile.image ||
+            "";
+
+        const preview =
+            document.getElementById(
+                "jnProfilePreview"
+            );
+
+        if (preview) {
+
+            preview.innerHTML =
+                pendingProfileImage
+                    ? avatarHTML(
+                        pendingProfileImage
+                    )
+                    : "👤";
+        }
+    }
+
+    /* =====================================================
+       PROFILE PICTURE
+       FIXED
+    ===================================================== */
+
+    const profileImageInput =
+        document.getElementById(
+            "jnProfileImageInput"
+        );
+
+    if (profileImageInput) {
+
+        profileImageInput.addEventListener(
+            "change",
+            async function (event) {
+
+                const file =
+                    event.target.files[0];
+
+                if (!file) {
+                    return;
+                }
+
+                /*
+                   IMPORTANT:
+                   Never check currentUser directly
+                   before waiting for Firebase Auth.
+                */
+
+                const user =
+                    await waitForUser();
+
+                if (!user) {
+
+                    showStatus(
+                        "Please sign in first.",
+                        true
+                    );
+
+                    profileImageInput.value =
+                        "";
+
+                    return;
+                }
+
+                try {
+
+                    /*
+                       Immediate local preview.
+                    */
+
+                    const localURL =
+                        URL.createObjectURL(
+                            file
+                        );
+
+                    const preview =
+                        document.getElementById(
+                            "jnProfilePreview"
+                        );
+
+                    if (preview) {
+
+                        preview.innerHTML = `
+                            <img
+                                src="${localURL}"
+                                alt="Profile">
+                        `;
+                    }
+
+                    /*
+                       Firebase Storage upload.
+                    */
+
+                    const safeName =
+                        file.name.replace(
+                            /[^a-zA-Z0-9._-]/g,
+                            "_"
+                        );
+
+                    const storageRef =
+                        storage
+                            .ref()
+                            .child(
+                                "profilePictures/" +
+                                user.uid +
+                                "/" +
+                                Date.now() +
+                                "_" +
+                                safeName
+                            );
+
+                    const upload =
+                        await storageRef.put(
+                            file
+                        );
+
+                    const downloadURL =
+                        await upload.ref
+                            .getDownloadURL();
+
+                    pendingProfileImage =
+                        downloadURL;
+
+                    /*
+                       Save image immediately
+                       to Firestore.
+                    */
+
+                    await db
+                        .collection("users")
+                        .doc(user.uid)
+                        .set({
+
+                            image:
+                                downloadURL,
+
+                            uid:
+                                user.uid,
+
+                            updatedAt:
+                                firebase.firestore
+                                    .FieldValue
+                                    .serverTimestamp()
+
+                        }, {
+                            merge: true
+                        });
+
+                    currentProfile = {
+
+                        ...(currentProfile || {}),
+
+                        uid:
+                            user.uid,
+
+                        image:
+                            downloadURL
+                    };
+
+                    if (preview) {
+
+                        preview.innerHTML =
+                            avatarHTML(
+                                downloadURL
+                            );
+                    }
+
+                    showStatus(
+                        "Profile picture saved."
+                    );
+
+                    try {
+                        URL.revokeObjectURL(
+                            localURL
+                        );
+                    } catch (e) {}
+
+                } catch (error) {
+
+                    console.error(
+                        "Profile picture error:",
+                        error
+                    );
+
+                    showStatus(
+                        "Profile picture upload failed. Check Firebase Storage rules.",
+                        true
+                    );
+                }
+            }
+        );
+    }
+
+    /* =====================================================
+       SAVE PROFILE
+    ===================================================== */
+
+    const saveProfileBtn =
+        document.getElementById(
+            "jnSaveProfile"
+        );
+
+    if (saveProfileBtn) {
+
+        saveProfileBtn.addEventListener(
+            "click",
+            saveProfile
+        );
+    }
+
+    async function saveProfile() {
+
+        const user =
+            await waitForUser();
+
+        if (!user) {
+
+            showStatus(
+                "Please sign in first.",
+                true
+            );
+
+            return;
+        }
 
         const usernameInput =
             document.getElementById(
                 "jnUsernameInput"
             );
 
-        const profileNameInput =
+        const nameInput =
             document.getElementById(
                 "jnProfileNameInput"
             );
 
-        const profilePreview =
-            document.getElementById(
-                "jnProfilePreview"
+        const username =
+            normalize(
+                usernameInput
+                    ? usernameInput.value
+                    : ""
             );
 
-        const profileImageInput =
-            document.getElementById(
-                "jnProfileImageInput"
+        const name =
+            nameInput
+                ? nameInput.value.trim()
+                : "";
+
+        if (!username || !name) {
+
+            showStatus(
+                "Username and profile name are required.",
+                true
             );
 
-        const saveProfileBtn =
-            document.getElementById(
-                "jnSaveProfile"
-            );
-
-        const deleteProfileBtn =
-            document.getElementById(
-                "jnDeleteProfile"
-            );
-
-        const profileStatus =
-            document.getElementById(
-                "jnProfileStatus"
-            );
-
-
-        let pendingProfileImage = "";
-
-
-        function renderProfilePreview(image) {
-
-            if (!profilePreview) {
-                return;
-            }
-
-
-            if (image) {
-
-                profilePreview.innerHTML =
-                    '<img src="' +
-                    escapeHTML(image) +
-                    '" alt="Profile">';
-
-            } else {
-
-                profilePreview.innerHTML =
-                    "<span>👤</span>";
-
-            }
-
+            return;
         }
 
-
-        function loadProfile() {
-
-            const profile =
-                getProfile();
-
-
-            if (!profile) {
-
-                if (usernameInput) {
-                    usernameInput.value = "";
-                }
-
-                if (profileNameInput) {
-                    profileNameInput.value = "";
-                }
-
-                pendingProfileImage = "";
-
-                renderProfilePreview("");
-
-                return;
-            }
-
-
-            if (usernameInput) {
-
-                usernameInput.value =
-                    profile.username || "";
-
-            }
-
-
-            if (profileNameInput) {
-
-                profileNameInput.value =
-                    profile.name || "";
-
-            }
-
-
-            pendingProfileImage =
-                profile.image || "";
-
-
-            renderProfilePreview(
-                pendingProfileImage
-            );
-
-        }
-
-
-        if (profileImageInput) {
-
-            profileImageInput.addEventListener(
-                "change",
-                function () {
-
-                    const file =
-                        this.files &&
-                        this.files[0];
-
-                    if (!file) {
-                        return;
-                    }
-
-
-                    const reader =
-                        new FileReader();
-
-
-                    reader.onload =
-                        function (event) {
-
-                            pendingProfileImage =
-                                event.target.result;
-
-                            renderProfilePreview(
-                                pendingProfileImage
-                            );
-
-                        };
-
-
-                    reader.readAsDataURL(
-                        file
-                    );
-
-                }
-            );
-
-        }
-
-
-        if (saveProfileBtn) {
-
-            saveProfileBtn.addEventListener(
-                "click",
-                function () {
-
-                    const username =
-                        usernameInput
-                            ? normalizeUsername(
-                                usernameInput.value
-                            )
-                            : "";
-
-                    const name =
-                        profileNameInput
-                            ? profileNameInput.value.trim()
-                            : "";
-
-
-                    if (!username) {
-
-                        if (profileStatus) {
-
-                            profileStatus.textContent =
-                                "Please enter a username.";
-
-                        }
-
-                        return;
-                    }
-
-
-                    if (!name) {
-
-                        if (profileStatus) {
-
-                            profileStatus.textContent =
-                                "Please enter your profile name.";
-
-                        }
-
-                        return;
-                    }
-
-
-                    const profile = {
-
-                        username:
-                            username,
-
-                        name:
-                            name,
-
-                        image:
-                            pendingProfileImage || "",
-
-                        online:
-                            true
-
-                    };
-
-
-                    setJSON(
-                        PROFILE_KEY,
-                        profile
-                    );
-
-
-                    /* Save local searchable user */
-
-                    let users =
-                        getUsers();
-
-
-                    const index =
-                        users.findIndex(
-                            function (user) {
-
-                                return (
-                                    normalizeUsername(
-                                        user.username
-                                    ) === username
-                                );
-
-                            }
-                        );
-
-
-                    if (index >= 0) {
-
-                        users[index] =
-                            profile;
-
-                    } else {
-
-                        users.push(
-                            profile
-                        );
-
-                    }
-
-
-                    setJSON(
-                        USERS_KEY,
-                        users
-                    );
-
-
-                    if (profileStatus) {
-
-                        profileStatus.textContent =
-                            "Profile saved successfully.";
-
-                    }
-
-                }
-            );
-
-        }
-
-
-        if (deleteProfileBtn) {
-
-            deleteProfileBtn.addEventListener(
-                "click",
-                function () {
-
-                    if (
-                        !window.confirm(
-                            "Delete your chat profile?"
-                        )
-                    ) {
-                        return;
-                    }
-
-
-                    localStorage.removeItem(
-                        PROFILE_KEY
-                    );
-
-
-                    if (usernameInput) {
-                        usernameInput.value = "";
-                    }
-
-
-                    if (profileNameInput) {
-                        profileNameInput.value = "";
-                    }
-
-
-                    pendingProfileImage = "";
-
-
-                    renderProfilePreview("");
-
-
-                    if (profileStatus) {
-
-                        profileStatus.textContent =
-                            "Profile deleted.";
-
-                    }
-
-                }
-            );
-
-        }
-
-
-        /* =================================================
-           FIRESTORE DETECTION
-        ================================================= */
-
-        function getFirestoreDB() {
-
-            /*
-             * Existing global database variables
-             */
-
-            if (
-                window.db &&
-                typeof window.db.collection === "function"
-            ) {
-
-                return window.db;
-            }
-
-
-            if (
-                window.firebaseDb &&
-                typeof window.firebaseDb.collection === "function"
-            ) {
-
-                return window.firebaseDb;
-            }
-
-
-            if (
-                window.firestoreDb &&
-                typeof window.firestoreDb.collection === "function"
-            ) {
-
-                return window.firestoreDb;
-            }
-
-
-            if (
-                window.firebaseDB &&
-                typeof window.firebaseDB.collection === "function"
-            ) {
-
-                return window.firebaseDB;
-            }
-
-
-            /*
-             * Firebase compat
-             */
-
-            if (
-                window.firebase &&
-                typeof window.firebase.firestore ===
-                "function"
-            ) {
-
-                try {
-
-                    return window.firebase.firestore();
-
-                } catch (error) {
-
-                    console.error(
-                        "Firebase Firestore error:",
-                        error
-                    );
-
-                }
-
-            }
-
-
-            return null;
-        }
-
-
-        /* =================================================
-           FIRESTORE USER CONVERSION
-        ================================================= */
-
-        function convertFirestoreUser(
-            data,
-            documentId
+        if (
+            !/^[a-z0-9_.-]{3,30}$/.test(
+                username
+            )
         ) {
 
-            data =
-                data || {};
+            showStatus(
+                "Username must be 3-30 characters.",
+                true
+            );
 
+            return;
+        }
 
-            const nested =
-                data.profile ||
-                data.data ||
-                {};
+        try {
 
+            const existing =
+                await db
+                    .collection("users")
+                    .where(
+                        "username",
+                        "==",
+                        username
+                    )
+                    .limit(2)
+                    .get();
 
-            const username =
-                data.username ||
-                data.userName ||
-                data.user_name ||
-                data.handle ||
-                data.userHandle ||
-                nested.username ||
-                nested.userName ||
-                nested.user_name ||
-                "";
+            const duplicate =
+                existing.docs.some(
+                    function (doc) {
 
+                        return (
+                            doc.id !==
+                            user.uid
+                        );
+                    }
+                );
 
-            const name =
-                data.name ||
-                data.profileName ||
-                data.profile_name ||
-                data.displayName ||
-                data.display_name ||
-                data.fullName ||
-                data.full_name ||
-                nested.name ||
-                nested.profileName ||
-                nested.displayName ||
-                "";
+            if (duplicate) {
 
+                showStatus(
+                    "This username is already used.",
+                    true
+                );
 
-            const image =
-                data.image ||
-                data.photoURL ||
-                data.photoUrl ||
-                data.photo ||
-                data.profileImage ||
-                data.profile_image ||
-                data.avatar ||
-                nested.image ||
-                nested.photoURL ||
-                nested.photoUrl ||
-                nested.profileImage ||
-                "";
-
-
-            const uid =
-                data.uid ||
-                data.userId ||
-                data.userID ||
-                data.id ||
-                documentId ||
-                "";
-
-
-            if (!username && !name) {
-                return null;
+                return;
             }
 
+            await db
+                .collection("users")
+                .doc(user.uid)
+                .set({
 
-            return {
+                    uid:
+                        user.uid,
 
-                username:
-                    String(
-                        username || uid
-                    ).replace(/^@/, ""),
+                    email:
+                        user.email || "",
 
-                name:
-                    String(
-                        name ||
-                        username ||
-                        "Justice Now User"
-                    ),
+                    username:
+                        username,
 
-                image:
-                    image || "",
+                    name:
+                        name,
+
+                    image:
+                        pendingProfileImage ||
+                        "",
+
+                    online:
+                        true,
+
+                    lastSeen:
+                        firebase.firestore
+                            .FieldValue
+                            .serverTimestamp(),
+
+                    updatedAt:
+                        firebase.firestore
+                            .FieldValue
+                            .serverTimestamp()
+
+                }, {
+                    merge: true
+                });
+
+            currentProfile = {
+
+                ...(currentProfile || {}),
 
                 uid:
-                    uid,
+                    user.uid,
 
-                online:
-                    data.online === true ||
-                    data.isOnline === true
+                username:
+                    username,
 
+                name:
+                    name,
+
+                image:
+                    pendingProfileImage ||
+                    ""
             };
 
+            showStatus(
+                "Profile saved successfully."
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Save profile error:",
+                error
+            );
+
+            showStatus(
+                "Could not save profile. Check Firestore rules.",
+                true
+            );
         }
+    }
 
+    /* =====================================================
+       DELETE PROFILE
+    ===================================================== */
 
-        /* =================================================
-           FIRESTORE SEARCH
-        ================================================= */
+    const deleteProfileBtn =
+        document.getElementById(
+            "jnDeleteProfile"
+        );
 
-        async function searchFirestoreUsers(
-            query
-        ) {
+    if (deleteProfileBtn) {
 
-            const db =
-                getFirestoreDB();
+        deleteProfileBtn.addEventListener(
+            "click",
+            async function () {
 
+                const user =
+                    await waitForUser();
 
-            if (!db) {
+                if (!user) {
 
-                console.warn(
-                    "Justice Now: Firestore database not found."
-                );
+                    showStatus(
+                        "Please sign in first.",
+                        true
+                    );
 
-                return [];
+                    return;
+                }
 
-            }
+                const ok =
+                    confirm(
+                        "Delete your Justice Now profile information?"
+                    );
 
-
-            const results = [];
-
-
-            /*
-             * Collections commonly used by the app.
-             *
-             * We try them safely.
-             */
-
-            const collectionNames = [
-                "users",
-                "profiles",
-                "chatUsers"
-            ];
-
-
-            for (
-                let i = 0;
-                i < collectionNames.length;
-                i++
-            ) {
-
-                const collectionName =
-                    collectionNames[i];
-
+                if (!ok) {
+                    return;
+                }
 
                 try {
 
-                    const snapshot =
-                        await db
-                            .collection(
-                                collectionName
-                            )
-                            .get();
+                    await db
+                        .collection("users")
+                        .doc(user.uid)
+                        .set({
 
+                            username: "",
+                            name: "",
+                            image: "",
+                            updatedAt:
+                                firebase.firestore
+                                    .FieldValue
+                                    .serverTimestamp()
 
-                    snapshot.forEach(
-                        function (doc) {
+                        }, {
+                            merge: true
+                        });
 
-                            const user =
-                                convertFirestoreUser(
-                                    doc.data(),
-                                    doc.id
-                                );
+                    currentProfile =
+                        null;
 
+                    pendingProfileImage =
+                        "";
 
-                            if (!user) {
-                                return;
-                            }
+                    const preview =
+                        document.getElementById(
+                            "jnProfilePreview"
+                        );
 
+                    if (preview) {
+                        preview.innerHTML =
+                            "👤";
+                    }
 
-                            const username =
-                                normalizeUsername(
-                                    user.username
-                                );
-
-
-                            const name =
-                                String(
-                                    user.name || ""
-                                ).toLowerCase();
-
-
-                            if (
-                                username.includes(query) ||
-                                name.includes(query)
-                            ) {
-
-                                results.push(
-                                    user
-                                );
-
-                            }
-
-                        }
+                    showStatus(
+                        "Profile information deleted."
                     );
 
                 } catch (error) {
 
-                    /*
-                     * If collection does not exist
-                     * or permission denies it, continue
-                     * with next collection.
-                     */
+                    console.error(error);
 
-                    console.warn(
-                        "Firestore collection skipped:",
-                        collectionName,
-                        error
+                    showStatus(
+                        "Could not delete profile.",
+                        true
                     );
-
                 }
+            }
+        );
+    }
 
+    /* =====================================================
+       SEARCH
+    ===================================================== */
+
+    const searchInput =
+        document.getElementById(
+            "jnUserSearchInput"
+        );
+
+    const searchBtn =
+        document.getElementById(
+            "jnSearchUserBtn"
+        );
+
+    const searchResults =
+        document.getElementById(
+            "jnSearchResults"
+        );
+
+    if (searchBtn) {
+
+        searchBtn.addEventListener(
+            "click",
+            searchUsers
+        );
+    }
+
+    if (searchInput) {
+
+        searchInput.addEventListener(
+            "keydown",
+            function (event) {
+
+                if (
+                    event.key ===
+                    "Enter"
+                ) {
+
+                    event.preventDefault();
+
+                    searchUsers();
+                }
+            }
+        );
+    }
+
+    async function searchUsers() {
+
+        const user =
+            await waitForUser();
+
+        if (!user) {
+
+            if (searchResults) {
+
+                searchResults.innerHTML = `
+                    <div class="jn-user-result">
+                        <strong>
+                            Please sign in first.
+                        </strong>
+                    </div>
+                `;
             }
 
-
-            /*
-             * Remove duplicate usernames
-             */
-
-            const unique = [];
-
-
-            results.forEach(
-                function (user) {
-
-                    const exists =
-                        unique.some(
-                            function (item) {
-
-                                return (
-                                    normalizeUsername(
-                                        item.username
-                                    ) ===
-                                    normalizeUsername(
-                                        user.username
-                                    )
-                                );
-
-                            }
-                        );
-
-
-                    if (!exists) {
-
-                        unique.push(
-                            user
-                        );
-
-                    }
-
-                }
-            );
-
-
-            /*
-             * Cache Firestore users locally
-             */
-
-            if (unique.length) {
-
-                let localUsers =
-                    getUsers();
-
-
-                unique.forEach(
-                    function (fireUser) {
-
-                        const index =
-                            localUsers.findIndex(
-                                function (localUser) {
-
-                                    return (
-                                        normalizeUsername(
-                                            localUser.username
-                                        ) ===
-                                        normalizeUsername(
-                                            fireUser.username
-                                        )
-                                    );
-
-                                }
-                            );
-
-
-                        if (index >= 0) {
-
-                            localUsers[index] =
-                                {
-                                    ...localUsers[index],
-                                    ...fireUser
-                                };
-
-                        } else {
-
-                            localUsers.push(
-                                fireUser
-                            );
-
-                        }
-
-                    }
-                );
-
-
-                setJSON(
-                    USERS_KEY,
-                    localUsers
-                );
-
-            }
-
-
-            return unique;
-
+            return;
         }
 
+        const query =
+            normalize(
+                searchInput
+                    ? searchInput.value
+                    : ""
+            );
 
-        /* =================================================
-           LOCAL SEARCH
-        ================================================= */
+        if (!query) {
 
-        function searchLocalUsers(
-            query
-        ) {
+            if (searchResults) {
+
+                searchResults.innerHTML = `
+                    <div class="jn-user-result">
+                        Enter a username or profile name.
+                    </div>
+                `;
+            }
+
+            return;
+        }
+
+        if (!searchResults) {
+            return;
+        }
+
+        /*
+           NO LOADING TEXT.
+           Clear old result silently.
+        */
+
+        searchResults.innerHTML = "";
+
+        try {
+
+            const usernameSnap =
+                await db
+                    .collection("users")
+                    .where(
+                        "username",
+                        "==",
+                        query
+                    )
+                    .limit(10)
+                    .get();
+
+            const nameSnap =
+                await db
+                    .collection("users")
+                    .where(
+                        "nameLower",
+                        "==",
+                        query
+                    )
+                    .limit(10)
+                    .get();
 
             const users =
-                getUsers();
+                new Map();
 
+            usernameSnap.forEach(
+                function (doc) {
 
-            const myProfile =
-                getProfile();
-
-
-            return users.filter(
-                function (user) {
-
-                    if (!user) {
-                        return false;
-                    }
-
-
-                    const username =
-                        normalizeUsername(
-                            user.username
-                        );
-
-
-                    const name =
-                        String(
-                            user.name || ""
-                        ).toLowerCase();
-
-
-                    if (
-                        myProfile &&
-                        username ===
-                        normalizeUsername(
-                            myProfile.username
-                        )
-                    ) {
-
-                        return false;
-
-                    }
-
-
-                    return (
-                        username.includes(query) ||
-                        name.includes(query)
+                    users.set(
+                        doc.id,
+                        {
+                            uid: doc.id,
+                            ...doc.data()
+                        }
                     );
-
                 }
             );
 
-        }
+            nameSnap.forEach(
+                function (doc) {
 
-
-        /* =================================================
-           SEARCH UI
-        ================================================= */
-
-        const searchInput =
-            document.getElementById(
-                "jnUserSearchInput"
+                    users.set(
+                        doc.id,
+                        {
+                            uid: doc.id,
+                            ...doc.data()
+                        }
+                    );
+                }
             );
 
-        const searchButton =
-            document.getElementById(
-                "jnSearchUserBtn"
-            );
+            /*
+               Also perform a small client-side
+               fallback for profile-name search.
+            */
 
-        const searchResults =
-            document.getElementById(
-                "jnSearchResults"
-            );
+            if (users.size === 0) {
 
+                const allSnap =
+                    await db
+                        .collection("users")
+                        .limit(100)
+                        .get();
 
-        let searchNumber = 0;
+                allSnap.forEach(
+                    function (doc) {
 
+                        const data =
+                            doc.data();
 
-        function showSearchMessage(
-            icon,
-            title,
-            text
-        ) {
+                        const username =
+                            normalize(
+                                data.username
+                            );
 
-            if (!searchResults) {
-                return;
-            }
+                        const name =
+                            normalize(
+                                data.name
+                            );
 
+                        if (
+                            username.includes(
+                                query
+                            ) ||
+                            name.includes(
+                                query
+                            )
+                        ) {
 
-            searchResults.innerHTML = `
-
-                <div class="jn-empty-state">
-
-                    <span>${icon}</span>
-
-                    <h3>
-                        ${escapeHTML(title)}
-                    </h3>
-
-                    <p>
-                        ${escapeHTML(text)}
-                    </p>
-
-                </div>
-
-            `;
-
-        }
-
-
-        function renderSearchResults(
-            matches
-        ) {
-
-            if (!searchResults) {
-                return;
-            }
-
-
-            searchResults.innerHTML = "";
-
-
-            if (!matches.length) {
-
-                showSearchMessage(
-                    "👤",
-                    "No user found",
-                    "Try another username or profile name."
+                            users.set(
+                                doc.id,
+                                {
+                                    uid: doc.id,
+                                    ...data
+                                }
+                            );
+                        }
+                    }
                 );
-
-                return;
-
             }
 
+            if (users.size === 0) {
 
-            matches.forEach(
-                function (user) {
+                searchResults.innerHTML = `
+                    <div class="jn-user-result">
+                        <strong>No user found.</strong>
+                    </div>
+                `;
 
-                    const result =
+                return;
+            }
+
+            users.forEach(
+                function (profile) {
+
+                    const card =
                         document.createElement(
                             "div"
                         );
 
-
-                    result.className =
+                    card.className =
                         "jn-user-result";
 
+                    const isMe =
+                        profile.uid ===
+                        user.uid;
 
                     const avatar =
-                        user.image
+                        profile.image
                             ? `
                                 <img
-                                    src="${escapeHTML(user.image)}"
-                                    alt="Profile"
-                                >
+                                    src="${escapeHTML(
+                                        profile.image
+                                    )}"
+                                    alt="Profile">
                               `
                             : "👤";
 
+                    const online =
+                        profile.online === true
+                            ? `
+                                <span class="jn-online-dot">
+                                    ● Online
+                                </span>
+                              `
+                            : `
+                                <span class="jn-offline">
+                                    Offline
+                                </span>
+                              `;
 
-                    result.innerHTML = `
+                    card.innerHTML = `
 
                         <div class="jn-user-main">
 
@@ -8169,2684 +8190,1904 @@ document.addEventListener("DOMContentLoaded", function () {
 
                                 <h3>
                                     ${escapeHTML(
-                                        user.name ||
-                                        user.username
+                                        profile.name ||
+                                        "User"
                                     )}
                                 </h3>
 
                                 <p>
                                     @${escapeHTML(
-                                        user.username
+                                        profile.username ||
+                                        ""
                                     )}
                                 </p>
+
+                                <small>
+                                    ${online}
+                                </small>
 
                             </div>
 
                         </div>
 
-                        <button
-                            type="button"
-                            class="jn-primary-btn jn-message-user-btn"
-                        >
-                            💬 Message
-                        </button>
+                        ${
+                            isMe
 
+                            ?
+
+                            `
+                            <button
+                                type="button"
+                                class="jn-secondary-btn"
+                                disabled>
+                                Your Profile
+                            </button>
+                            `
+
+                            :
+
+                            `
+                            <button
+                                type="button"
+                                class="jn-primary-btn jn-direct-message-btn">
+                                💬 Message
+                            </button>
+                            `
+                        }
                     `;
 
-
-                    const messageButton =
-                        result.querySelector(
-                            ".jn-message-user-btn"
+                    const messageBtn =
+                        card.querySelector(
+                            ".jn-direct-message-btn"
                         );
 
+                    if (messageBtn) {
 
-                    if (messageButton) {
-
-                        messageButton.addEventListener(
+                        messageBtn.addEventListener(
                             "click",
-                            function (event) {
-
-                                event.preventDefault();
-                                event.stopPropagation();
-
-                                openPrivateChat(
-                                    user
-                                );
-
-                            }
-                        );
-
-                    }
-
-
-                    searchResults.appendChild(
-                        result
-                    );
-
-                }
-            );
-
-        }
-
-
-        async function performSearch() {
-
-            if (!searchResults) {
-                return;
-            }
-
-
-            const query =
-                searchInput
-                    ? searchInput.value
-                        .trim()
-                        .toLowerCase()
-                    : "";
-
-
-            if (!query) {
-
-                showSearchMessage(
-                    "🔍",
-                    "Search for a user",
-                    "Enter a username or profile name above."
-                );
-
-                return;
-            }
-
-
-            const thisSearch =
-                ++searchNumber;
-
-
-            showSearchMessage(
-                "⏳",
-                "Searching...",
-                "Searching Justice Now users."
-            );
-
-
-            /*
-             * Search local users immediately.
-             */
-
-            let matches =
-                searchLocalUsers(
-                    query
-                );
-
-
-            /*
-             * Remove current user.
-             */
-
-            const me =
-                normalizeUsername(
-                    currentUsername()
-                );
-
-
-            matches =
-                matches.filter(
-                    function (user) {
-
-                        return (
-                            normalizeUsername(
-                                user.username
-                            ) !== me
-                        );
-
-                    }
-                );
-
-
-            renderSearchResults(
-                uniqueUsers(matches)
-            );
-
-
-            /*
-             * Now search Firestore.
-             */
-
-            try {
-
-                const firestoreUsers =
-                    await searchFirestoreUsers(
-                        query
-                    );
-
-
-                if (
-                    thisSearch !==
-                    searchNumber
-                ) {
-
-                    return;
-
-                }
-
-
-                const combined =
-                    uniqueUsers(
-                        matches.concat(
-                            firestoreUsers
-                        )
-                    ).filter(
-                        function (user) {
-
-                            return (
-                                normalizeUsername(
-                                    user.username
-                                ) !== me
-                            );
-
-                        }
-                    );
-
-
-                renderSearchResults(
-                    combined
-                );
-
-
-            } catch (error) {
-
-                console.error(
-                    "Justice Now search error:",
-                    error
-                );
-
-
-                /*
-                 * Keep local results if Firestore
-                 * search fails.
-                 */
-
-                if (!matches.length) {
-
-                    showSearchMessage(
-                        "⚠️",
-                        "Search unavailable",
-                        "Please check your Firebase connection."
-                    );
-
-                } else {
-
-                    renderSearchResults(
-                        uniqueUsers(matches)
-                    );
-
-                }
-
-            }
-
-        }
-
-
-        function uniqueUsers(
-            users
-        ) {
-
-            const output = [];
-
-
-            users.forEach(
-                function (user) {
-
-                    if (!user) {
-                        return;
-                    }
-
-
-                    const username =
-                        normalizeUsername(
-                            user.username
-                        );
-
-
-                    if (!username) {
-                        return;
-                    }
-
-
-                    const already =
-                        output.some(
-                            function (item) {
-
-                                return (
-                                    normalizeUsername(
-                                        item.username
-                                    ) === username
-                                );
-
-                            }
-                        );
-
-
-                    if (!already) {
-
-                        output.push(
-                            user
-                        );
-
-                    }
-
-                }
-            );
-
-
-            return output;
-
-        }
-
-
-        if (searchButton) {
-
-            searchButton.addEventListener(
-                "click",
-                function (event) {
-
-                    event.preventDefault();
-
-                    performSearch();
-
-                }
-            );
-
-        }
-
-
-        if (searchInput) {
-
-            searchInput.addEventListener(
-                "keydown",
-                function (event) {
-
-                    if (
-                        event.key === "Enter"
-                    ) {
-
-                        event.preventDefault();
-
-                        performSearch();
-
-                    }
-
-                }
-            );
-
-        }
-
-
-        /* =================================================
-           NEW CHAT
-        ================================================= */
-
-        const newChatSearchBtn =
-            document.getElementById(
-                "jnNewChatSearchBtn"
-            );
-
-
-        if (newChatSearchBtn) {
-
-            newChatSearchBtn.addEventListener(
-                "click",
-                function (event) {
-
-                    event.preventDefault();
-
-                    showChatView(
-                        "search"
-                    );
-
-
-                    if (searchInput) {
-
-                        setTimeout(
                             function () {
 
-                                searchInput.focus();
+                                /*
+                                   DIRECTLY OPEN
+                                   SELECTED USER.
+                                */
 
-                            },
-                            50
+                                openDirectMessage(
+                                    profile
+                                );
+                            }
                         );
-
                     }
 
+                    searchResults.appendChild(
+                        card
+                    );
                 }
             );
 
+        } catch (error) {
+
+            console.error(
+                "Search error:",
+                error
+            );
+
+            searchResults.innerHTML = `
+                <div class="jn-user-result">
+                    <strong>Search could not be completed.</strong>
+                    <small>
+                        Check Firestore rules/index.
+                    </small>
+                </div>
+            `;
+        }
+    }
+
+    /* =====================================================
+       DIRECT MESSAGE
+    ===================================================== */
+
+    async function openDirectMessage(
+        profile
+    ) {
+
+        const user =
+            await waitForUser();
+
+        if (!user) {
+            return;
         }
 
-
-        /* =================================================
-           ACTIVE CONVERSATION
-        ================================================= */
-
-        let activeConversation = null;
-
-
-        function openPrivateChat(
-            user
+        if (
+            profile.uid ===
+            user.uid
         ) {
-
-            if (!user) {
-                return;
-            }
-
-
-            activeConversation = {
-
-                type:
-                    "private",
-
-                id:
-                    normalizeUsername(
-                        user.username
-                    ),
-
-                title:
-                    user.name ||
-                    user.username,
-
-                username:
-                    user.username,
-
-                image:
-                    user.image || ""
-
-            };
-
-
-            openMessageView();
-
+            return;
         }
 
+        /*
+           Selected user is stored here.
+        */
 
-        function openMessageView() {
+        activeChat = {
 
-            document
-                .querySelectorAll(
-                    ".jn-chat-view"
-                )
-                .forEach(
-                    function (section) {
+            type: "private",
 
-                        section.classList.remove(
-                            "active"
-                        );
+            chatId:
+                makeChatId(
+                    user.uid,
+                    profile.uid
+                ),
 
-                    }
-                );
+            otherUid:
+                profile.uid,
 
+            otherProfile:
+                profile
+        };
 
-            document
-                .querySelectorAll(
-                    ".jn-sidebar-btn"
-                )
-                .forEach(
-                    function (button) {
+        updateMessageHeader(
+            profile
+        );
 
-                        button.classList.remove(
-                            "active"
-                        );
+        showChatView(
+            "messages"
+        );
 
-                    }
-                );
+        listenToMessages();
+    }
 
+    function updateMessageHeader(
+        profile
+    ) {
 
-            const messageView =
-                document.getElementById(
-                    "jnViewMessages"
-                );
+        const avatar =
+            document.getElementById(
+                "jnMessageAvatar"
+            );
 
+        const title =
+            document.getElementById(
+                "jnMessageTitle"
+            );
 
-            if (messageView) {
+        const status =
+            document.getElementById(
+                "jnMessageStatus"
+            );
 
-                messageView.classList.add(
-                    "active"
-                );
+        if (avatar) {
 
-            }
-
-
-            const messageButton =
-                document.querySelector(
-                    '[data-chat-view="messages"]'
-                );
-
-
-            if (messageButton) {
-
-                messageButton.classList.add(
-                    "active"
-                );
-
-            }
-
-
-            renderActiveConversation();
-
+            avatar.innerHTML =
+                profile.image
+                    ? avatarHTML(
+                        profile.image
+                    )
+                    : "👤";
         }
 
+        if (title) {
 
-        function renderActiveConversation() {
+            title.textContent =
+                profile.name ||
+                profile.username ||
+                "User";
+        }
 
-            if (!activeConversation) {
-                return;
+        if (status) {
+
+            status.innerHTML =
+                profile.online === true
+                    ? `<span class="jn-online-dot">● Online</span>`
+                    : `<span class="jn-offline">Offline</span>`;
+        }
+    }
+
+    /* =====================================================
+       BACK FROM MESSAGE
+    ===================================================== */
+
+    const backBtn =
+        document.getElementById(
+            "jnBackFromMessage"
+        );
+
+    if (backBtn) {
+
+        backBtn.addEventListener(
+            "click",
+            function () {
+
+                if (activeListener) {
+
+                    activeListener();
+
+                    activeListener =
+                        null;
+                }
+
+                activeChat =
+                    null;
+
+                showChatView(
+                    "search"
+                );
             }
+        );
+    }
 
+    /* =====================================================
+       SEND TEXT
+    ===================================================== */
 
-            const title =
-                document.getElementById(
-                    "jnMessageTitle"
-                );
+    const messageInput =
+        document.getElementById(
+            "jnMessageInput"
+        );
 
-            const status =
-                document.getElementById(
-                    "jnMessageStatus"
-                );
+    const sendMessageBtn =
+        document.getElementById(
+            "jnSendMessageBtn"
+        );
 
-            const avatar =
-                document.getElementById(
-                    "jnMessageAvatar"
-                );
+    if (sendMessageBtn) {
 
+        sendMessageBtn.addEventListener(
+            "click",
+            sendTextMessage
+        );
+    }
 
-            if (title) {
+    if (messageInput) {
 
-                title.textContent =
-                    activeConversation.title;
-
-            }
-
-
-            if (status) {
-
-                status.textContent =
-                    "● Online";
-
-                status.classList.add(
-                    "online"
-                );
-
-            }
-
-
-            if (avatar) {
+        messageInput.addEventListener(
+            "keydown",
+            function (event) {
 
                 if (
-                    activeConversation.image
+                    event.key ===
+                    "Enter"
                 ) {
 
-                    avatar.innerHTML =
-                        '<img src="' +
-                        escapeHTML(
-                            activeConversation.image
-                        ) +
-                        '" alt="Profile">';
+                    event.preventDefault();
 
-                } else {
-
-                    avatar.innerHTML =
-                        "👤";
-
+                    sendTextMessage();
                 }
-
             }
+        );
+    }
 
+    async function sendTextMessage() {
 
-            renderMessages();
-
+        if (!activeChat) {
+            return;
         }
 
+        const user =
+            await waitForUser();
 
-        /* =================================================
-           MESSAGE STORAGE
-        ================================================= */
-
-        function getActiveMessages() {
-
-            if (!activeConversation) {
-                return [];
-            }
-
-
-            const chats =
-                getChats();
-
-
-            const key =
-                chatKey(
-                    activeConversation.type,
-                    activeConversation.id
-                );
-
-
-            return Array.isArray(
-                chats[key]
-            )
-                ? chats[key]
-                : [];
-
+        if (!user) {
+            return;
         }
 
+        const text =
+            messageInput
+                ? messageInput.value.trim()
+                : "";
 
-        function saveActiveMessages(
-            messages
-        ) {
+        if (!text) {
+            return;
+        }
 
-            if (!activeConversation) {
-                return;
+        const chatId =
+            activeChat.chatId;
+
+        try {
+
+            await db
+                .collection("chats")
+                .doc(chatId)
+                .collection("messages")
+                .add({
+
+                    senderId:
+                        user.uid,
+
+                    receiverId:
+                        activeChat.otherUid,
+
+                    type:
+                        "text",
+
+                    text:
+                        text,
+
+                    createdAt:
+                        firebase.firestore
+                            .FieldValue
+                            .serverTimestamp(),
+
+                    deleted:
+                        false
+                });
+
+            await db
+                .collection("chats")
+                .doc(chatId)
+                .set({
+
+                    participants: [
+                        user.uid,
+                        activeChat.otherUid
+                    ],
+
+                    lastMessage:
+                        text,
+
+                    lastMessageAt:
+                        firebase.firestore
+                            .FieldValue
+                            .serverTimestamp(),
+
+                    updatedAt:
+                        firebase.firestore
+                            .FieldValue
+                            .serverTimestamp()
+
+                }, {
+                    merge: true
+                });
+
+            if (messageInput) {
+
+                messageInput.value =
+                    "";
             }
 
+        } catch (error) {
 
-            const chats =
-                getChats();
+            console.error(
+                "Send message error:",
+                error
+            );
+        }
+    }
 
+    /* =====================================================
+       LISTEN TO REAL-TIME MESSAGES
+    ===================================================== */
 
-            const key =
-                chatKey(
-                    activeConversation.type,
-                    activeConversation.id
-                );
+    function listenToMessages() {
 
+        if (!activeChat) {
+            return;
+        }
 
-            chats[key] =
-                messages;
+        if (activeListener) {
 
+            activeListener();
 
-            saveChats(
-                chats
+            activeListener =
+                null;
+        }
+
+        const messagesBox =
+            document.getElementById(
+                "jnMessages"
             );
 
+        if (!messagesBox) {
+            return;
         }
 
+        messagesBox.innerHTML = "";
 
-        /* =================================================
-           MESSAGE RENDER
-        ================================================= */
+        activeListener =
+            db
+                .collection("chats")
+                .doc(activeChat.chatId)
+                .collection("messages")
+                .orderBy(
+                    "createdAt",
+                    "asc"
+                )
+                .onSnapshot(
+                    function (snapshot) {
 
-        function renderMessages() {
+                        messagesBox.innerHTML =
+                            "";
 
-            const container =
-                document.getElementById(
-                    "jnMessagesContainer"
+                        snapshot.forEach(
+                            function (doc) {
+
+                                renderMessage(
+                                    doc.id,
+                                    doc.data(),
+                                    messagesBox
+                                );
+                            }
+                        );
+
+                        messagesBox.scrollTop =
+                            messagesBox.scrollHeight;
+                    },
+
+                    function (error) {
+
+                        console.error(
+                            "Message listener error:",
+                            error
+                        );
+                    }
                 );
+    }
 
+    function renderMessage(
+        id,
+        data,
+        container
+    ) {
 
-            if (!container) {
-                return;
-            }
+        if (
+            data.deleted === true
+        ) {
+            return;
+        }
 
+        const user =
+            currentUser;
 
-            const messages =
-                getActiveMessages();
+        const mine =
+            user &&
+            data.senderId ===
+            user.uid;
 
+        const bubble =
+            document.createElement(
+                "div"
+            );
 
-            container.innerHTML = "";
+        bubble.className =
+            mine
+                ? "jn-message-bubble jn-message-mine"
+                : "jn-message-bubble jn-message-other";
 
+        let content = "";
 
-            if (!messages.length) {
+        if (data.type === "image") {
 
-                container.innerHTML = `
+            content = `
+                <img
+                    src="${escapeHTML(
+                        data.url
+                    )}"
+                    alt="Image"
+                    style="
+                        max-width:240px;
+                        border-radius:12px;
+                        display:block;
+                    ">
+            `;
 
-                    <div class="jn-empty-state">
+        } else if (
+            data.type === "voice"
+        ) {
 
-                        <span>💬</span>
+            content = `
+                <audio
+                    controls
+                    src="${escapeHTML(
+                        data.url
+                    )}">
+                </audio>
+            `;
 
-                        <h3>
-                            Start a conversation
-                        </h3>
+        } else {
 
-                        <p>
-                            Send your first message.
-                        </p>
+            content =
+                escapeHTML(
+                    data.text ||
+                    ""
+                );
+        }
 
+        bubble.innerHTML =
+            content;
+
+        bubble.dataset.messageId =
+            id;
+
+        container.appendChild(
+            bubble
+        );
+    }
+
+    /* =====================================================
+       CHAT LIST
+    ===================================================== */
+
+    async function renderChatList() {
+
+        const list =
+            document.getElementById(
+                "jnChatList"
+            );
+
+        if (!list) {
+            return;
+        }
+
+        const user =
+            await waitForUser();
+
+        if (!user) {
+            return;
+        }
+
+        list.innerHTML = "";
+
+        try {
+
+            const snapshot =
+                await db
+                    .collection("chats")
+                    .where(
+                        "participants",
+                        "array-contains",
+                        user.uid
+                    )
+                    .orderBy(
+                        "updatedAt",
+                        "desc"
+                    )
+                    .get();
+
+            if (snapshot.empty) {
+
+                list.innerHTML = `
+                    <div class="jn-chat-list-item">
+                        No chats yet.
                     </div>
-
                 `;
 
                 return;
             }
 
+            for (
+                const doc of
+                snapshot.docs
+            ) {
 
-            messages.forEach(
-                function (message) {
+                const data =
+                    doc.data();
+
+                const otherUid =
+                    (
+                        data.participants ||
+                        []
+                    ).find(
+                        function (uid) {
+                            return uid !==
+                                user.uid;
+                        }
+                    );
+
+                if (!otherUid) {
+                    continue;
+                }
+
+                const profileSnap =
+                    await db
+                        .collection("users")
+                        .doc(otherUid)
+                        .get();
+
+                if (!profileSnap.exists) {
+                    continue;
+                }
+
+                const profile =
+                    profileSnap.data();
+
+                const item =
+                    document.createElement(
+                        "div"
+                    );
+
+                item.className =
+                    "jn-chat-list-item";
+
+                item.innerHTML = `
+
+                    <div class="jn-chat-avatar">
+                        ${
+                            profile.image
+                                ? avatarHTML(
+                                    profile.image
+                                )
+                                : "👤"
+                        }
+                    </div>
+
+                    <div class="jn-chat-list-info">
+
+                        <strong>
+                            ${escapeHTML(
+                                profile.name ||
+                                profile.username ||
+                                "User"
+                            )}
+                        </strong>
+
+                        <span>
+                            ${escapeHTML(
+                                data.lastMessage ||
+                                "Chat"
+                            )}
+                        </span>
+
+                    </div>
+                `;
+
+                item.addEventListener(
+                    "click",
+                    function () {
+
+                        openDirectMessage(
+                            {
+                                uid:
+                                    otherUid,
+                                ...profile
+                            }
+                        );
+                    }
+                );
+
+                list.appendChild(
+                    item
+                );
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Chat list error:",
+                error
+            );
+        }
+    }
+
+    /* =====================================================
+       IMAGE MESSAGE
+    ===================================================== */
+
+    const imageBtn =
+        document.getElementById(
+            "jnImageBtn"
+        );
+
+    const imageInput =
+        document.getElementById(
+            "jnImageInput"
+        );
+
+    if (imageBtn && imageInput) {
+
+        imageBtn.addEventListener(
+            "click",
+            function () {
+
+                imageInput.click();
+            }
+        );
+
+        imageInput.addEventListener(
+            "change",
+            sendImageMessage
+        );
+    }
+
+    async function sendImageMessage(
+        event
+    ) {
+
+        const file =
+            event.target.files[0];
+
+        if (!file || !activeChat) {
+            return;
+        }
+
+        const user =
+            await waitForUser();
+
+        if (!user) {
+            return;
+        }
+
+        try {
+
+            const safeName =
+                file.name.replace(
+                    /[^a-zA-Z0-9._-]/g,
+                    "_"
+                );
+
+            const ref =
+                storage
+                    .ref()
+                    .child(
+                        "chatImages/" +
+                        activeChat.chatId +
+                        "/" +
+                        Date.now() +
+                        "_" +
+                        safeName
+                    );
+
+            const upload =
+                await ref.put(file);
+
+            const url =
+                await upload.ref
+                    .getDownloadURL();
+
+            await db
+                .collection("chats")
+                .doc(activeChat.chatId)
+                .collection("messages")
+                .add({
+
+                    senderId:
+                        user.uid,
+
+                    receiverId:
+                        activeChat.otherUid,
+
+                    type:
+                        "image",
+
+                    url:
+                        url,
+
+                    createdAt:
+                        firebase.firestore
+                            .FieldValue
+                            .serverTimestamp()
+                });
+
+        } catch (error) {
+
+            console.error(
+                "Image message error:",
+                error
+            );
+        }
+
+        imageInput.value =
+            "";
+    }
+
+    /* =====================================================
+       VOICE MESSAGE
+    ===================================================== */
+
+    const voiceBtn =
+        document.getElementById(
+            "jnVoiceBtn"
+        );
+
+    if (voiceBtn) {
+
+        voiceBtn.addEventListener(
+            "click",
+            toggleVoiceRecording
+        );
+    }
+
+    async function toggleVoiceRecording() {
+
+        if (!activeChat) {
+            return;
+        }
+
+        const user =
+            await waitForUser();
+
+        if (!user) {
+            return;
+        }
+
+        if (
+            mediaRecorder &&
+            mediaRecorder.state ===
+            "recording"
+        ) {
+
+            mediaRecorder.stop();
+
+            voiceBtn.textContent =
+                "🎤";
+
+            return;
+        }
+
+        try {
+
+            const stream =
+                await navigator.mediaDevices
+                    .getUserMedia({
+                        audio: true
+                    });
+
+            recordedChunks = [];
+
+            mediaRecorder =
+                new MediaRecorder(
+                    stream
+                );
+
+            mediaRecorder.ondataavailable =
+                function (event) {
+
+                    if (
+                        event.data.size >
+                        0
+                    ) {
+
+                        recordedChunks.push(
+                            event.data
+                        );
+                    }
+                };
+
+            mediaRecorder.onstop =
+                async function () {
+
+                    stream
+                        .getTracks()
+                        .forEach(
+                            function (track) {
+                                track.stop();
+                            }
+                        );
+
+                    const blob =
+                        new Blob(
+                            recordedChunks,
+                            {
+                                type:
+                                    "audio/webm"
+                            }
+                        );
+
+                    try {
+
+                        const ref =
+                            storage
+                                .ref()
+                                .child(
+                                    "voiceMessages/" +
+                                    activeChat.chatId +
+                                    "/" +
+                                    Date.now() +
+                                    ".webm"
+                                );
+
+                        const upload =
+                            await ref.put(
+                                blob
+                            );
+
+                        const url =
+                            await upload.ref
+                                .getDownloadURL();
+
+                        await db
+                            .collection("chats")
+                            .doc(
+                                activeChat.chatId
+                            )
+                            .collection(
+                                "messages"
+                            )
+                            .add({
+
+                                senderId:
+                                    user.uid,
+
+                                receiverId:
+                                    activeChat.otherUid,
+
+                                type:
+                                    "voice",
+
+                                url:
+                                    url,
+
+                                createdAt:
+                                    firebase.firestore
+                                        .FieldValue
+                                        .serverTimestamp()
+                            });
+
+                    } catch (error) {
+
+                        console.error(
+                            "Voice upload error:",
+                            error
+                        );
+                    }
+                };
+
+            mediaRecorder.start();
+
+            voiceBtn.textContent =
+                "⏹";
+
+        } catch (error) {
+
+            console.error(
+                "Microphone error:",
+                error
+            );
+
+            alert(
+                "Microphone permission is required."
+            );
+        }
+    }
+
+    /* =====================================================
+       EMOJI
+    ===================================================== */
+
+    const emojiList = [
+        "😀","😃","😄","😁","😆","😅","😂","🤣",
+        "😊","😇","🙂","🙃","😉","😌","😍","🥰",
+        "😘","😗","😙","😚","😋","😛","😝","😜",
+        "🤪","🤨","🧐","🤓","😎","🤩","🥳","😏",
+        "😒","😞","😔","😟","😕","🙁","☹️","😣",
+        "😖","😫","😩","🥺","😢","😭","😤","😠",
+        "😡","🤬","🤯","😳","🥵","🥶","😱","😨",
+        "😰","😥","😓","🤗","🤔","🤭","🤫","🤥",
+        "😶","😐","😑","😬","🙄","😯","😦","😧",
+        "😮","😲","🥱","😴","🤤","😪","😵","🤐",
+        "🥴","🤢","🤮","🤧","😷","🤒","🤕","🤑",
+        "🤠","😈","👿","👹","👺","🤡","💩","👻",
+        "💀","☠️","👽","👾","🤖","🎃",
+        "😺","😸","😹","😻","😼","😽","🙀","😿",
+        "😾","🙈","🙉","🙊",
+        "❤️","🧡","💛","💚","💙","💜","🖤","🤍",
+        "🤎","💔","💕","💞","💓","💗","💖","💘",
+        "💝","❤️‍🔥",
+        "👍","👎","👌","✌️","🤞","🤟","🤘","🤙",
+        "👈","👉","👆","👇","☝️","✋","🤚","🖐️",
+        "🖖","👏","🙌","👐","🤲","🙏","💪","🫶",
+        "👋","🤝","💅","👀","🧠","🫂",
+        "🎉","🎊","🎈","🎁","🏆","🥇",
+        "⚖️","🛡️","🚨","🚑","🚓","🏥",
+        "🏠","📱","💻","📷","🎤","🎧","📞","📹",
+        "🔒","🔓","🔔","🔕","📌","📎","📁","📄",
+        "✏️","📝","✅","❌","⚠️","❗","❓",
+        "‼️","⁉️","⭕","🚫",
+        "🌞","🌝","🌚","🌙","🌈","☀️","🌤️",
+        "⛅","🌧️","⛈️","❄️","☃️","🌊",
+        "🌍","🌎","🌏",
+        "🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼",
+        "🐨","🐯","🦁","🐮","🐷","🐸","🐵",
+        "🐔","🐧","🐦","🐤","🦄",
+        "🍎","🍊","🍋","🍌","🍉","🍇","🍓","🍒",
+        "🍑","🍍","🥭","🍕","🍔","🍟","🌭","🌮",
+        "🍿","🍩","🍪","🎂","🍰",
+        "⚽","🏀","🏈","⚾","🎾","🏐","🏸","🥊",
+        "🥋","🎮","🎯",
+        "🚗","🚕","🚌","🚓","🚑","🚒","🚲",
+        "🏍️","✈️","🚁","🚀","🚢","🚆","🚉",
+        "💡","📚","📖","💰","💳","🔑","🔨","⚙️",
+        "🧰","📧","📩","📤","📥","🔍","🔎",
+        "🗂️","📂",
+        "🫠","🫡","🫣","🫢","🫥","🫤",
+        "🥹","😮‍💨","😵‍💫","🫨"
+    ];
+
+    function buildEmojiPicker() {
+
+        const panel =
+            document.getElementById(
+                "jnEmojiPanel"
+            );
+
+        if (!panel) {
+            return;
+        }
+
+        if (
+            panel.dataset.ready ===
+            "true"
+        ) {
+            return;
+        }
+
+        panel.dataset.ready =
+            "true";
+
+        const unique =
+            [...new Set(
+                emojiList
+            )];
+
+        unique.forEach(
+            function (emoji) {
+
+                const button =
+                    document.createElement(
+                        "button"
+                    );
+
+                button.type =
+                    "button";
+
+                button.textContent =
+                    emoji;
+
+                button.addEventListener(
+                    "click",
+                    function () {
+
+                        if (
+                            messageInput
+                        ) {
+
+                            messageInput.value +=
+                                emoji;
+
+                            messageInput.focus();
+                        }
+                    }
+                );
+
+                panel.appendChild(
+                    button
+                );
+            }
+        );
+    }
+
+    const emojiBtn =
+        document.getElementById(
+            "jnEmojiBtn"
+        );
+
+    const emojiPanel =
+        document.getElementById(
+            "jnEmojiPanel"
+        );
+
+    if (emojiBtn) {
+
+        emojiBtn.addEventListener(
+            "click",
+            function (event) {
+
+                event.stopPropagation();
+
+                buildEmojiPicker();
+
+                if (emojiPanel) {
+
+                    emojiPanel.classList.toggle(
+                        "open"
+                    );
+                }
+            }
+        );
+    }
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            if (
+                emojiPanel &&
+                !emojiPanel.contains(
+                    event.target
+                ) &&
+                emojiBtn &&
+                !emojiBtn.contains(
+                    event.target
+                )
+            ) {
+
+                emojiPanel.classList.remove(
+                    "open"
+                );
+            }
+        }
+    );
+
+    /* =====================================================
+       MESSAGE MENU
+    ===================================================== */
+
+    const messageMenuBtn =
+        document.getElementById(
+            "jnMessageMenuBtn"
+        );
+
+    const messageMenu =
+        document.getElementById(
+            "jnMessageMenu"
+        );
+
+    if (messageMenuBtn) {
+
+        messageMenuBtn.addEventListener(
+            "click",
+            function (event) {
+
+                event.stopPropagation();
+
+                if (messageMenu) {
+
+                    messageMenu.classList.toggle(
+                        "open"
+                    );
+                }
+            }
+        );
+    }
+
+    /* =====================================================
+       MUTE
+    ===================================================== */
+
+    const muteBtn =
+        document.getElementById(
+            "jnMuteBtn"
+        );
+
+    if (muteBtn) {
+
+        muteBtn.addEventListener(
+            "click",
+            async function () {
+
+                if (!activeChat) {
+                    return;
+                }
+
+                const user =
+                    await waitForUser();
+
+                if (!user) {
+                    return;
+                }
+
+                const ref =
+                    db
+                        .collection("chats")
+                        .doc(
+                            activeChat.chatId
+                        );
+
+                const snap =
+                    await ref.get();
+
+                const data =
+                    snap.exists
+                        ? snap.data()
+                        : {};
+
+                const muted =
+                    data.mutedBy &&
+                    data.mutedBy[user.uid] ===
+                    true;
+
+                await ref.set({
+
+                    mutedBy: {
+
+                        [user.uid]:
+                            !muted
+                    }
+
+                }, {
+                    merge: true
+                });
+
+                muteBtn.textContent =
+                    muted
+                        ? "🔕 Mute Notifications"
+                        : "🔔 Unmute Notifications";
+            }
+        );
+    }
+
+    /* =====================================================
+       DELETE CHAT
+    ===================================================== */
+
+    const deleteChatBtn =
+        document.getElementById(
+            "jnDeleteChatBtn"
+        );
+
+    if (deleteChatBtn) {
+
+        deleteChatBtn.addEventListener(
+            "click",
+            async function () {
+
+                if (!activeChat) {
+                    return;
+                }
+
+                const ok =
+                    confirm(
+                        "Delete this chat?"
+                    );
+
+                if (!ok) {
+                    return;
+                }
+
+                try {
+
+                    const messages =
+                        await db
+                            .collection("chats")
+                            .doc(
+                                activeChat.chatId
+                            )
+                            .collection(
+                                "messages"
+                            )
+                            .get();
+
+                    const batch =
+                        db.batch();
+
+                    messages.forEach(
+                        function (doc) {
+
+                            batch.delete(
+                                doc.ref
+                            );
+                        }
+                    );
+
+                    await batch.commit();
+
+                    await db
+                        .collection("chats")
+                        .doc(
+                            activeChat.chatId
+                        )
+                        .delete();
+
+                    if (activeListener) {
+
+                        activeListener();
+
+                        activeListener =
+                            null;
+                    }
+
+                    activeChat =
+                        null;
+
+                    showChatView(
+                        "chats"
+                    );
+
+                } catch (error) {
+
+                    console.error(
+                        "Delete chat error:",
+                        error
+                    );
+                }
+            }
+        );
+    }
+
+    /* =====================================================
+       DELETE MY MESSAGES
+    ===================================================== */
+
+    const deleteMyMessagesBtn =
+        document.getElementById(
+            "jnDeleteMyMessagesBtn"
+        );
+
+    if (deleteMyMessagesBtn) {
+
+        deleteMyMessagesBtn.addEventListener(
+            "click",
+            async function () {
+
+                if (!activeChat) {
+                    return;
+                }
+
+                const user =
+                    await waitForUser();
+
+                if (!user) {
+                    return;
+                }
+
+                try {
+
+                    const snapshot =
+                        await db
+                            .collection("chats")
+                            .doc(
+                                activeChat.chatId
+                            )
+                            .collection(
+                                "messages"
+                            )
+                            .where(
+                                "senderId",
+                                "==",
+                                user.uid
+                            )
+                            .get();
+
+                    const batch =
+                        db.batch();
+
+                    snapshot.forEach(
+                        function (doc) {
+
+                            batch.update(
+                                doc.ref,
+                                {
+                                    deleted:
+                                        true
+                                }
+                            );
+                        }
+                    );
+
+                    await batch.commit();
+
+                } catch (error) {
+
+                    console.error(
+                        "Delete messages error:",
+                        error
+                    );
+                }
+            }
+        );
+    }
+
+    /* =====================================================
+       BLOCK USER
+    ===================================================== */
+
+    const blockUserBtn =
+        document.getElementById(
+            "jnBlockUserBtn"
+        );
+
+    if (blockUserBtn) {
+
+        blockUserBtn.addEventListener(
+            "click",
+            async function () {
+
+                if (!activeChat) {
+                    return;
+                }
+
+                const user =
+                    await waitForUser();
+
+                if (!user) {
+                    return;
+                }
+
+                try {
+
+                    await db
+                        .collection("users")
+                        .doc(user.uid)
+                        .collection("blockedUsers")
+                        .doc(
+                            activeChat.otherUid
+                        )
+                        .set({
+
+                            blocked:
+                                true,
+
+                            createdAt:
+                                firebase.firestore
+                                    .FieldValue
+                                    .serverTimestamp()
+
+                        });
+
+                    alert(
+                        "User blocked."
+                    );
+
+                } catch (error) {
+
+                    console.error(
+                        "Block error:",
+                        error
+                    );
+                }
+            }
+        );
+    }
+
+    /* =====================================================
+       CALL BUTTON
+       PROFILE-TO-PROFILE PLACEHOLDER
+    ===================================================== */
+
+    const callBtn =
+        document.getElementById(
+            "jnCallBtn"
+        );
+
+    if (callBtn) {
+
+        callBtn.addEventListener(
+            "click",
+            function () {
+
+                if (!activeChat) {
+                    return;
+                }
+
+                alert(
+                    "Voice/video calling requires WebRTC calling setup and microphone/camera permission."
+                );
+            }
+        );
+    }
+
+    /* =====================================================
+       GROUPS
+    ===================================================== */
+
+    const createGroupBtn =
+        document.getElementById(
+            "jnCreateGroupBtn"
+        );
+
+    const createGroupPanel =
+        document.getElementById(
+            "jnCreateGroupPanel"
+        );
+
+    const closeCreateGroup =
+        document.getElementById(
+            "jnCloseCreateGroup"
+        );
+
+    if (createGroupBtn) {
+
+        createGroupBtn.addEventListener(
+            "click",
+            function () {
+
+                if (createGroupPanel) {
+
+                    createGroupPanel.classList.add(
+                        "open"
+                    );
+                }
+            }
+        );
+    }
+
+    if (closeCreateGroup) {
+
+        closeCreateGroup.addEventListener(
+            "click",
+            function () {
+
+                if (createGroupPanel) {
+
+                    createGroupPanel.classList.remove(
+                        "open"
+                    );
+                }
+            }
+        );
+    }
+
+    const groupImageInput =
+        document.getElementById(
+            "jnGroupImageInput"
+        );
+
+    let pendingGroupImage = "";
+
+    if (groupImageInput) {
+
+        groupImageInput.addEventListener(
+            "change",
+            async function (event) {
+
+                const file =
+                    event.target.files[0];
+
+                if (!file) {
+                    return;
+                }
+
+                const user =
+                    await waitForUser();
+
+                if (!user) {
+                    return;
+                }
+
+                try {
+
+                    const ref =
+                        storage
+                            .ref()
+                            .child(
+                                "groupPictures/" +
+                                user.uid +
+                                "/" +
+                                Date.now() +
+                                "_" +
+                                file.name
+                                    .replace(
+                                        /[^a-zA-Z0-9._-]/g,
+                                        "_"
+                                    )
+                            );
+
+                    const upload =
+                        await ref.put(file);
+
+                    pendingGroupImage =
+                        await upload.ref
+                            .getDownloadURL();
+
+                    const preview =
+                        document.getElementById(
+                            "jnGroupPicturePreview"
+                        );
+
+                    if (preview) {
+
+                        preview.innerHTML =
+                            avatarHTML(
+                                pendingGroupImage
+                            );
+                    }
+
+                } catch (error) {
+
+                    console.error(
+                        "Group image error:",
+                        error
+                    );
+                }
+            }
+        );
+    }
+
+    /* =====================================================
+       GROUP MEMBER SEARCH
+    ===================================================== */
+
+    const groupSearchBtn =
+        document.getElementById(
+            "jnSearchGroupMemberBtn"
+        );
+
+    const groupMemberSearch =
+        document.getElementById(
+            "jnGroupMemberSearch"
+        );
+
+    const groupMemberResults =
+        document.getElementById(
+            "jnGroupMemberResults"
+        );
+
+    if (groupSearchBtn) {
+
+        groupSearchBtn.addEventListener(
+            "click",
+            searchGroupMembers
+        );
+    }
+
+    async function searchGroupMembers() {
+
+        const user =
+            await waitForUser();
+
+        if (!user) {
+            return;
+        }
+
+        const query =
+            normalize(
+                groupMemberSearch
+                    ? groupMemberSearch.value
+                    : ""
+            );
+
+        if (!query) {
+            return;
+        }
+
+        if (!groupMemberResults) {
+            return;
+        }
+
+        groupMemberResults.innerHTML =
+            "";
+
+        try {
+
+            const snapshot =
+                await db
+                    .collection("users")
+                    .limit(100)
+                    .get();
+
+            snapshot.forEach(
+                function (doc) {
+
+                    const profile =
+                        {
+                            uid: doc.id,
+                            ...doc.data()
+                        };
+
+                    if (
+                        profile.uid ===
+                        user.uid
+                    ) {
+                        return;
+                    }
+
+                    const username =
+                        normalize(
+                            profile.username
+                        );
+
+                    const name =
+                        normalize(
+                            profile.name
+                        );
+
+                    if (
+                        !username.includes(
+                            query
+                        ) &&
+                        !name.includes(
+                            query
+                        )
+                    ) {
+                        return;
+                    }
 
                     const row =
                         document.createElement(
                             "div"
                         );
 
-
                     row.className =
-                        "jn-message-row" +
-                        (
-                            message.mine
-                                ? " mine"
-                                : ""
-                        );
+                        "jn-member-result";
 
+                    row.innerHTML = `
 
-                    const bubble =
-                        document.createElement(
-                            "div"
-                        );
+                        <div>
+                            ${escapeHTML(
+                                profile.name ||
+                                "User"
+                            )}
 
-
-                    bubble.className =
-                        "jn-message-bubble";
-
-
-                    if (
-                        message.type ===
-                        "image"
-                    ) {
-
-                        bubble.innerHTML = `
-
-                            <img
-                                src="${escapeHTML(
-                                    message.content
-                                )}"
-                                class="jn-message-image"
-                                alt="Sent image"
-                            >
-
-                            <div class="jn-message-time">
-                                ${escapeHTML(
-                                    message.time
+                            <small>
+                                @${escapeHTML(
+                                    profile.username ||
+                                    ""
                                 )}
-                            </div>
-
-                        `;
-
-                    }
-
-                    else if (
-                        message.type ===
-                        "voice"
-                    ) {
-
-                        bubble.innerHTML = `
-
-                            <div class="jn-voice-message">
-
-                                <span>🎤</span>
-
-                                <audio
-                                    controls
-                                    src="${escapeHTML(
-                                        message.content
-                                    )}"
-                                ></audio>
-
-                            </div>
-
-                            <div class="jn-message-time">
-                                ${escapeHTML(
-                                    message.time
-                                )}
-                            </div>
-
-                        `;
-
-                    }
-
-                    else {
-
-                        bubble.innerHTML = `
-
-                            <div>
-                                ${escapeHTML(
-                                    message.content
-                                )}
-                            </div>
-
-                            <div class="jn-message-time">
-                                ${escapeHTML(
-                                    message.time
-                                )}
-                            </div>
-
-                        `;
-
-                    }
-
-
-                    row.appendChild(
-                        bubble
-                    );
-
-
-                    container.appendChild(
-                        row
-                    );
-
-                }
-            );
-
-
-            container.scrollTop =
-                container.scrollHeight;
-
-        }
-
-
-        /* =================================================
-           TEXT MESSAGE
-        ================================================= */
-
-        const messageInput =
-            document.getElementById(
-                "jnMessageInput"
-            );
-
-        const sendMessageBtn =
-            document.getElementById(
-                "jnSendMessageBtn"
-            );
-
-
-        function sendTextMessage() {
-
-            if (
-                !activeConversation ||
-                !messageInput
-            ) {
-
-                return;
-
-            }
-
-
-            const text =
-                messageInput.value.trim();
-
-
-            if (!text) {
-                return;
-            }
-
-
-            const messages =
-                getActiveMessages();
-
-
-            messages.push({
-
-                id:
-                    makeId("msg"),
-
-                type:
-                    "text",
-
-                content:
-                    text,
-
-                mine:
-                    true,
-
-                sender:
-                    currentUsername(),
-
-                time:
-                    new Date()
-                        .toLocaleTimeString(
-                            [],
-                            {
-                                hour:
-                                    "2-digit",
-
-                                minute:
-                                    "2-digit"
-                            }
-                        )
-
-            });
-
-
-            saveActiveMessages(
-                messages
-            );
-
-
-            messageInput.value = "";
-
-
-            renderMessages();
-
-            renderChatList();
-
-        }
-
-
-        if (sendMessageBtn) {
-
-            sendMessageBtn.addEventListener(
-                "click",
-                function (event) {
-
-                    event.preventDefault();
-
-                    sendTextMessage();
-
-                }
-            );
-
-        }
-
-
-        if (messageInput) {
-
-            messageInput.addEventListener(
-                "keydown",
-                function (event) {
-
-                    if (
-                        event.key === "Enter" &&
-                        !event.shiftKey
-                    ) {
-
-                        event.preventDefault();
-
-                        sendTextMessage();
-
-                    }
-
-                }
-            );
-
-        }
-
-
-        /* =================================================
-           BACK BUTTON
-        ================================================= */
-
-        const backMessageBtn =
-            document.getElementById(
-                "jnBackFromMessage"
-            );
-
-
-        if (backMessageBtn) {
-
-            backMessageBtn.addEventListener(
-                "click",
-                function (event) {
-
-                    event.preventDefault();
-
-
-                    if (
-                        activeConversation &&
-                        activeConversation.type ===
-                        "group"
-                    ) {
-
-                        showChatView(
-                            "groups"
-                        );
-
-                    } else {
-
-                        showChatView(
-                            "chats"
-                        );
-
-                    }
-
-
-                    activeConversation =
-                        null;
-
-                }
-            );
-
-        }
-
-
-        /* =================================================
-           IMAGE MESSAGE
-        ================================================= */
-
-        const imageBtn =
-            document.getElementById(
-                "jnImageBtn"
-            );
-
-        const imageInput =
-            document.getElementById(
-                "jnImageInput"
-            );
-
-
-        if (
-            imageBtn &&
-            imageInput
-        ) {
-
-            imageBtn.addEventListener(
-                "click",
-                function () {
-
-                    imageInput.click();
-
-                }
-            );
-
-
-            imageInput.addEventListener(
-                "change",
-                function () {
-
-                    const file =
-                        this.files &&
-                        this.files[0];
-
-
-                    if (
-                        !file ||
-                        !activeConversation
-                    ) {
-
-                        return;
-
-                    }
-
-
-                    const reader =
-                        new FileReader();
-
-
-                    reader.onload =
-                        function (event) {
-
-                            const messages =
-                                getActiveMessages();
-
-
-                            messages.push({
-
-                                id:
-                                    makeId(
-                                        "image"
-                                    ),
-
-                                type:
-                                    "image",
-
-                                content:
-                                    event.target.result,
-
-                                mine:
-                                    true,
-
-                                time:
-                                    new Date()
-                                        .toLocaleTimeString(
-                                            [],
-                                            {
-                                                hour:
-                                                    "2-digit",
-
-                                                minute:
-                                                    "2-digit"
-                                            }
-                                        )
-
-                            });
-
-
-                            saveActiveMessages(
-                                messages
-                            );
-
-
-                            renderMessages();
-
-
-                            imageInput.value =
-                                "";
-
-                        };
-
-
-                    reader.readAsDataURL(
-                        file
-                    );
-
-                }
-            );
-
-        }
-
-
-        /* =================================================
-           VOICE MESSAGE
-        ================================================= */
-
-        const voiceBtn =
-            document.getElementById(
-                "jnVoiceBtn"
-            );
-
-
-        let mediaRecorder = null;
-
-        let voiceChunks = [];
-
-        let voiceStream = null;
-
-
-        function getSupportedAudioType() {
-
-            if (
-                typeof MediaRecorder ===
-                "undefined"
-            ) {
-
-                return "";
-
-            }
-
-
-            const types = [
-
-                "audio/webm;codecs=opus",
-
-                "audio/webm",
-
-                "audio/ogg;codecs=opus",
-
-                "audio/ogg",
-
-                "audio/mp4"
-
-            ];
-
-
-            for (
-                let i = 0;
-                i < types.length;
-                i++
-            ) {
-
-                if (
-                    MediaRecorder.isTypeSupported(
-                        types[i]
-                    )
-                ) {
-
-                    return types[i];
-
-                }
-
-            }
-
-
-            return "";
-
-        }
-
-
-        async function startVoiceRecording() {
-
-            if (!activeConversation) {
-
-                alert(
-                    "Please open a chat first."
-                );
-
-                return;
-
-            }
-
-
-            if (
-                !navigator.mediaDevices ||
-                !navigator.mediaDevices.getUserMedia
-            ) {
-
-                alert(
-                    "Voice recording is not supported by this browser."
-                );
-
-                return;
-
-            }
-
-
-            try {
-
-                voiceStream =
-                    await navigator
-                        .mediaDevices
-                        .getUserMedia({
-                            audio: true
-                        });
-
-
-                voiceChunks = [];
-
-
-                const mimeType =
-                    getSupportedAudioType();
-
-
-                mediaRecorder =
-                    mimeType
-                        ? new MediaRecorder(
-                            voiceStream,
-                            {
-                                mimeType:
-                                    mimeType
-                            }
-                        )
-                        : new MediaRecorder(
-                            voiceStream
-                        );
-
-
-                mediaRecorder.ondataavailable =
-                    function (event) {
-
-                        if (
-                            event.data &&
-                            event.data.size > 0
-                        ) {
-
-                            voiceChunks.push(
-                                event.data
-                            );
-
-                        }
-
-                    };
-
-
-                mediaRecorder.onerror =
-                    function (event) {
-
-                        console.error(
-                            "Voice recorder error:",
-                            event
-                        );
-
-                        cleanupVoiceRecording();
-
-                    };
-
-
-                mediaRecorder.onstop =
-                    function () {
-
-                        const type =
-                            mediaRecorder.mimeType ||
-                            "audio/webm";
-
-
-                        const audioBlob =
-                            new Blob(
-                                voiceChunks,
-                                {
-                                    type:
-                                        type
-                                }
-                            );
-
-
-                        const audioURL =
-                            URL.createObjectURL(
-                                audioBlob
-                            );
-
-
-                        const messages =
-                            getActiveMessages();
-
-
-                        messages.push({
-
-                            id:
-                                makeId(
-                                    "voice"
-                                ),
-
-                            type:
-                                "voice",
-
-                            content:
-                                audioURL,
-
-                            mine:
-                                true,
-
-                            temporary:
-                                true,
-
-                            time:
-                                new Date()
-                                    .toLocaleTimeString(
-                                        [],
-                                        {
-                                            hour:
-                                                "2-digit",
-
-                                            minute:
-                                                "2-digit"
-                                        }
-                                    )
-
-                        });
-
-
-                        saveActiveMessages(
-                            messages
-                        );
-
-
-                        renderMessages();
-
-
-                        cleanupVoiceRecording();
-
-                    };
-
-
-                mediaRecorder.start(
-                    250
-                );
-
-
-                if (voiceBtn) {
-
-                    voiceBtn.classList.add(
-                        "jn-recording"
-                    );
-
-                    voiceBtn.textContent =
-                        "⏹";
-
-                    voiceBtn.title =
-                        "Stop recording";
-
-                }
-
-
-            } catch (error) {
-
-                console.error(
-                    "Microphone error:",
-                    error
-                );
-
-
-                cleanupVoiceRecording();
-
-
-                alert(
-                    "Microphone permission was not allowed."
-                );
-
-            }
-
-        }
-
-
-        function cleanupVoiceRecording() {
-
-            if (voiceStream) {
-
-                voiceStream
-                    .getTracks()
-                    .forEach(
-                        function (track) {
-
-                            track.stop();
-
-                        }
-                    );
-
-            }
-
-
-            voiceStream =
-                null;
-
-
-            mediaRecorder =
-                null;
-
-
-            voiceChunks = [];
-
-
-            if (voiceBtn) {
-
-                voiceBtn.classList.remove(
-                    "jn-recording"
-                );
-
-                voiceBtn.textContent =
-                    "🎤";
-
-                voiceBtn.title =
-                    "Voice message";
-
-            }
-
-        }
-
-
-        function stopVoiceRecording() {
-
-            if (
-                mediaRecorder &&
-                mediaRecorder.state !==
-                "inactive"
-            ) {
-
-                mediaRecorder.stop();
-
-            } else {
-
-                cleanupVoiceRecording();
-
-            }
-
-        }
-
-
-        if (voiceBtn) {
-
-            voiceBtn.addEventListener(
-                "click",
-                function () {
-
-                    if (
-                        mediaRecorder &&
-                        mediaRecorder.state ===
-                        "recording"
-                    ) {
-
-                        stopVoiceRecording();
-
-                    } else {
-
-                        startVoiceRecording();
-
-                    }
-
-                }
-            );
-
-        }
-
-
-        /* =================================================
-           EMOJI
-        ================================================= */
-
-        const emojiBtn =
-            document.getElementById(
-                "jnEmojiBtn"
-            );
-
-        const emojiPanel =
-            document.getElementById(
-                "jnEmojiPanel"
-            );
-
-
-        /*
-         * Large emoji/combinations collection.
-         */
-
-        const emojiList = [
-
-            "😀","😃","😄","😁","😆","😅","😂","🤣",
-            "😊","😇","🙂","🙃","😉","😌","😍","🥰",
-            "😘","😗","😙","😚","😋","😛","😝","😜",
-            "🤪","🤨","🧐","🤓","😎","🥸","🤩","🥳",
-            "😏","😒","😞","😔","😟","😕","🙁","☹️",
-            "😣","😖","😫","😩","🥺","😢","😭","😤",
-            "😠","😡","🤬","🤯","😳","🥵","🥶","😱",
-            "😨","😰","😥","😓","🤗","🤔","🫣","🤭",
-            "🤫","🤥","😶","😐","😑","😬","🙄","😯",
-            "😦","😧","😮","😲","🥱","😴","🤤","😪",
-            "😵","🤐","🥴","🤢","🤮","🤧","😷","🤒",
-            "🤕","🤑","🤠","😈","👿","👹","👺","🤡",
-            "💩","👻","💀","☠️","👽","👾","🤖","🎃",
-
-            "😺","😸","😹","😻","😼","😽","🙀","😿",
-            "😾",
-
-            "❤️","🧡","💛","💚","💙","💜","🖤","🤍",
-            "🤎","💔","❣️","💕","💞","💓","💗","💖",
-            "💘","💝","💟",
-
-            "👍","👎","👌","✌️","🤞","🤟","🤘","🤙",
-            "👏","🙌","👐","🤝","🙏","💪","👋","🤚",
-            "🖐️","✋","🖖","👆","👇","☝️","✍️","🤳",
-
-            "🔥","✨","⭐","🌟","💯","🎉","🎊","✅",
-            "❌","⚖️","🚨","📞","💬","🎤","❤️‍🔥",
-
-            "⚡","💥","💫","🌈","☀️","🌙","🌎","🌍",
-            "🌏","🌸","🌹","🌺","🌻","🌼","🌷","🌱",
-            "🌿","🍀","🍁","🍂","🍃",
-
-            "🍎","🍊","🍋","🍌","🍉","🍇","🍓","🫐",
-            "🍒","🍑","🥭","🍍","🥥","🥝",
-
-            "🍕","🍔","🍟","🌭","🌮","🌯","🍿","🍩",
-            "🍪","🎂","🍰","🧁","🍫","🍭","🍬",
-
-            "☕","🧃","🥤","🧋","🍵","🥛",
-
-            "⚽","🏀","🏈","⚾","🎾","🏐","🏆","🥇",
-            "🥈","🥉","🎮","🎯","🎲",
-
-            "🚗","🚕","🚌","🚓","🚑","🚒","🚐","🚲",
-            "✈️","🚀","🚁","🚢","🚂",
-
-            "📱","💻","⌨️","🖥️","🖨️","📷","🎥",
-            "📞","☎️","📧","📩","📌","📍","🔒","🔑",
-            "🔔","🔕","🔍","⚙️",
-
-            "📁","📂","📄","📝","📃","📚","📖","📕",
-            "📗","📘","📙","📓","📒","📔",
-
-            "⚖️","👮","🧑‍⚖️","🏛️","🚨","🆘","📢",
-            "🔴","🟢","🟡","🔵","⚠️",
-
-            "🇵🇰","🇺🇸","🇬🇧","🇨🇦","🇦🇪","🇸🇦",
-            "🇹🇷","🇨🇳","🇯🇵","🇰🇷","🇮🇳"
-
-        ];
-
-
-        function buildEmojiPanel() {
-
-            if (!emojiPanel) {
-                return;
-            }
-
-
-            emojiPanel.innerHTML = "";
-
-
-            emojiList.forEach(
-                function (emoji) {
-
-                    const button =
-                        document.createElement(
-                            "button"
-                        );
-
-
-                    button.type =
-                        "button";
-
-
-                    button.className =
-                        "jn-emoji-item";
-
-
-                    button.textContent =
-                        emoji;
-
-
-                    button.addEventListener(
-                        "click",
-                        function (event) {
-
-                            event.preventDefault();
-                            event.stopPropagation();
-
-
-                            if (!messageInput) {
-                                return;
-                            }
-
-
-                            messageInput.value +=
-                                emoji;
-
-
-                            messageInput.focus();
-
-                        }
-                    );
-
-
-                    emojiPanel.appendChild(
-                        button
-                    );
-
-                }
-            );
-
-        }
-
-
-        buildEmojiPanel();
-
-
-        if (
-            emojiBtn &&
-            emojiPanel
-        ) {
-
-            emojiBtn.addEventListener(
-                "click",
-                function (event) {
-
-                    event.preventDefault();
-                    event.stopPropagation();
-
-
-                    emojiPanel.classList.toggle(
-                        "active"
-                    );
-
-                }
-            );
-
-        }
-
-
-        /* =================================================
-           MESSAGE MENU
-        ================================================= */
-
-        const messageMenuBtn =
-            document.getElementById(
-                "jnMessageMenuBtn"
-            );
-
-        const messageMenu =
-            document.getElementById(
-                "jnMessageMenu"
-            );
-
-
-        if (
-            messageMenuBtn &&
-            messageMenu
-        ) {
-
-            messageMenuBtn.addEventListener(
-                "click",
-                function (event) {
-
-                    event.preventDefault();
-                    event.stopPropagation();
-
-
-                    messageMenu.classList.toggle(
-                        "active"
-                    );
-
-                }
-            );
-
-        }
-
-
-        /* =================================================
-           BLOCK / MUTE STORAGE
-        ================================================= */
-
-        function getBlockedUsers() {
-
-            return getJSON(
-                BLOCKED_KEY,
-                []
-            );
-
-        }
-
-
-        function saveBlockedUsers(
-            users
-        ) {
-
-            setJSON(
-                BLOCKED_KEY,
-                users
-            );
-
-        }
-
-
-        function getMutedUsers() {
-
-            return getJSON(
-                MUTED_KEY,
-                []
-            );
-
-        }
-
-
-        function saveMutedUsers(
-            users
-        ) {
-
-            setJSON(
-                MUTED_KEY,
-                users
-            );
-
-        }
-
-
-        /* =================================================
-           MESSAGE MENU ACTIONS
-        ================================================= */
-
-        document
-            .querySelectorAll(
-                "[data-menu-action]"
-            )
-            .forEach(
-                function (button) {
-
-                    button.addEventListener(
-                        "click",
-                        function (event) {
-
-                            event.preventDefault();
-                            event.stopPropagation();
-
-
-                            const action =
-                                button.getAttribute(
-                                    "data-menu-action"
-                                );
-
-
-                            if (
-                                !activeConversation
-                            ) {
-
-                                alert(
-                                    "Please open a chat first."
-                                );
-
-                                return;
-
-                            }
-
-
-                            const username =
-                                activeConversation
-                                    .username ||
-                                activeConversation.id;
-
-
-                            /* MUTE */
-
-                            if (
-                                action ===
-                                "mute"
-                            ) {
-
-                                let muted =
-                                    getMutedUsers();
-
-
-                                const index =
-                                    muted.findIndex(
-                                        function (item) {
-
-                                            return (
-                                                normalizeUsername(
-                                                    item
-                                                ) ===
-                                                normalizeUsername(
-                                                    username
-                                                )
-                                            );
-
-                                        }
-                                    );
-
-
-                                if (index >= 0) {
-
-                                    muted.splice(
-                                        index,
-                                        1
-                                    );
-
-                                    saveMutedUsers(
-                                        muted
-                                    );
-
-                                    alert(
-                                        "Notifications unmuted."
-                                    );
-
-                                } else {
-
-                                    muted.push(
-                                        username
-                                    );
-
-                                    saveMutedUsers(
-                                        muted
-                                    );
-
-                                    alert(
-                                        "Notifications muted."
-                                    );
-
-                                }
-
-                            }
-
-
-                            /* DELETE CHAT */
-
-                            else if (
-                                action ===
-                                "delete-chat"
-                            ) {
-
-                                if (
-                                    window.confirm(
-                                        "Delete this chat?"
-                                    )
-                                ) {
-
-                                    const chats =
-                                        getChats();
-
-
-                                    const key =
-                                        chatKey(
-                                            activeConversation.type,
-                                            activeConversation.id
-                                        );
-
-
-                                    delete chats[key];
-
-
-                                    saveChats(
-                                        chats
-                                    );
-
-
-                                    alert(
-                                        "Chat deleted."
-                                    );
-
-
-                                    renderMessages();
-
-                                    renderChatList();
-
-                                }
-
-                            }
-
-
-                            /* DELETE MY MESSAGES */
-
-                            else if (
-                                action ===
-                                "delete-messages"
-                            ) {
-
-                                const messages =
-                                    getActiveMessages();
-
-
-                                const remaining =
-                                    messages.filter(
-                                        function (
-                                            message
-                                        ) {
-
-                                            return (
-                                                !message.mine
-                                            );
-
-                                        }
-                                    );
-
-
-                                saveActiveMessages(
-                                    remaining
-                                );
-
-
-                                renderMessages();
-
-
-                                alert(
-                                    "Your messages were deleted."
-                                );
-
-                            }
-
-
-                            /* BLOCK */
-
-                            else if (
-                                action ===
-                                "block"
-                            ) {
-
-                                let blocked =
-                                    getBlockedUsers();
-
-
-                                const exists =
-                                    blocked.some(
-                                        function (item) {
-
-                                            return (
-                                                normalizeUsername(
-                                                    item
-                                                ) ===
-                                                normalizeUsername(
-                                                    username
-                                                )
-                                            );
-
-                                        }
-                                    );
-
-
-                                if (!exists) {
-
-                                    blocked.push(
-                                        username
-                                    );
-
-                                    saveBlockedUsers(
-                                        blocked
-                                    );
-
-                                }
-
-
-                                alert(
-                                    "User blocked."
-                                );
-
-                            }
-
-
-                            messageMenu.classList.remove(
-                                "active"
-                            );
-
-                        }
-                    );
-
-                }
-            );
-
-
-        /* =================================================
-           CHAT LIST
-        ================================================= */
-
-        function renderChatList() {
-
-            const list =
-                document.getElementById(
-                    "jnChatList"
-                );
-
-
-            if (!list) {
-                return;
-            }
-
-
-            const chats =
-                getChats();
-
-
-            const keys =
-                Object.keys(
-                    chats
-                );
-
-
-            /*
-             * Only show private conversations
-             * which contain messages.
-             */
-
-            const privateKeys =
-                keys.filter(
-                    function (key) {
-
-                        return (
-                            key.startsWith(
-                                "private:"
-                            ) &&
-                            Array.isArray(
-                                chats[key]
-                            ) &&
-                            chats[key].length > 0
-                        );
-
-                    }
-                );
-
-
-            if (!privateKeys.length) {
-
-                list.innerHTML = `
-
-                    <div class="jn-empty-state">
-
-                        <span>💬</span>
-
-                        <h3>
-                            No chats yet
-                        </h3>
-
-                        <p>
-                            Search for a user to start chatting.
-                        </p>
-
-                    </div>
-
-                `;
-
-                return;
-
-            }
-
-
-            list.innerHTML = "";
-
-
-            const users =
-                getUsers();
-
-
-            privateKeys.forEach(
-                function (key) {
-
-                    const messages =
-                        chats[key];
-
-
-                    const id =
-                        key.substring(
-                            "private:".length
-                        );
-
-
-                    const user =
-                        users.find(
-                            function (item) {
-
-                                return (
-                                    normalizeUsername(
-                                        item.username
-                                    ) ===
-                                    normalizeUsername(
-                                        id
-                                    )
-                                );
-
-                            }
-                        );
-
-
-                    const title =
-                        user
-                            ? user.name
-                            : id;
-
-
-                    const image =
-                        user
-                            ? user.image || ""
-                            : "";
-
-
-                    const last =
-                        messages[
-                            messages.length - 1
-                        ];
-
-
-                    const item =
-                        document.createElement(
-                            "div"
-                        );
-
-
-                    item.className =
-                        "jn-conversation";
-
-
-                    let preview =
-                        "Message";
-
-
-                    if (
-                        last.type ===
-                        "text"
-                    ) {
-
-                        preview =
-                            last.content;
-
-                    }
-
-                    else if (
-                        last.type ===
-                        "voice"
-                    ) {
-
-                        preview =
-                            "🎤 Voice message";
-
-                    }
-
-                    else if (
-                        last.type ===
-                        "image"
-                    ) {
-
-                        preview =
-                            "🖼 Image";
-
-                    }
-
-
-                    item.innerHTML = `
-
-                        <div class="jn-user-avatar">
-
-                            ${
-                                image
-                                    ? `
-                                        <img
-                                            src="${escapeHTML(
-                                                image
-                                            )}"
-                                            alt=""
-                                        >
-                                      `
-                                    : "👤"
-                            }
-
+                            </small>
                         </div>
 
-                        <div class="jn-conversation-info">
-
-                            <h3>
-                                ${escapeHTML(
-                                    title
-                                )}
-                            </h3>
-
-                            <p>
-                                ${escapeHTML(
-                                    preview
-                                )}
-                            </p>
-
-                        </div>
-
+                        <button
+                            type="button"
+                            class="jn-secondary-btn">
+                            Add
+                        </button>
                     `;
 
+                    row
+                        .querySelector("button")
+                        .addEventListener(
+                            "click",
+                            function () {
 
-                    item.addEventListener(
+                                addGroupMember(
+                                    profile
+                                );
+
+                                row.remove();
+                            }
+                        );
+
+                    groupMemberResults
+                        .appendChild(
+                            row
+                        );
+                }
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Group search error:",
+                error
+            );
+        }
+    }
+
+    function addGroupMember(
+        profile
+    ) {
+
+        const exists =
+            selectedGroupMembers.some(
+                function (member) {
+
+                    return member.uid ===
+                        profile.uid;
+                }
+            );
+
+        if (exists) {
+            return;
+        }
+
+        selectedGroupMembers.push(
+            profile
+        );
+
+        renderSelectedMembers();
+    }
+
+    function renderSelectedMembers() {
+
+        const box =
+            document.getElementById(
+                "jnSelectedMembers"
+            );
+
+        if (!box) {
+            return;
+        }
+
+        box.innerHTML = "";
+
+        selectedGroupMembers.forEach(
+            function (member, index) {
+
+                const item =
+                    document.createElement(
+                        "div"
+                    );
+
+                item.className =
+                    "jn-selected-member";
+
+                item.innerHTML = `
+
+                    ${escapeHTML(
+                        member.name ||
+                        member.username ||
+                        "User"
+                    )}
+
+                    <button
+                        type="button">
+                        ×
+                    </button>
+                `;
+
+                item
+                    .querySelector("button")
+                    .addEventListener(
                         "click",
                         function () {
 
-                            openPrivateChat({
+                            selectedGroupMembers
+                                .splice(
+                                    index,
+                                    1
+                                );
 
-                                username:
-                                    id,
-
-                                name:
-                                    title,
-
-                                image:
-                                    image
-
-                            });
-
+                            renderSelectedMembers();
                         }
                     );
 
+                box.appendChild(
+                    item
+                );
+            }
+        );
+    }
 
-                    list.appendChild(
-                        item
-                    );
+    /* =====================================================
+       SAVE GROUP
+    ===================================================== */
 
-                }
-            );
+    const saveGroupBtn =
+        document.getElementById(
+            "jnSaveGroupBtn"
+        );
 
+    if (saveGroupBtn) {
+
+        saveGroupBtn.addEventListener(
+            "click",
+            saveGroup
+        );
+    }
+
+    async function saveGroup() {
+
+        const user =
+            await waitForUser();
+
+        if (!user) {
+            return;
         }
 
-
-        /* =================================================
-           GROUP SYSTEM
-        ================================================= */
-
-        const createGroupBtn =
-            document.getElementById(
-                "jnCreateGroupBtn"
-            );
-
-        const closeGroupPanel =
-            document.getElementById(
-                "jnCloseGroupPanel"
-            );
-
-        const createGroupPanel =
-            document.getElementById(
-                "jnCreateGroupPanel"
-            );
-
-        const groupNameInput =
+        const nameInput =
             document.getElementById(
                 "jnGroupNameInput"
             );
 
-        const groupImageInput =
-            document.getElementById(
-                "jnGroupImageInput"
+        const groupName =
+            nameInput
+                ? nameInput.value.trim()
+                : "";
+
+        if (!groupName) {
+
+            alert(
+                "Enter group name."
             );
 
-        const groupPicturePreview =
-            document.getElementById(
-                "jnGroupPicturePreview"
-            );
+            return;
+        }
 
-        const groupMemberSearch =
-            document.getElementById(
-                "jnGroupMemberSearch"
-            );
-
-        const addGroupMemberBtn =
-            document.getElementById(
-                "jnAddGroupMemberBtn"
-            );
-
-        const groupMemberResults =
-            document.getElementById(
-                "jnGroupMemberResults"
-            );
-
-        const selectedMembersList =
-            document.getElementById(
-                "jnSelectedMembersList"
-            );
-
-        const saveGroupBtn =
-            document.getElementById(
-                "jnSaveGroupBtn"
-            );
-
-
-        let pendingGroupImage = "";
-
-        let selectedGroupMembers = [];
-
-
-        if (
-            createGroupBtn &&
-            createGroupPanel
-        ) {
-
-            createGroupBtn.addEventListener(
-                "click",
-                function (event) {
-
-                    event.preventDefault();
-
-                    createGroupPanel.classList.add(
-                        "active"
-                    );
-
+        const memberIds =
+            selectedGroupMembers.map(
+                function (member) {
+                    return member.uid;
                 }
             );
 
-        }
-
-
-        if (
-            closeGroupPanel &&
-            createGroupPanel
-        ) {
-
-            closeGroupPanel.addEventListener(
-                "click",
-                function () {
-
-                    createGroupPanel.classList.remove(
-                        "active"
-                    );
-
-                }
-            );
-
-        }
-
-
-        if (groupImageInput) {
-
-            groupImageInput.addEventListener(
-                "change",
-                function () {
-
-                    const file =
-                        this.files &&
-                        this.files[0];
-
-
-                    if (!file) {
-                        return;
-                    }
-
-
-                    const reader =
-                        new FileReader();
-
-
-                    reader.onload =
-                        function (event) {
-
-                            pendingGroupImage =
-                                event.target.result;
-
-
-                            if (
-                                groupPicturePreview
-                            ) {
-
-                                groupPicturePreview.innerHTML =
-                                    '<img src="' +
-                                    escapeHTML(
-                                        pendingGroupImage
-                                    ) +
-                                    '" alt="">';
-
-                            }
-
-                        };
-
-
-                    reader.readAsDataURL(
-                        file
-                    );
-
-                }
-            );
-
-        }
-
-
-        function searchGroupMember() {
-
-            if (!groupMemberResults) {
-                return;
-            }
-
-
-            const query =
-                groupMemberSearch
-                    ? groupMemberSearch.value
-                        .trim()
-                        .toLowerCase()
-                    : "";
-
-
-            if (!query) {
-
-                groupMemberResults.innerHTML =
-                    "";
-
-                return;
-
-            }
-
-
-            const users =
-                getUsers();
-
-
-            const me =
-                normalizeUsername(
-                    currentUsername()
-                );
-
-
-            const results =
-                users.filter(
-                    function (user) {
-
-                        const username =
-                            normalizeUsername(
-                                user.username
-                            );
-
-
-                        const name =
-                            String(
-                                user.name || ""
-                            ).toLowerCase();
-
-
-                        if (
-                            username ===
-                            me
-                        ) {
-
-                            return false;
-
-                        }
-
-
-                        return (
-                            username.includes(
-                                query
-                            ) ||
-                            name.includes(
-                                query
-                            )
-                        );
-
-                    }
-                );
-
-
-            groupMemberResults.innerHTML =
-                "";
-
-
-            if (!results.length) {
-
-                groupMemberResults.innerHTML = `
-
-                    <div class="jn-member-result">
-
-                        <span>
-                            No user found.
-                        </span>
-
-                    </div>
-
-                `;
-
-                return;
-
-            }
-
-
-            results.forEach(
-                function (user) {
-
-                    const alreadySelected =
-                        selectedGroupMembers.some(
-                            function (member) {
-
-                                return (
-                                    normalizeUsername(
-                                        member.username
-                                    ) ===
-                                    normalizeUsername(
-                                        user.username
-                                    )
-                                );
-
-                            }
-                        );
-
-
-                    const item =
-                        document.createElement(
-                            "div"
-                        );
-
-
-                    item.className =
-                        "jn-member-result";
-
-
-                    item.innerHTML = `
-
-                        <span>
-
-                            <strong>
-                                ${escapeHTML(
-                                    user.name ||
-                                    user.username
-                                )}
-                            </strong>
-
-                            <small>
-                                @${escapeHTML(
-                                    user.username
-                                )}
-                            </small>
-
-                        </span>
-
-                        <button
-                            type="button"
-                            class="jn-secondary-btn"
-                        >
-                            ${
-                                alreadySelected
-                                    ? "Added"
-                                    : "+ Add"
-                            }
-                        </button>
-
-                    `;
-
-
-                    const button =
-                        item.querySelector(
-                            "button"
-                        );
-
-
-                    if (alreadySelected) {
-
-                        button.disabled =
-                            true;
-
-                    } else {
-
-                        button.addEventListener(
-                            "click",
-                            function () {
-
-                                selectedGroupMembers.push(
-                                    user
-                                );
-
-
-                                renderSelectedMembers();
-
-                                searchGroupMember();
-
-                            }
-                        );
-
-                    }
-
-
-                    groupMemberResults.appendChild(
-                        item
-                    );
-
-                }
-            );
-
-        }
-
-
-        if (addGroupMemberBtn) {
-
-            addGroupMemberBtn.addEventListener(
-                "click",
-                searchGroupMember
-            );
-
-        }
-
-
-        if (groupMemberSearch) {
-
-            groupMemberSearch.addEventListener(
-                "keydown",
-                function (event) {
-
-                    if (
-                        event.key ===
-                        "Enter"
-                    ) {
-
-                        event.preventDefault();
-
-                        searchGroupMember();
-
-                    }
-
-                }
-            );
-
-        }
-
-
-        function renderSelectedMembers() {
-
-            if (!selectedMembersList) {
-                return;
-            }
-
-
-            selectedMembersList.innerHTML =
-                "";
-
-
-            selectedGroupMembers.forEach(
-                function (
-                    member,
-                    index
-                ) {
-
-                    const item =
-                        document.createElement(
-                            "span"
-                        );
-
-
-                    item.className =
-                        "jn-selected-member";
-
-
-                    item.innerHTML = `
-
-                        ${escapeHTML(
-                            member.name ||
-                            member.username
-                        )}
-
-                        <button
-                            type="button"
-                            title="Remove"
-                        >
-                            ✕
-                        </button>
-
-                    `;
-
-
-                    const removeButton =
-                        item.querySelector(
-                            "button"
-                        );
-
-
-                    removeButton.addEventListener(
-                        "click",
-                        function () {
-
-                            selectedGroupMembers.splice(
-                                index,
-                                1
-                            );
-
-
-                            renderSelectedMembers();
-
-                            searchGroupMember();
-
-                        }
-                    );
-
-
-                    selectedMembersList.appendChild(
-                        item
-                    );
-
-                }
-            );
-
-        }
-
-
-        /* =================================================
-           SAVE GROUP
-        ================================================= */
-
-        if (saveGroupBtn) {
-
-            saveGroupBtn.addEventListener(
-                "click",
-                function () {
-
-                    const groupName =
-                        groupNameInput
-                            ? groupNameInput.value.trim()
-                            : "";
-
-
-                    if (!groupName) {
-
-                        alert(
-                            "Please enter a group name."
-                        );
-
-                        return;
-
-                    }
-
-
-                    const group = {
-
-                        id:
-                            makeId(
-                                "group"
-                            ),
+        memberIds.push(
+            user.uid
+        );
+
+        try {
+
+            const ref =
+                await db
+                    .collection("groups")
+                    .add({
 
                         name:
                             groupName,
@@ -10855,858 +10096,212 @@ document.addEventListener("DOMContentLoaded", function () {
                             pendingGroupImage ||
                             "",
 
-                        members:
-                            selectedGroupMembers.map(
-                                function (member) {
+                        ownerId:
+                            user.uid,
 
-                                    return member.username;
-
-                                }
-                            ),
-
-                        createdBy:
-                            currentUsername(),
+                        memberIds:
+                            [
+                                ...new Set(
+                                    memberIds
+                                )
+                            ],
 
                         createdAt:
-                            Date.now()
+                            firebase.firestore
+                                .FieldValue
+                                .serverTimestamp(),
 
-                    };
+                        updatedAt:
+                            firebase.firestore
+                                .FieldValue
+                                .serverTimestamp()
+                    });
 
+            selectedGroupMembers =
+                [];
 
-                    const groups =
-                        getGroups();
+            pendingGroupImage =
+                "";
 
-
-                    groups.push(
-                        group
-                    );
-
-
-                    setJSON(
-                        GROUPS_KEY,
-                        groups
-                    );
-
-
-                    /*
-                     * Group is created first.
-                     * Only then open message page.
-                     */
-
-                    activeConversation = {
-
-                        type:
-                            "group",
-
-                        id:
-                            group.id,
-
-                        title:
-                            group.name,
-
-                        image:
-                            group.image,
-
-                        members:
-                            group.members
-
-                    };
-
-
-                    if (createGroupPanel) {
-
-                        createGroupPanel.classList.remove(
-                            "active"
-                        );
-
-                    }
-
-
-                    if (groupNameInput) {
-
-                        groupNameInput.value =
-                            "";
-
-                    }
-
-
-                    if (groupMemberSearch) {
-
-                        groupMemberSearch.value =
-                            "";
-
-                    }
-
-
-                    pendingGroupImage =
-                        "";
-
-
-                    selectedGroupMembers =
-                        [];
-
-
-                    if (selectedMembersList) {
-
-                        selectedMembersList.innerHTML =
-                            "";
-
-                    }
-
-
-                    if (groupPicturePreview) {
-
-                        groupPicturePreview.innerHTML =
-                            "👥";
-
-                    }
-
-
-                    renderGroups();
-
-                    openMessageView();
-
-                }
-            );
-
-        }
-
-
-        /* =================================================
-           GROUP LIST
-        ================================================= */
-
-        function renderGroups() {
-
-            const list =
-                document.getElementById(
-                    "jnGroupList"
-                );
-
-
-            if (!list) {
-                return;
+            if (nameInput) {
+                nameInput.value =
+                    "";
             }
 
+            if (createGroupPanel) {
 
-            const groups =
-                getGroups();
+                createGroupPanel.classList.remove(
+                    "open"
+                );
+            }
 
+            renderSelectedMembers();
 
-            if (!groups.length) {
+            renderGroups();
+
+            alert(
+                "Group created successfully."
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Create group error:",
+                error
+            );
+
+            alert(
+                "Group could not be created. Check Firestore rules."
+            );
+        }
+    }
+
+    /* =====================================================
+       RENDER GROUPS
+    ===================================================== */
+
+    async function renderGroups() {
+
+        const list =
+            document.getElementById(
+                "jnGroupList"
+            );
+
+        if (!list) {
+            return;
+        }
+
+        const user =
+            await waitForUser();
+
+        if (!user) {
+            return;
+        }
+
+        list.innerHTML = "";
+
+        try {
+
+            const snapshot =
+                await db
+                    .collection("groups")
+                    .where(
+                        "memberIds",
+                        "array-contains",
+                        user.uid
+                    )
+                    .get();
+
+            if (snapshot.empty) {
 
                 list.innerHTML = `
-
-                    <div class="jn-empty-state">
-
-                        <span>👥</span>
-
-                        <h3>
-                            No groups yet
-                        </h3>
-
-                        <p>
-                            Create a group to start group chat.
-                        </p>
-
+                    <div class="jn-group-list-item">
+                        No groups yet.
                     </div>
-
                 `;
 
                 return;
-
             }
 
+            snapshot.forEach(
+                function (doc) {
 
-            list.innerHTML =
-                "";
-
-
-            groups.forEach(
-                function (group) {
-
-                    const members =
-                        Array.isArray(
-                            group.members
-                        )
-                            ? group.members
-                            : [];
-
+                    const group =
+                        doc.data();
 
                     const item =
                         document.createElement(
                             "div"
                         );
 
-
                     item.className =
-                        "jn-group-item";
-
+                        "jn-group-list-item";
 
                     item.innerHTML = `
 
-                        <div class="jn-group-picture">
-
+                        <div class="jn-chat-avatar">
                             ${
                                 group.image
-                                    ? `
-                                        <img
-                                            src="${escapeHTML(
-                                                group.image
-                                            )}"
-                                            alt=""
-                                        >
-                                      `
+                                    ? avatarHTML(
+                                        group.image
+                                    )
                                     : "👥"
                             }
-
                         </div>
 
-                        <div class="jn-group-info">
+                        <div class="jn-chat-list-info">
 
-                            <h3>
+                            <strong>
                                 ${escapeHTML(
-                                    group.name
+                                    group.name ||
+                                    "Group"
                                 )}
-                            </h3>
+                            </strong>
 
-                            <p>
-                                ${members.length}
-                                member(s)
-                            </p>
+                            <span>
+                                ${
+                                    (
+                                        group.memberIds ||
+                                        []
+                                    ).length
+                                } members
+                            </span>
 
                         </div>
-
                     `;
-
-
-                    item.addEventListener(
-                        "click",
-                        function () {
-
-                            activeConversation = {
-
-                                type:
-                                    "group",
-
-                                id:
-                                    group.id,
-
-                                title:
-                                    group.name,
-
-                                image:
-                                    group.image ||
-                                    "",
-
-                                members:
-                                    members
-
-                            };
-
-
-                            openMessageView();
-
-                        }
-                    );
-
 
                     list.appendChild(
                         item
                     );
-
                 }
             );
 
+        } catch (error) {
+
+            console.error(
+                "Groups error:",
+                error
+            );
         }
+    }
 
+    /* =====================================================
+       NEW CHAT BUTTON
+    ===================================================== */
 
-        /* =================================================
-           CALL SYSTEM
-        ================================================= */
+    const newChatSearchBtn =
+        document.getElementById(
+            "jnNewChatSearchBtn"
+        );
 
-        const callBtn =
-            document.getElementById(
-                "jnCallBtn"
-            );
+    if (newChatSearchBtn) {
 
-        const callOverlay =
-            document.getElementById(
-                "jnCallOverlay"
-            );
+        newChatSearchBtn.addEventListener(
+            "click",
+            function () {
 
-        const callAvatar =
-            document.getElementById(
-                "jnCallAvatar"
-            );
-
-        const callName =
-            document.getElementById(
-                "jnCallName"
-            );
-
-        const callStatus =
-            document.getElementById(
-                "jnCallStatus"
-            );
-
-        const endCallBtn =
-            document.getElementById(
-                "jnEndCallBtn"
-            );
-
-        const muteCallBtn =
-            document.getElementById(
-                "jnMuteCallBtn"
-            );
-
-
-        let callStream = null;
-
-        let callTimer = null;
-
-        let callSeconds = 0;
-
-        let callMuted = false;
-
-
-        async function startCall() {
-
-            if (!activeConversation) {
-
-                alert(
-                    "Please open a chat first."
+                showChatView(
+                    "search"
                 );
 
-                return;
-
-            }
-
-
-            if (!callOverlay) {
-                return;
-            }
-
-
-            if (callName) {
-
-                callName.textContent =
-                    activeConversation.title;
-
-            }
-
-
-            if (callAvatar) {
-
-                if (
-                    activeConversation.image
-                ) {
-
-                    callAvatar.innerHTML =
-                        '<img src="' +
-                        escapeHTML(
-                            activeConversation.image
-                        ) +
-                        '" alt="">';
-
-                } else {
-
-                    callAvatar.innerHTML =
-                        "👤";
-
-                }
-
-            }
-
-
-            callOverlay.classList.add(
-                "active"
-            );
-
-
-            if (callStatus) {
-
-                callStatus.textContent =
-                    "Connecting...";
-
-            }
-
-
-            if (
-                navigator.mediaDevices &&
-                navigator.mediaDevices.getUserMedia
-            ) {
-
-                try {
-
-                    callStream =
-                        await navigator
-                            .mediaDevices
-                            .getUserMedia({
-                                audio: true
-                            });
-
-
-                    if (callStatus) {
-
-                        callStatus.textContent =
-                            "Call connected";
-
-                    }
-
-
-                    startCallTimer();
-
-
-                } catch (error) {
-
-                    console.error(
-                        "Call microphone error:",
-                        error
-                    );
-
-
-                    if (callStatus) {
-
-                        callStatus.textContent =
-                            "Microphone permission denied";
-
-                    }
-
-                }
-
-            } else {
-
-                if (callStatus) {
-
-                    callStatus.textContent =
-                        "Call started";
-
-                }
-
-
-                startCallTimer();
-
-            }
-
-        }
-
-
-        function startCallTimer() {
-
-            stopCallTimer();
-
-
-            callSeconds =
-                0;
-
-
-            callTimer =
-                setInterval(
+                setTimeout(
                     function () {
 
-                        callSeconds++;
+                        if (searchInput) {
 
-
-                        const minutes =
-                            Math.floor(
-                                callSeconds /
-                                60
-                            );
-
-
-                        const seconds =
-                            callSeconds %
-                            60;
-
-
-                        if (callStatus) {
-
-                            callStatus.textContent =
-                                "Call connected • " +
-                                String(
-                                    minutes
-                                ).padStart(
-                                    2,
-                                    "0"
-                                ) +
-                                ":" +
-                                String(
-                                    seconds
-                                ).padStart(
-                                    2,
-                                    "0"
-                                );
-
+                            searchInput.focus();
                         }
-
                     },
-                    1000
+                    50
                 );
-
-        }
-
-
-        function stopCallTimer() {
-
-            if (callTimer) {
-
-                clearInterval(
-                    callTimer
-                );
-
-                callTimer =
-                    null;
-
-            }
-
-        }
-
-
-        function endCall() {
-
-            stopCallTimer();
-
-
-            if (callStream) {
-
-                callStream
-                    .getTracks()
-                    .forEach(
-                        function (track) {
-
-                            track.stop();
-
-                        }
-                    );
-
-
-                callStream =
-                    null;
-
-            }
-
-
-            callMuted =
-                false;
-
-
-            if (muteCallBtn) {
-
-                muteCallBtn.classList.remove(
-                    "active"
-                );
-
-                muteCallBtn.textContent =
-                    "🎤";
-
-            }
-
-
-            if (callOverlay) {
-
-                callOverlay.classList.remove(
-                    "active"
-                );
-
-            }
-
-        }
-
-
-        if (callBtn) {
-
-            callBtn.addEventListener(
-                "click",
-                startCall
-            );
-
-        }
-
-
-        if (endCallBtn) {
-
-            endCallBtn.addEventListener(
-                "click",
-                endCall
-            );
-
-        }
-
-
-        if (muteCallBtn) {
-
-            muteCallBtn.addEventListener(
-                "click",
-                function () {
-
-                    if (!callStream) {
-                        return;
-                    }
-
-
-                    const tracks =
-                        callStream.getAudioTracks();
-
-
-                    if (!tracks.length) {
-                        return;
-                    }
-
-
-                    callMuted =
-                        !callMuted;
-
-
-                    tracks.forEach(
-                        function (track) {
-
-                            track.enabled =
-                                !callMuted;
-
-                        }
-                    );
-
-
-                    muteCallBtn.classList.toggle(
-                        "active",
-                        callMuted
-                    );
-
-
-                    muteCallBtn.textContent =
-                        callMuted
-                            ? "🔇"
-                            : "🎤";
-
-                }
-            );
-
-        }
-
-
-        /* =================================================
-           CLOSE EMOJI / MENU WHEN CLICKING OUTSIDE
-        ================================================= */
-
-        document.addEventListener(
-            "click",
-            function (event) {
-
-                if (
-                    emojiPanel &&
-                    emojiPanel.classList.contains(
-                        "active"
-                    ) &&
-                    !emojiPanel.contains(
-                        event.target
-                    ) &&
-                    emojiBtn &&
-                    !emojiBtn.contains(
-                        event.target
-                    )
-                ) {
-
-                    emojiPanel.classList.remove(
-                        "active"
-                    );
-
-                }
-
-
-                if (
-                    messageMenu &&
-                    messageMenu.classList.contains(
-                        "active"
-                    ) &&
-                    !messageMenu.contains(
-                        event.target
-                    ) &&
-                    messageMenuBtn &&
-                    !messageMenuBtn.contains(
-                        event.target
-                    )
-                ) {
-
-                    messageMenu.classList.remove(
-                        "active"
-                    );
-
-                }
-
             }
         );
-
-
-        /* =================================================
-           ESC
-        ================================================= */
-
-        document.addEventListener(
-            "keydown",
-            function (event) {
-
-                if (
-                    event.key !==
-                    "Escape"
-                ) {
-                    return;
-                }
-
-
-                if (
-                    callOverlay &&
-                    callOverlay.classList.contains(
-                        "active"
-                    )
-                ) {
-
-                    endCall();
-
-                    return;
-
-                }
-
-
-                if (
-                    createGroupPanel &&
-                    createGroupPanel.classList.contains(
-                        "active"
-                    )
-                ) {
-
-                    createGroupPanel.classList.remove(
-                        "active"
-                    );
-
-                    return;
-
-                }
-
-
-                if (
-                    chatPage &&
-                    chatPage.classList.contains(
-                        "active"
-                    )
-                ) {
-
-                    closeChat();
-
-                }
-
-            }
-        );
-
-
-        /* =================================================
-           INITIAL RENDER
-        ================================================= */
-
-        loadProfile();
-
-        renderChatList();
-
-        renderGroups();
-
-
-        /*
-         * Important:
-         * Do not automatically force the chat page open.
-         * Your Home Chat button will open it.
-         */
-
-        console.log(
-            "Justice Now Chat initialized successfully."
-        );
-
     }
+
+    /* =====================================================
+       INITIALIZE EMOJI
+    ===================================================== */
+
+    buildEmojiPicker();
 
 })();
-/* =====================================================
-    USER SEARCH & CHAT CREATION SYSTEM
-===================================================== */
-const userSearchInput = document.getElementById("jnUserSearchInput");
-const searchResultsContainer = document.getElementById("jnUserSearchResults"); // Search results dikhane ke liye container
-
-if (userSearchInput) {
-    userSearchInput.addEventListener("input", function (e) {
-        const query = e.target.value.toLowerCase().trim();
-
-        // 1. Existing Chats / Groups filter karein
-        filterExistingChats(query);
-
-        // 2. Register hue baki Users mein se search karein
-        if (query.length > 0) {
-            searchRegisteredUsers(query);
-        } else if (searchResultsContainer) {
-            searchResultsContainer.innerHTML = ""; // Search clear hone par clear kar dein
-        }
-    });
-}
-
-// Active chats filter karne ka function
-function filterExistingChats(query) {
-    const chatItems = document.querySelectorAll("#jnChatsList .jn-chat-item, #jnGroupsList .jn-chat-item");
-    chatItems.forEach(function (item) {
-        const titleElement = item.querySelector("h3");
-        if (titleElement) {
-            const titleText = titleElement.textContent.toLowerCase();
-            item.style.display = titleText.includes(query) ? "flex" : "none";
-        }
-    });
-}
-
-// Database / LocalStorage ke users search karke nayi chat start karne ka function
-function searchRegisteredUsers(query) {
-    if (!searchResultsContainer) return;
-
-    const allUsers = getUsers(); // LocalStorage se users retrieve karne ke liye
-    const currentAcc = currentUsername().toLowerCase();
-
-    // Matching users filter karein (apne ilawa)
-    const matchedUsers = allUsers.filter(function (user) {
-        const isNotSelf = user.username.toLowerCase() !== currentAcc;
-        const matchesQuery = user.name.toLowerCase().includes(query) || user.username.toLowerCase().includes(query);
-        return isNotSelf && matchesQuery;
-    });
-
-    if (!matchedUsers.length) {
-        searchResultsContainer.innerHTML = `<div class="jn-empty-state"><p>No user found</p></div>`;
-        return;
-    }
-
-    searchResultsContainer.innerHTML = "";
-
-    matchedUsers.forEach(function (user) {
-        const item = document.createElement("div");
-        item.className = "jn-chat-item";
-
-        const avatarHTML = user.image ? `<img src="${user.image}" alt="Avatar">` : "👤";
-
-        item.innerHTML = `
-            <div class="jn-chat-avatar">${avatarHTML}</div>
-            <div class="jn-chat-info">
-                <div class="jn-chat-top">
-                    <h3>${escapeHTML(user.name)}</h3>
-                </div>
-                <p>@${escapeHTML(user.username)}</p>
-            </div>
-        `;
-
-        // User par click karke direct chat open karne ke liye
-        item.addEventListener("click", function () {
-            activeConversation = {
-                type: "private",
-                id: user.username,
-                title: user.name,
-                image: user.image || ""
-            };
-            openMessageView();
-            userSearchInput.value = "";
-            searchResultsContainer.innerHTML = "";
-        });
-
-        searchResultsContainer.appendChild(item);
-    });
-}

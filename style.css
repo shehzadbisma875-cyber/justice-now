@@ -2397,134 +2397,66 @@ select:focus {
    BLACK + TEAL + WHITE
 ========================================================= */
 
-:root {
-    --jn-black: #050505;
-    --jn-black-2: #0b0b0b;
-    --jn-black-3: #111111;
-    --jn-teal: #12cfc0;
-    --jn-teal-dark: #079f96;
-    --jn-white: #ffffff;
-    --jn-gray: #a7a7a7;
-    --jn-border: #242424;
-    --jn-danger: #e74c3c;
-}
-
-
-/* =========================================================
-   HOME TOP CHAT BUTTON
-========================================================= */
-
-.jn-chat-top-btn {
-    border: none;
-    outline: none;
-    background: var(--jn-teal);
-    color: #000;
-    font-size: 15px;
-    font-weight: 800;
-    padding: 10px 18px;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: 0.2s ease;
-}
-
-.jn-chat-top-btn:hover {
-    background: #18e1d1;
-    transform: translateY(-1px);
-}
-
-.jn-chat-top-btn:active {
-    transform: scale(0.97);
-}
-
-
-/* =========================================================
-   CHAT PAGE
-========================================================= */
-
 .jn-chat-page {
-    display: none;
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    background: var(--jn-black);
-    color: var(--jn-white);
-    z-index: 99999;
+    display: none !important;
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    z-index: 999999 !important;
+    background: #050505 !important;
+    color: #ffffff;
     overflow: hidden;
-    font-family:
-        Inter,
-        Arial,
-        Helvetica,
-        sans-serif;
 }
 
 .jn-chat-page.active {
-    display: flex;
+    display: flex !important;
     flex-direction: column;
 }
 
 
 /* =========================================================
-   HEADER
+   TOP CHAT HEADER
 ========================================================= */
 
 .jn-chat-header {
-    height: 72px;
-    min-height: 72px;
-    background: #000;
-    border-bottom: 1px solid var(--jn-border);
+    height: 68px;
+    min-height: 68px;
+    background: #080808;
+    border-bottom: 1px solid #173c3b;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 22px;
+    padding: 0 20px;
 }
 
-.jn-chat-brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.jn-chat-logo {
-    width: 43px;
-    height: 43px;
-    border-radius: 50%;
-    background: var(--jn-teal);
-    color: #000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 23px;
-    font-weight: 900;
-}
-
-.jn-chat-brand h2 {
-    margin: 0;
-    font-size: 20px;
-    color: #fff;
-}
-
-.jn-chat-brand span {
+.jn-chat-header-title strong {
     display: block;
+    color: #ffffff;
+    font-size: 20px;
+}
+
+.jn-chat-header-title span {
+    display: block;
+    color: #8aa4a3;
+    font-size: 11px;
     margin-top: 3px;
-    color: #888;
-    font-size: 12px;
 }
 
 .jn-chat-close {
-    border: none;
-    background: #151515;
-    color: white;
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
+    width: 38px;
+    height: 38px;
+    border: 1px solid #244d4a;
+    border-radius: 50%;
+    background: #111111;
+    color: #ffffff;
     cursor: pointer;
-    font-size: 18px;
+    font-size: 17px;
 }
 
 .jn-chat-close:hover {
-    background: var(--jn-teal);
-    color: #000;
+    background: #12cfc0;
+    color: #000000;
 }
 
 
@@ -2533,74 +2465,68 @@ select:focus {
 ========================================================= */
 
 .jn-chat-layout {
-    display: flex;
     flex: 1;
     min-height: 0;
+    display: flex;
 }
 
 
 /* =========================================================
-   LEFT SIDEBAR
+   SIDEBAR
 ========================================================= */
 
 .jn-chat-sidebar {
-    width: 235px;
-    min-width: 235px;
-    background: #000;
-    border-right: 1px solid var(--jn-border);
-    padding: 18px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 9px;
+    width: 220px;
+    min-width: 220px;
+    background: #080808;
+    border-right: 1px solid #183b39;
+    padding: 14px 10px;
 }
 
 .jn-sidebar-btn {
     width: 100%;
+    min-height: 48px;
+    margin-bottom: 8px;
+    padding: 0 13px;
     border: 1px solid transparent;
-    background: transparent;
-    color: #c8c8c8;
-    padding: 14px 15px;
     border-radius: 10px;
-    cursor: pointer;
+    background: transparent;
+    color: #a8b9b8;
     display: flex;
     align-items: center;
     gap: 12px;
+    cursor: pointer;
     text-align: left;
     font-size: 14px;
 }
 
-.jn-sidebar-btn span {
-    font-size: 19px;
-    width: 25px;
-    text-align: center;
-}
-
 .jn-sidebar-btn:hover {
-    background: #121212;
-    color: white;
+    background: #10201f;
+    color: #ffffff;
 }
 
 .jn-sidebar-btn.active {
-    background: rgba(18, 207, 192, 0.12);
-    border-color: var(--jn-teal);
-    color: var(--jn-teal);
+    background: #12cfc0;
+    color: #000000;
+    font-weight: 700;
 }
 
 
 /* =========================================================
-   RIGHT CONTENT
+   RIGHT SIDE
 ========================================================= */
 
-.jn-chat-content {
+.jn-chat-main {
     flex: 1;
     min-width: 0;
     min-height: 0;
+    background: #050505;
+    position: relative;
     overflow: hidden;
-    background: var(--jn-black);
 }
 
 .jn-chat-view {
-    display: none;
+    display: none !important;
     width: 100%;
     height: 100%;
     overflow-y: auto;
@@ -2609,44 +2535,35 @@ select:focus {
 }
 
 .jn-chat-view.active {
-    display: block;
-}
-
-.jn-message-view.active {
-    display: flex;
-    flex-direction: column;
-    padding: 0;
-    overflow: hidden;
+    display: block !important;
 }
 
 
 /* =========================================================
-   HEADING
+   VIEW HEADER
 ========================================================= */
 
-.jn-view-heading {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 15px;
+.jn-view-header {
     margin-bottom: 25px;
 }
 
-.jn-view-heading h1 {
+.jn-view-header h2 {
     margin: 0;
-    font-size: 28px;
-    color: white;
+    color: #ffffff;
+    font-size: 24px;
 }
 
-.jn-view-heading p {
-    margin: 7px 0 0;
-    color: #8d8d8d;
-    font-size: 14px;
-}
-
-.jn-online-label {
-    color: var(--jn-teal);
+.jn-view-header p {
+    margin: 6px 0 0;
+    color: #809594;
     font-size: 13px;
+}
+
+.jn-chat-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
 }
 
 
@@ -2656,63 +2573,39 @@ select:focus {
 
 .jn-primary-btn,
 .jn-secondary-btn,
-.jn-danger-btn,
-.jn-outline-btn {
+.jn-danger-btn {
+    border: none;
+    min-height: 42px;
+    padding: 0 17px;
     border-radius: 9px;
-    padding: 11px 17px;
-    font-size: 14px;
-    font-weight: 800;
     cursor: pointer;
-    transition: 0.2s ease;
+    font-weight: 700;
 }
 
 .jn-primary-btn {
-    border: none;
-    background: var(--jn-teal);
-    color: #000;
+    background: #12cfc0;
+    color: #000000;
 }
 
 .jn-primary-btn:hover {
-    background: #20e0d0;
+    background: #27e1d2;
 }
 
 .jn-secondary-btn {
-    border: 1px solid var(--jn-teal);
-    background: transparent;
-    color: var(--jn-teal);
-}
-
-.jn-secondary-btn:hover {
-    background: rgba(18, 207, 192, 0.1);
+    background: #152321;
+    color: #ffffff;
+    border: 1px solid #28514d;
 }
 
 .jn-danger-btn {
-    border: 1px solid var(--jn-danger);
-    background: transparent;
-    color: #ff7064;
-}
-
-.jn-danger-btn:hover {
-    background: rgba(231, 76, 60, 0.12);
-}
-
-.jn-outline-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #3c3c3c;
-    background: #111;
-    color: white;
-}
-
-.jn-outline-btn:hover {
-    border-color: var(--jn-teal);
-    color: var(--jn-teal);
+    background: #301414;
+    color: #ff8f8f;
+    border: 1px solid #6d2a2a;
 }
 
 .jn-full-btn {
     width: 100%;
-    margin-top: 22px;
+    margin-top: 18px;
 }
 
 
@@ -2721,93 +2614,100 @@ select:focus {
 ========================================================= */
 
 .jn-profile-card {
-    max-width: 850px;
+    max-width: 540px;
     background: #0b0b0b;
-    border: 1px solid var(--jn-border);
+    border: 1px solid #1d3d3a;
     border-radius: 16px;
-    padding: 30px;
-    display: grid;
-    grid-template-columns: 220px 1fr;
-    gap: 35px;
+    padding: 28px;
 }
 
-.jn-profile-picture-area {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
+.jn-profile-card label,
+.jn-create-group-panel label {
+    display: block;
+    margin-top: 16px;
+    margin-bottom: 7px;
+    color: #dce5e4;
+    font-size: 13px;
+    font-weight: 600;
 }
 
-.jn-profile-picture {
-    width: 145px;
-    height: 145px;
+.jn-profile-card input,
+.jn-create-group-panel input,
+.jn-search-box input,
+.jn-group-member-search input,
+#jnMessageInput {
+    width: 100%;
+    box-sizing: border-box;
+    height: 44px;
+    border-radius: 9px;
+    border: 1px solid #274642;
+    background: #111111;
+    color: #ffffff;
+    outline: none;
+    padding: 0 13px;
+}
+
+.jn-profile-card input:focus,
+.jn-create-group-panel input:focus,
+.jn-search-box input:focus {
+    border-color: #12cfc0;
+}
+
+.jn-profile-photo-wrap {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.jn-profile-preview {
+    width: 110px;
+    height: 110px;
+    margin: auto;
     border-radius: 50%;
-    border: 3px solid var(--jn-teal);
-    background: #151515;
+    background: #173330;
+    border: 3px solid #12cfc0;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    color: #777;
-    font-size: 48px;
+    font-size: 40px;
 }
 
-.jn-profile-picture img {
+.jn-profile-preview img,
+.jn-group-picture-preview img,
+.jn-message-avatar img,
+.jn-chat-avatar img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
-.jn-profile-fields {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.jn-profile-fields label,
-.jn-create-group-panel label,
-.jn-member-search label {
-    color: #ccc;
+.jn-change-photo {
+    display: inline-block;
+    margin-top: 12px;
+    color: #12cfc0;
+    cursor: pointer;
     font-size: 13px;
-    font-weight: 700;
 }
 
-.jn-profile-fields input,
-.jn-create-group-panel input,
-.jn-search-box input,
-.jn-member-search input,
-.jn-message-composer input {
-    width: 100%;
-    box-sizing: border-box;
-    margin-top: 8px;
-    padding: 13px 14px;
-    border-radius: 9px;
-    border: 1px solid #292929;
-    background: #151515;
-    color: white;
-    outline: none;
-    font-size: 14px;
+.jn-input-help {
+    color: #687b79;
+    font-size: 11px;
 }
 
-.jn-profile-fields input:focus,
-.jn-create-group-panel input:focus,
-.jn-search-box input:focus,
-.jn-member-search input:focus,
-.jn-message-composer input:focus {
-    border-color: var(--jn-teal);
-}
-
-.jn-profile-actions {
+.jn-profile-buttons {
     display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 5px;
+    gap: 10px;
+    margin-top: 22px;
 }
 
-.jn-status-text {
-    margin: 0;
-    color: var(--jn-teal);
-    font-size: 13px;
+.jn-profile-buttons button {
+    flex: 1;
+}
+
+.jn-status {
+    color: #12cfc0;
+    min-height: 18px;
+    font-size: 12px;
 }
 
 
@@ -2816,401 +2716,349 @@ select:focus {
 ========================================================= */
 
 .jn-search-box {
-    max-width: 800px;
-    display: grid;
-    grid-template-columns: 1fr auto;
+    display: flex;
     gap: 10px;
+    max-width: 700px;
     margin-bottom: 20px;
 }
 
 .jn-search-box input {
-    margin: 0;
+    flex: 1;
 }
 
 .jn-search-results {
-    max-width: 800px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    max-width: 700px;
 }
 
-
-/* =========================================================
-   USER RESULT
-========================================================= */
-
 .jn-user-result {
-    background: #0d0d0d;
-    border: 1px solid #222;
+    background: #0b0b0b;
+    border: 1px solid #1d3d3a;
     border-radius: 13px;
-    padding: 15px;
+    padding: 13px;
+    margin-bottom: 10px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 15px;
 }
 
-.jn-user-result:hover {
-    border-color: #333;
-}
-
 .jn-user-main {
     display: flex;
     align-items: center;
-    gap: 13px;
+    gap: 12px;
     min-width: 0;
 }
 
 .jn-user-avatar {
     width: 50px;
     height: 50px;
+    min-width: 50px;
     border-radius: 50%;
-    background: #171717;
-    border: 1px solid #333;
+    background: #173330;
     overflow: hidden;
     display: flex;
-    align-items: center;
     justify-content: center;
-    flex-shrink: 0;
-}
-
-.jn-user-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.jn-user-info {
-    min-width: 0;
+    align-items: center;
+    color: #ffffff;
+    font-weight: 700;
 }
 
 .jn-user-info h3 {
     margin: 0;
-    color: white;
-    font-size: 15px;
+    color: #ffffff;
+    font-size: 14px;
 }
 
 .jn-user-info p {
-    margin: 4px 0 0;
-    color: #777;
+    margin: 4px 0;
+    color: #12cfc0;
     font-size: 12px;
 }
 
-.jn-user-online {
-    color: var(--jn-teal) !important;
+.jn-user-info small {
+    color: #6f8381;
+}
+
+.jn-online-dot {
+    color: #22e06f;
+}
+
+.jn-offline {
+    color: #6f8381;
 }
 
 
 /* =========================================================
-   EMPTY
+   CHAT LIST
 ========================================================= */
 
-.jn-empty-state {
-    min-height: 250px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    color: #666;
-    text-align: center;
-}
-
-.jn-empty-state span {
-    font-size: 40px;
-    margin-bottom: 10px;
-}
-
-.jn-empty-state h3 {
-    margin: 0;
-    color: #ccc;
-}
-
-.jn-empty-state p {
-    margin-top: 7px;
-}
-
-
-/* =========================================================
-   CONVERSATION LIST
-========================================================= */
-
-.jn-conversation-list,
+.jn-chat-list,
 .jn-group-list {
     display: flex;
     flex-direction: column;
     gap: 9px;
 }
 
-.jn-conversation,
-.jn-group-item {
-    border: 1px solid #222;
-    background: #0c0c0c;
+.jn-chat-list-item,
+.jn-group-list-item {
+    width: 100%;
+    background: #0b0b0b;
+    border: 1px solid #193936;
     border-radius: 12px;
-    padding: 14px;
+    padding: 13px;
+    color: #ffffff;
     display: flex;
     align-items: center;
-    gap: 13px;
+    gap: 12px;
     cursor: pointer;
+    box-sizing: border-box;
 }
 
-.jn-conversation:hover,
-.jn-group-item:hover {
-    border-color: var(--jn-teal);
+.jn-chat-list-item:hover,
+.jn-group-list-item:hover {
+    border-color: #12cfc0;
+    background: #0d1716;
 }
 
-.jn-conversation-info,
-.jn-group-info {
+.jn-chat-avatar {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #173330;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.jn-chat-list-info {
     flex: 1;
-    min-width: 0;
 }
 
-.jn-conversation-info h3,
-.jn-group-info h3 {
-    margin: 0;
-    font-size: 15px;
-    color: white;
+.jn-chat-list-info strong {
+    display: block;
 }
 
-.jn-conversation-info p,
-.jn-group-info p {
-    margin: 5px 0 0;
-    color: #777;
-    font-size: 12px;
+.jn-chat-list-info span {
+    display: block;
+    color: #758987;
+    font-size: 11px;
+    margin-top: 4px;
 }
 
 
 /* =========================================================
-   GROUP CREATION
+   CREATE GROUP
 ========================================================= */
 
 .jn-create-group-panel {
     display: none;
-    max-width: 850px;
-    margin-top: 22px;
-    padding: 24px;
-    border-radius: 15px;
-    background: #0b0b0b;
-    border: 1px solid #292929;
+    max-width: 650px;
+    background: #0a0a0a;
+    border: 1px solid #214541;
+    border-radius: 16px;
+    padding: 23px;
 }
 
-.jn-create-group-panel.active {
+.jn-create-group-panel.open {
     display: block;
 }
 
-.jn-modal-heading {
+.jn-modal-header {
     display: flex;
-    align-items: flex-start;
     justify-content: space-between;
-    gap: 15px;
-    margin-bottom: 25px;
+    align-items: center;
 }
 
-.jn-modal-heading h2 {
+.jn-modal-header h3 {
     margin: 0;
 }
 
-.jn-modal-heading p {
-    margin: 5px 0 0;
-    color: #777;
-    font-size: 13px;
-}
-
-.jn-icon-btn {
-    width: 40px;
-    height: 40px;
-    border: 1px solid #292929;
-    background: #111;
-    color: white;
-    border-radius: 9px;
+.jn-modal-close {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    border: none;
+    background: #171717;
+    color: #ffffff;
     cursor: pointer;
 }
 
-.jn-icon-btn:hover {
-    border-color: var(--jn-teal);
-    color: var(--jn-teal);
+.jn-group-picture-area {
+    text-align: center;
 }
 
-.jn-group-picture-row {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin: 20px 0;
-}
-
-.jn-group-picture {
-    width: 70px;
-    height: 70px;
-    border-radius: 14px;
-    background: #161616;
-    border: 1px solid #333;
+.jn-group-picture-preview {
+    width: 90px;
+    height: 90px;
+    margin: 10px auto;
+    border-radius: 50%;
+    background: #173330;
+    border: 2px solid #12cfc0;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 30px;
     overflow: hidden;
+    font-size: 32px;
 }
 
-.jn-group-picture img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+.jn-group-member-search {
+    display: flex;
+    gap: 8px;
 }
 
-.jn-member-search {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 10px;
-    align-items: end;
-}
-
-.jn-member-search input {
-    margin-bottom: 0;
+.jn-group-member-search input {
+    flex: 1;
 }
 
 .jn-member-results {
-    margin-top: 12px;
+    margin-top: 10px;
 }
 
 .jn-member-result {
-    background: #151515;
-    border: 1px solid #292929;
-    border-radius: 9px;
+    background: #101010;
+    border: 1px solid #1e3936;
     padding: 10px;
+    border-radius: 9px;
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
+    margin-bottom: 7px;
+}
+
+.jn-member-result small {
+    display: block;
+    color: #12cfc0;
+    margin-top: 3px;
 }
 
 .jn-selected-members {
-    margin-top: 22px;
-}
-
-.jn-selected-members h3 {
-    font-size: 14px;
-    margin-bottom: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 12px;
 }
 
 .jn-selected-member {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 7px 10px;
-    background: #171717;
-    border: 1px solid #333;
+    background: #123330;
+    color: #ffffff;
+    border: 1px solid #235953;
     border-radius: 20px;
-    margin: 4px;
-    font-size: 12px;
+    padding: 7px 10px;
+    font-size: 11px;
 }
 
 .jn-selected-member button {
     border: none;
     background: transparent;
-    color: #999;
+    color: #ffffff;
     cursor: pointer;
 }
 
 
 /* =========================================================
-   MESSAGE HEADER
+   MESSAGE PAGE
 ========================================================= */
 
-.jn-message-header {
-    min-height: 72px;
-    background: #050505;
-    border-bottom: 1px solid #252525;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 15px;
-    box-sizing: border-box;
+.jn-message-view {
+    padding: 0 !important;
     position: relative;
 }
 
-.jn-message-user {
+.jn-message-header {
+    height: 67px;
+    background: #090909;
+    border-bottom: 1px solid #193a37;
     display: flex;
     align-items: center;
-    gap: 11px;
-    flex: 1;
-    min-width: 0;
+    gap: 10px;
+    padding: 0 15px;
+    box-sizing: border-box;
+}
+
+.jn-back-btn,
+.jn-message-action {
+    width: 39px;
+    height: 39px;
+    border-radius: 50%;
+    border: none;
+    background: #141414;
+    color: #ffffff;
+    cursor: pointer;
+}
+
+.jn-back-btn:hover,
+.jn-message-action:hover {
+    background: #12cfc0;
+    color: #000000;
 }
 
 .jn-message-avatar {
-    width: 45px;
-    height: 45px;
+    width: 43px;
+    height: 43px;
     border-radius: 50%;
-    background: #171717;
-    border: 1px solid #333;
     overflow: hidden;
+    background: #173330;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
 }
 
-.jn-message-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+.jn-message-user-title {
+    flex: 1;
 }
 
-.jn-message-user h2 {
-    margin: 0;
-    font-size: 16px;
+.jn-message-user-title strong {
+    display: block;
 }
 
-.jn-message-user p {
-    margin: 4px 0 0;
-    color: #777;
-    font-size: 12px;
+.jn-message-user-title span {
+    display: block;
+    color: #758987;
+    font-size: 10px;
+    margin-top: 3px;
 }
 
-.jn-message-user p.online {
-    color: var(--jn-teal);
-}
-
-.jn-message-actions {
-    display: flex;
-    gap: 7px;
-    position: relative;
+.jn-message-user-title span.online {
+    color: #22e06f;
 }
 
 
 /* =========================================================
-   THREE DOT MENU
+   MESSAGE MENU
 ========================================================= */
 
 .jn-message-menu {
     display: none;
     position: absolute;
-    right: 0;
-    top: 48px;
-    width: 225px;
-    background: #111;
-    border: 1px solid #333;
-    border-radius: 10px;
-    padding: 7px;
+    right: 15px;
+    top: 60px;
+    width: 220px;
+    background: #111111;
+    border: 1px solid #2a4c49;
+    border-radius: 11px;
     z-index: 20;
-    box-shadow: 0 15px 40px rgba(0,0,0,.55);
+    overflow: hidden;
 }
 
-.jn-message-menu.active {
+.jn-message-menu.open {
     display: block;
 }
 
 .jn-message-menu button {
     width: 100%;
+    padding: 12px;
     border: none;
+    border-bottom: 1px solid #202f2e;
     background: transparent;
-    color: #ddd;
+    color: #ffffff;
     text-align: left;
-    padding: 11px;
-    border-radius: 7px;
     cursor: pointer;
 }
 
 .jn-message-menu button:hover {
-    background: #1c1c1c;
-    color: var(--jn-teal);
+    background: #173330;
 }
 
 
@@ -3218,61 +3066,98 @@ select:focus {
    MESSAGES
 ========================================================= */
 
-.jn-messages-container {
-    flex: 1;
+.jn-messages {
+    position: absolute;
+    top: 67px;
+    bottom: 68px;
+    left: 0;
+    right: 0;
     overflow-y: auto;
-    padding: 22px;
-    background:
-        radial-gradient(
-            circle at top,
-            rgba(18, 207, 192, 0.035),
-            transparent 35%
-        ),
-        #050505;
-}
-
-.jn-message-row {
-    display: flex;
-    margin: 8px 0;
-}
-
-.jn-message-row.mine {
-    justify-content: flex-end;
+    padding: 20px;
+    box-sizing: border-box;
+    background: #050505;
 }
 
 .jn-message-bubble {
-    max-width: min(70%, 600px);
-    padding: 10px 13px;
-    border-radius: 14px;
-    background: #161616;
-    border: 1px solid #252525;
-    color: white;
+    max-width: 70%;
+    padding: 10px 12px;
+    border-radius: 13px;
+    margin-bottom: 9px;
+    clear: both;
 }
 
-.jn-message-row.mine .jn-message-bubble {
-    background: rgba(18, 207, 192, .16);
-    border-color: rgba(18, 207, 192, .5);
+.jn-message-bubble.mine {
+    float: right;
+    background: #0e766e;
+    border-bottom-right-radius: 4px;
 }
 
-.jn-message-sender {
-    color: var(--jn-teal);
-    font-size: 11px;
-    font-weight: 800;
-    margin-bottom: 4px;
+.jn-message-bubble.other {
+    float: left;
+    background: #151d1d;
+    border-bottom-left-radius: 4px;
+}
+
+.jn-message-bubble p {
+    margin: 0;
+    color: #ffffff;
+    font-size: 13px;
+    white-space: pre-wrap;
 }
 
 .jn-message-time {
+    display: block;
     margin-top: 5px;
-    color: #777;
+    color: #94a8a6;
     font-size: 9px;
     text-align: right;
 }
 
-.jn-message-image {
-    max-width: 280px;
-    max-height: 300px;
+.jn-chat-image {
+    max-width: 250px;
+    max-height: 250px;
     border-radius: 10px;
     display: block;
+}
+
+
+/* =========================================================
+   EMOJI
+========================================================= */
+
+.jn-emoji-panel {
+    display: none;
+    position: absolute;
+    left: 12px;
+    bottom: 72px;
+    width: min(420px, calc(100% - 24px));
+    max-height: 260px;
+    overflow-y: auto;
+    background: #111111;
+    border: 1px solid #284844;
+    border-radius: 13px;
+    padding: 10px;
+    z-index: 30;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 4px;
+}
+
+.jn-emoji-panel.open {
+    display: grid;
+}
+
+.jn-emoji-item {
+    border: none;
+    background: transparent;
+    color: #ffffff;
+    font-size: 21px;
+    padding: 5px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.jn-emoji-item:hover {
+    background: #1b3c39;
 }
 
 
@@ -3281,110 +3166,49 @@ select:focus {
 ========================================================= */
 
 .jn-message-composer {
-    min-height: 65px;
-    background: #080808;
-    border-top: 1px solid #252525;
-    padding: 10px 13px;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 68px;
+    background: #090909;
+    border-top: 1px solid #193a37;
     display: flex;
     align-items: center;
     gap: 7px;
-}
-
-.jn-message-composer input {
-    margin: 0;
-    flex: 1;
-    border-radius: 20px;
-    padding: 12px 15px;
+    padding: 9px;
+    box-sizing: border-box;
 }
 
 .jn-composer-btn,
 .jn-send-btn {
-    width: 43px;
-    height: 43px;
-    min-width: 43px;
-    border-radius: 50%;
+    border: none;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .jn-composer-btn {
-    border: 1px solid #292929;
-    background: #121212;
-    color: white;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #141414;
+    color: #ffffff;
 }
 
 .jn-composer-btn:hover {
-    border-color: var(--jn-teal);
-    color: var(--jn-teal);
+    background: #173330;
+}
+
+#jnMessageInput {
+    flex: 1;
 }
 
 .jn-send-btn {
-    border: none;
-    background: var(--jn-teal);
-    color: #000;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #12cfc0;
+    color: #000000;
     font-weight: 900;
-}
-
-.jn-send-btn:hover {
-    background: #20e0d0;
-}
-
-
-/* =========================================================
-   EMOJI PANEL
-========================================================= */
-
-.jn-emoji-panel {
-    display: none;
-    position: absolute;
-    right: 70px;
-    bottom: 75px;
-    width: min(420px, calc(100% - 30px));
-    max-height: 260px;
-    overflow-y: auto;
-    background: #111;
-    border: 1px solid #333;
-    border-radius: 13px;
-    padding: 12px;
-    z-index: 50;
-    grid-template-columns: repeat(10, 1fr);
-    gap: 5px;
-}
-
-.jn-emoji-panel.active {
-    display: grid;
-}
-
-.jn-emoji-item {
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    font-size: 23px;
-    border-radius: 6px;
-    padding: 4px;
-}
-
-.jn-emoji-item:hover {
-    background: #222;
-}
-
-
-/* =========================================================
-   BLOCKED
-========================================================= */
-
-.jn-blocked-note {
-    text-align: center;
-    color: #888;
-    padding: 40px 20px;
-}
-
-.jn-blocked-note strong {
-    display: block;
-    color: #ff7064;
-    margin-bottom: 7px;
 }
 
 
@@ -3392,280 +3216,88 @@ select:focus {
    MOBILE
 ========================================================= */
 
-@media (max-width: 750px) {
+@media (max-width: 700px) {
 
     .jn-chat-sidebar {
-        width: 72px;
-        min-width: 72px;
-        padding: 12px 7px;
+        width: 70px;
+        min-width: 70px;
+        padding: 10px 6px;
     }
 
     .jn-sidebar-btn {
         justify-content: center;
-        padding: 13px 5px;
+        padding: 0;
     }
 
-    .jn-sidebar-btn strong {
-        display: none;
-    }
-
-    .jn-sidebar-btn span {
-        width: auto;
-    }
-
-    .jn-chat-header {
-        padding: 0 12px;
-    }
-
-    .jn-chat-brand h2 {
-        font-size: 16px;
-    }
-
-    .jn-chat-brand span {
+    .jn-sidebar-btn span:last-child {
         display: none;
     }
 
     .jn-chat-view {
-        padding: 18px;
+        padding: 17px;
     }
 
     .jn-profile-card {
-        grid-template-columns: 1fr;
-        padding: 20px;
+        padding: 18px;
     }
 
-    .jn-search-box {
-        grid-template-columns: 1fr;
-    }
-
-    .jn-member-search {
-        grid-template-columns: 1fr;
-    }
-
-    .jn-message-bubble {
-        max-width: 85%;
-    }
-
-    .jn-emoji-panel {
-        right: 10px;
-        bottom: 75px;
-        grid-template-columns: repeat(8, 1fr);
-    }
-}
-
-@media (max-width: 480px) {
-
-    .jn-view-heading {
+    .jn-user-result {
         align-items: flex-start;
         flex-direction: column;
     }
 
-    .jn-message-actions .jn-icon-btn {
-        width: 35px;
-        height: 35px;
+    .jn-search-box {
+        flex-direction: column;
     }
 
-    .jn-message-header > .jn-icon-btn {
-        width: 35px;
-        height: 35px;
+    .jn-chat-list-header {
+        align-items: flex-start;
+        flex-direction: column;
     }
 
-    .jn-composer-btn,
-    .jn-send-btn {
-        width: 38px;
-        min-width: 38px;
-        height: 38px;
-    }
-
-    .jn-message-composer {
-        padding: 8px;
-    }
-
-    .jn-message-composer input {
-        min-width: 0;
+    .jn-message-bubble {
+        max-width: 84%;
     }
 }
-/* =========================================================
-   JUSTICE NOW CALL WINDOW
-========================================================= */
-
-.jn-call-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 100000;
-    background: rgba(0, 0, 0, 0.92);
-    align-items: center;
-    justify-content: center;
-}
-
-.jn-call-overlay.active {
-    display: flex;
-}
-
-.jn-call-box {
-    width: min(390px, calc(100% - 35px));
-    background: #0b0b0b;
-    border: 1px solid #242424;
-    border-radius: 22px;
-    padding: 35px 25px;
-    text-align: center;
-    box-sizing: border-box;
-}
-
-.jn-call-avatar {
-    width: 110px;
-    height: 110px;
-    margin: 0 auto 18px;
-    border-radius: 50%;
-    background: #151515;
-    border: 3px solid var(--jn-teal);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 48px;
-    overflow: hidden;
-}
-
-.jn-call-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.jn-call-box h2 {
-    margin: 0;
-    color: white;
-    font-size: 22px;
-}
-
-.jn-call-box p {
-    margin: 8px 0 25px;
-    color: var(--jn-teal);
-    font-size: 14px;
-}
-
-.jn-call-controls {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 20px;
-}
-
-.jn-call-control,
-.jn-call-end {
-    width: 58px;
-    height: 58px;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 1px solid #333;
-    background: #151515;
-    color: white;
-    font-size: 22px;
-}
-
-.jn-call-control:hover {
-    border-color: var(--jn-teal);
-}
-
-.jn-call-control.active {
-    background: var(--jn-teal);
-    color: #000;
-}
-
-.jn-call-end {
-    background: #d93636;
-    border-color: #d93636;
-    transform: rotate(135deg);
-}
-
-.jn-call-end:hover {
-    background: #ef4444;
-}
-
 
 /* =========================================================
-   VOICE MESSAGE
-========================================================= */
+   HOME PAGE CHAT BUTTON
+   Existing Home button: #openChatBtn
+   ========================================================= */
 
-.jn-voice-message {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-width: 190px;
+#openChatBtn,
+.jn-chat-top-btn {
+    background: #12cfc0 !important;
+    color: #000000 !important;
+    border: 1px solid #12cfc0 !important;
+    border-radius: 9px !important;
+    padding: 10px 16px !important;
+    cursor: pointer !important;
+    font-weight: 700 !important;
+    transition: background .2s ease, transform .2s ease, box-shadow .2s ease;
 }
 
-.jn-voice-message audio {
-    width: 180px;
-    max-width: 100%;
-    height: 35px;
+#openChatBtn:hover,
+.jn-chat-top-btn:hover {
+    background: #27e1d2 !important;
+    color: #000000 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 5px 18px rgba(18, 207, 192, .22);
 }
 
-.jn-recording {
-    border-color: #ff4b4b !important;
-    color: #ff4b4b !important;
-    animation: jnVoicePulse 1s infinite;
-}
-
-@keyframes jnVoicePulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(255, 75, 75, 0.35);
-    }
-
-    70% {
-        box-shadow: 0 0 0 10px rgba(255, 75, 75, 0);
-    }
-
-    100% {
-        box-shadow: 0 0 0 0 rgba(255, 75, 75, 0);
-    }
+#openChatBtn:focus-visible,
+.jn-chat-top-btn:focus-visible {
+    outline: 2px solid #ffffff !important;
+    outline-offset: 2px;
 }
 
 
-/* =========================================================
-   CALL STATUS
-========================================================= */
-
-.jn-call-connected {
-    color: var(--jn-teal) !important;
+/* Direct message button in Search results */
+.jn-request-btn {
+    white-space: nowrap;
 }
 
-.jn-call-ringing {
-    animation: jnCallRing 1s infinite;
-}
-
-@keyframes jnCallRing {
-    0% {
-        transform: scale(1);
-    }
-
-    50% {
-        transform: scale(1.04);
-    }
-
-    100% {
-        transform: scale(1);
-    }
-}
-
-
-/* =========================================================
-   MOBILE CALL
-========================================================= */
-
-@media (max-width: 480px) {
-
-    .jn-call-box {
-        padding: 28px 18px;
-    }
-
-    .jn-call-avatar {
-        width: 95px;
-        height: 95px;
-    }
-
-    .jn-voice-message audio {
-        width: 145px;
-    }
-
+.jn-request-btn:disabled {
+    opacity: .55;
+    cursor: not-allowed;
 }
