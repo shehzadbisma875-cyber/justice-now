@@ -1,4 +1,9 @@
-
+import { 
+  signUpUser, 
+  signInUser, 
+  signInWithGoogle, 
+  resetPassword 
+} from './supabase-auth.js';
 /* ==========================================
    JUSTICE NOW
    COMPLETE JAVASCRIPT
@@ -6311,14 +6316,9 @@ document.addEventListener("DOMContentLoaded", function () {
         divider.after(googleButton);
 
 
-        googleButton.onclick =
-            function () {
-
-                alert(
-                    "Google Sign-In needs Google OAuth configuration. The button is ready, but a Google Client ID must be added to enable real Google account login."
-                );
-
-            };
+      googleButton.onclick = function () {
+    signInWithGoogle();
+};
     }
 
 
