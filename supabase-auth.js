@@ -1,10 +1,10 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
 /* =====================================================
-   SUPABASE CONFIG & INITIALIZATION
+   SUPABASE CONFIG
    ===================================================== */
 const SUPABASE_URL = "https://nijpkyhlhmpggcimcxqr.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_7J3qDUVInQNMdCXSy3GDsw_yN7rA5w-"; // یہاں اپنی Supabase Anon Key درج کریں
+const SUPABASE_ANON_KEY = "sb_publishable_7J3qDUVInQNMdCXSy3GDsw_yN7rA5w-";
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -14,7 +14,7 @@ let messageSubscription = null;
 let selectedUserForRequest = null;
 
 /* =====================================================
-   CURRENT USER HELPER
+   HELPER: GET CURRENT USER
    ===================================================== */
 async function getCurrentUser() {
     const { data: { session } } = await supabase.auth.getSession();
@@ -44,17 +44,11 @@ async function saveJusticeUser(user, extraData = {}) {
     localStorage.setItem("justiceUser", JSON.stringify(profileData));
 
     try {
-        const { error } = await supabase
-            .from("users")
-            .upsert({
-                id: user.id,
-                ...profileData
-            });
-
+        const { error } = await supabase.from("users").upsert(profileData, { onConflict: "uid" });
         if (error) throw error;
-        console.log("Profile successfully saved to Supabase Database!");
+        console.log("Profile successfully saved to Supabase!");
     } catch (err) {
-        console.error("Database Save Error:", err);
+        console.error("Supabase Save Error:", err);
     }
 }
 
@@ -115,14 +109,21 @@ export async function searchUserByUsernameOrName(searchQuery) {
     const currentUser = await getCurrentUser();
 
     try {
-        const { data, error } = await supabase
-            .from("users")
-            .select("*")
-            .or(`username.ilike.%${searchTerm}%,name.ilike.%${searchTerm}%,profileName.ilike.%${searchTerm}%`);
-
+        const { data: users, error } = await supabase.from("users").select("*");
         if (error) throw error;
 
-        let results = (data || []).filter(user => !currentUser || user.id !== currentUser.id);
+        let results = [];
+        (users || []).forEach((data) => {
+            if (currentUser && data.uid === currentUser.id) return;
+
+            const uName = (data.username || "").toLowerCase();
+            const fName = (data.name || data.profileName || "").toLowerCase();
+
+            if (uName.includes(searchTerm) || fName.includes(searchTerm)) {
+                results.push({ id: data.uid, ...data });
+            }
+        });
+
         return results;
     } catch (error) {
         console.error("Search User Error:", error);
@@ -203,16 +204,14 @@ document.getElementById("jnSendRequestButton")?.addEventListener("click", async 
     if (!selectedUserForRequest) return;
 
     try {
-        const { error } = await supabase
-            .from("chatRequests")
-            .insert([{
-                senderId: currentUser.id,
-                receiverId: selectedUserForRequest.uid,
-                senderUsername: currentUser.user_metadata?.full_name || "User",
-                receiverUsername: selectedUserForRequest.username || "",
-                status: "pending",
-                createdAt: new Date().toISOString()
-            }]);
+        const { error } = await supabase.from("chatRequests").insert([{
+            senderId: currentUser.id,
+            receiverId: selectedUserForRequest.uid,
+            senderUsername: currentUser.user_metadata?.full_name || "User",
+            receiverUsername: selectedUserForRequest.username || "",
+            status: "pending",
+            createdAt: new Date().toISOString()
+        }]);
 
         if (error) throw error;
 
@@ -230,7 +229,7 @@ export async function loadRequests() {
     if (!list || !currentUser) return;
 
     try {
-        const { data, error } = await supabase
+        const { data: requests, error } = await supabase
             .from("chatRequests")
             .select("*")
             .eq("receiverId", currentUser.id)
@@ -238,13 +237,13 @@ export async function loadRequests() {
 
         if (error) throw error;
 
-        if (!data || data.length === 0) {
+        if (!requests || requests.length === 0) {
             list.innerHTML = '<div class="jn-empty-state">No requests yet.</div>';
             return;
         }
 
         list.innerHTML = "";
-        data.forEach((req) => {
+        requests.forEach((req) => {
             const item = document.createElement("div");
             item.className = "jn-request-item";
             item.innerHTML = `
@@ -270,19 +269,13 @@ async function acceptRequest(requestId, req) {
 
     try {
         const chatId = [currentUser.id, req.senderId].sort().join("_");
-        
-        await supabase
-            .from("chatRequests")
-            .update({ status: "accepted" })
-            .eq("id", requestId);
 
-        await supabase
-            .from("chats")
-            .upsert({
-                id: chatId,
-                members: [currentUser.id, req.senderId],
-                updatedAt: new Date().toISOString()
-            });
+        await supabase.from("chatRequests").update({ status: "accepted" }).eq("id", requestId);
+        await supabase.from("chats").upsert({
+            id: chatId,
+            members: [currentUser.id, req.senderId],
+            updatedAt: new Date().toISOString()
+        }, { onConflict: "id" });
 
         alert("Request accepted.");
         loadRequests();
@@ -294,11 +287,7 @@ async function acceptRequest(requestId, req) {
 
 async function rejectRequest(requestId) {
     try {
-        await supabase
-            .from("chatRequests")
-            .update({ status: "rejected" })
-            .eq("id", requestId);
-
+        await supabase.from("chatRequests").update({ status: "rejected" }).eq("id", requestId);
         loadRequests();
     } catch (error) {
         console.error("Reject Error:", error);
@@ -335,12 +324,7 @@ export async function loadChats() {
             const otherUid = chat.members.find(uid => uid !== currentUser.id);
             if (!otherUid) continue;
 
-            const { data: user } = await supabase
-                .from("users")
-                .select("*")
-                .eq("id", otherUid)
-                .single();
-
+            const { data: user } = await supabase.from("users").select("*").eq("uid", otherUid).single();
             if (!user) continue;
 
             const item = document.createElement("div");
@@ -382,41 +366,35 @@ async function listenForMessages(chatId) {
 
     if (messageSubscription) {
         supabase.removeChannel(messageSubscription);
+        messageSubscription = null;
     }
 
-    // Initial messages load
-    const { data: messages, error } = await supabase
+    const currentUser = await getCurrentUser();
+
+    // Load initial messages
+    const { data: messages } = await supabase
         .from("messages")
         .select("*")
         .eq("chatId", chatId)
         .order("createdAt", { ascending: true });
 
-    const currentUser = await getCurrentUser();
+    renderMessages(messages || [], currentUser, messagesContainer);
 
-    messagesContainer.innerHTML = "";
-    if (messages) {
-        messages.forEach(msg => {
-            renderMessage(msg, currentUser);
-        });
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
-
-    // Real-time listener using Supabase Channels
+    // Subscribe to real-time new messages
     messageSubscription = supabase
-        .channel(`chat:${chatId}`)
-        .on(
-            'postgres_changes',
-            { event: 'INSERT', schema: 'public', table: 'messages', filter: `chatId=eq.${chatId}` },
-            payload => {
-                renderMessage(payload.new, currentUser);
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            }
-        )
+        .channel(`public:messages:chatId=eq.${chatId}`)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `chatId=eq.${chatId}` }, payload => {
+            appendSingleMessage(payload.new, currentUser, messagesContainer);
+        })
         .subscribe();
 }
 
-function renderMessage(msg, currentUser) {
-    const messagesContainer = document.getElementById("jnMessages");
+function renderMessages(messages, currentUser, container) {
+    container.innerHTML = "";
+    messages.forEach(msg => appendSingleMessage(msg, currentUser, container));
+}
+
+function appendSingleMessage(msg, currentUser, container) {
     const isMine = currentUser && msg.senderId === currentUser.id;
 
     const bubble = document.createElement("div");
@@ -432,7 +410,8 @@ function renderMessage(msg, currentUser) {
         word-break: break-word;
     `;
     bubble.textContent = msg.text || "";
-    messagesContainer.appendChild(bubble);
+    container.appendChild(bubble);
+    container.scrollTop = container.scrollHeight;
 }
 
 async function sendMessage() {
@@ -446,19 +425,16 @@ async function sendMessage() {
 
     input.value = "";
     try {
-        await supabase
-            .from("messages")
-            .insert([{
-                chatId: currentActiveChatId,
-                text: text,
-                senderId: currentUser.id,
-                createdAt: new Date().toISOString()
-            }]);
+        await supabase.from("messages").insert([{
+            chatId: currentActiveChatId,
+            text: text,
+            senderId: currentUser.id,
+            createdAt: new Date().toISOString()
+        }]);
 
-        await supabase
-            .from("chats")
-            .update({ updatedAt: new Date().toISOString() })
-            .eq("id", currentActiveChatId);
+        await supabase.from("chats").update({
+            updatedAt: new Date().toISOString()
+        }).eq("id", currentActiveChatId);
     } catch (error) {
         console.error("Send Message Error:", error);
     }
@@ -484,7 +460,7 @@ document.getElementById("jnConversationBack")?.addEventListener("click", () => {
 /* =====================================================
    SIGN UP
    ===================================================== */
-document.addEventListener("submit", async function(event) {
+document.addEventListener("submit", function(event) {
     const form = event.target;
     if (!form || form.id !== "signupForm") return;
 
@@ -514,19 +490,16 @@ document.addEventListener("submit", async function(event) {
 
     message.textContent = "Creating your account...";
 
-    try {
-        const { data, error } = await supabase.auth.signUp({
-            email: email,
-            password: password,
-            options: {
-                data: { full_name: name }
-            }
-        });
-
-        if (error) throw error;
-
-        if (data.user) {
-            await saveJusticeUser(data.user, { name });
+    supabase.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+            data: { full_name: name }
+        }
+    }).then(async function(response) {
+        if (response.error) throw response.error;
+        if (response.data.user) {
+            await saveJusticeUser(response.data.user, { name });
             message.textContent = "Account created successfully!";
             form.reset();
 
@@ -535,16 +508,16 @@ document.addEventListener("submit", async function(event) {
                 else if (typeof showPage === "function") showPage("signin");
             }, 1000);
         }
-    } catch (error) {
+    }).catch(function(error) {
         console.error("Supabase Sign Up Error:", error);
         message.textContent = "Account creation failed: " + error.message;
-    }
+    });
 }, true);
 
 /* =====================================================
    SIGN IN
    ===================================================== */
-document.addEventListener("submit", async function(event) {
+document.addEventListener("submit", function(event) {
     const form = event.target;
     if (!form || form.id !== "signinForm") return;
 
@@ -564,16 +537,13 @@ document.addEventListener("submit", async function(event) {
 
     message.textContent = "Signing in...";
 
-    try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email: email,
-            password: password
-        });
-
-        if (error) throw error;
-
-        if (data.user) {
-            await saveJusticeUser(data.user, { name });
+    supabase.auth.signInWithPassword({
+        email: email,
+        password: password
+    }).then(async function(response) {
+        if (response.error) throw response.error;
+        if (response.data.user) {
+            await saveJusticeUser(response.data.user, { name });
             message.textContent = "Sign in successful!";
 
             setTimeout(function() {
@@ -581,10 +551,10 @@ document.addEventListener("submit", async function(event) {
                 else if (typeof showPage === "function") showPage("welcome");
             }, 700);
         }
-    } catch (error) {
+    }).catch(function(error) {
         console.error("Supabase Sign In Error:", error);
         message.textContent = "Sign in failed: " + error.message;
-    }
+    });
 }, true);
 
 /* =====================================================
@@ -617,16 +587,17 @@ document.addEventListener("DOMContentLoaded", function() {
         googleButton.disabled = true;
         googleButton.textContent = "Opening Google...";
 
-        try {
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: window.location.origin
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: window.location.origin,
+                queryParams: {
+                    prompt: 'select_account'
                 }
-            });
+            }
+        });
 
-            if (error) throw error;
-        } catch (error) {
+        if (error) {
             console.error("GOOGLE SIGN-IN ERROR:", error);
             const message = document.getElementById("signinMessage");
             if (message) message.textContent = "Google Sign-In error: " + error.message;
@@ -640,7 +611,7 @@ document.addEventListener("DOMContentLoaded", function() {
 /* =====================================================
    FORGOT PASSWORD
    ===================================================== */
-document.addEventListener("click", async function(event) {
+document.addEventListener("click", function(event) {
     const button = event.target.closest("#resetPasswordButton");
     if (!button) return;
 
@@ -658,18 +629,15 @@ document.addEventListener("click", async function(event) {
 
     message.textContent = "Sending password reset email...";
 
-    try {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin
-        });
-
-        if (error) throw error;
-
+    supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/#reset-password`
+    }).then(function(response) {
+        if (response.error) throw response.error;
         message.textContent = "Password reset link has been sent to your email.";
-    } catch (error) {
+    }).catch(function(error) {
         console.error("Password Reset Error:", error);
         message.textContent = "Unable to send reset email: " + error.message;
-    }
+    });
 }, true);
 
 /* =====================================================
@@ -678,17 +646,12 @@ document.addEventListener("click", async function(event) {
 supabase.auth.onAuthStateChange(async (event, session) => {
     if (session && session.user) {
         const user = session.user;
-        
-        const { data: userDoc } = await supabase
-            .from("users")
-            .select("*")
-            .eq("id", user.id)
-            .single();
+        const { data: userDoc } = await supabase.from("users").select("*").eq("uid", user.id).single();
 
         if (userDoc) {
             localStorage.setItem("justiceUser", JSON.stringify(userDoc));
         } else {
-            await saveJusticeUser(user, { name: user.user_metadata?.full_name || user.user_metadata?.name });
+            saveJusticeUser(user, { name: user.user_metadata?.full_name });
         }
 
         loadChats();
