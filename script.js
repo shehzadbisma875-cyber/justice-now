@@ -10027,36 +10027,63 @@ document.addEventListener("DOMContentLoaded", function () {
 
 })();
 /* =====================================================
-   6. AUTHENTICATION & AUTOMATIC REDIRECT LOGIC
+   SUPABASE AUTHENTICATION & AUTO-REDIRECT FIX
    ===================================================== */
 
-// 1. Jaise hi user Sign In/Sign Up ho, Dashboard dikhao
-supabase.auth.onAuthStateChange((event, session) => {
+// 1. Page Load aur Sign In/Out par Automatically Sahi Page Dikhana
+window.addEventListener('DOMContentLoaded', async () => {
+    // Check initial user session on load
+    const { data: { session } } = await supabase.auth.getSession();
     if (session) {
-        console.log("User logged in:", session.user);
-        showPage('dashboardPage'); // User sign in hotay hi next page par chala jayega
+        showPage('dashboardPage');
     }
 });
 
-// 2. Sign In Form Submission Handle karein
-const loginForm = document.getElementById("loginForm"); // Apne Login Form ki ID check kar lein
-if (loginForm) {
-    loginForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        
-        const email = document.getElementById("loginEmail").value;
-        const password = document.getElementById("loginPassword").value;
+// Auth state change listener (Google Redirect & Manual Login handle karega)
+supabase.auth.onAuthStateChange((event, session) => {
+    console.log("Auth Event:", event);
+    if (session) {
+        // User logged in hai -> Seedha Dashboard Dikhayein
+        showPage('dashboardPage');
+    }
+});
 
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email: email,
-            password: password,
-        });
+// 2. EMAIL & PASSWORD SIGN IN
+window.handleSignIn = async function() {
+    const emailInput = document.getElementById("authEmail") || document.getElementById("loginEmail");
+    const passwordInput = document.getElementById("authPassword") || document.getElementById("loginPassword");
 
-        if (error) {
-            alert("Sign in failed: " + error.message);
-        } else {
-            alert("Sign in successful!");
-            showPage('dashboardPage');
+    if (!emailInput || !passwordInput || !emailInput.value || !passwordInput.value) {
+        alert("Please enter both email and password.");
+        return;
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+        email: emailInput.value,
+        password: passwordInput.value
+    });
+
+    if (error) {
+        alert("Sign In Failed: " + error.message);
+    } else {
+        alert("Sign In Successful!");
+        showPage('dashboardPage'); // Next Page Load Karein
+    }
+};
+
+// 3. GOOGLE SIGN IN (Forced Account Selector)
+window.handleGoogleSignIn = async function() {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+            redirectTo: window.location.origin, // Apki current site par wapas layega
+            queryParams: {
+                prompt: 'select_account' // Yeh har baar Google Account Selection screen majboorifun kholega
+            }
         }
     });
-}
+
+    if (error) {
+        alert("Google Sign-In Error: " + error.message);
+    }
+};
