@@ -1,9 +1,4 @@
-import { 
-  signUpUser, 
-  signInUser, 
-  signInWithGoogle, 
-  resetPassword 
-} from './supabase-auth.js';
+
 /* ==========================================
    JUSTICE NOW
    COMPLETE JAVASCRIPT
@@ -10031,3 +10026,37 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 })();
+/* =====================================================
+   6. AUTHENTICATION & AUTOMATIC REDIRECT LOGIC
+   ===================================================== */
+
+// 1. Jaise hi user Sign In/Sign Up ho, Dashboard dikhao
+supabase.auth.onAuthStateChange((event, session) => {
+    if (session) {
+        console.log("User logged in:", session.user);
+        showPage('dashboardPage'); // User sign in hotay hi next page par chala jayega
+    }
+});
+
+// 2. Sign In Form Submission Handle karein
+const loginForm = document.getElementById("loginForm"); // Apne Login Form ki ID check kar lein
+if (loginForm) {
+    loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        
+        const email = document.getElementById("loginEmail").value;
+        const password = document.getElementById("loginPassword").value;
+
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password,
+        });
+
+        if (error) {
+            alert("Sign in failed: " + error.message);
+        } else {
+            alert("Sign in successful!");
+            showPage('dashboardPage');
+        }
+    });
+}
