@@ -10027,28 +10027,62 @@ document.addEventListener("DOMContentLoaded", function () {
 
 })();
 /* =====================================================
-   SUPABASE AUTHENTICATION & AUTO-REDIRECT FIX
+   ROUTER & AUTHENTICATION COMPLETE FIX
    ===================================================== */
 
-// 1. Page Load aur Sign In/Out par Automatically Sahi Page Dikhana
-window.addEventListener('DOMContentLoaded', async () => {
-    // Check initial user session on load
+// Universal Show Page Function
+window.showPage = function(pageId) {
+    console.log("Navigating to page:", pageId);
+    
+    // Sabhi pages se active class hatayein
+    const allPages = document.querySelectorAll('.page');
+    allPages.forEach(page => {
+        page.classList.remove('active');
+        page.style.display = 'none'; // Force hide
+    });
+
+    // Target page ko display aur active karein
+    const targetPage = document.getElementById(pageId);
+    if (targetPage) {
+        targetPage.classList.add('active');
+        targetPage.style.display = 'block'; // Force display
+        window.scrollTo(0, 0);
+    } else {
+        console.error("Page ID not found:", pageId);
+    }
+};
+
+// App Load & Auth State Handler
+async function initAuth() {
+    // 1. Session check karein
     const { data: { session } } = await supabase.auth.getSession();
+    
     if (session) {
+        console.log("Active Session Found:", session.user.email);
         showPage('dashboardPage');
+    } else {
+        // Agar login page ka ID aapke HTML mein kuch aur hai (e.g. 'loginPage'), toh yahan change karein
+        console.log("No session found. Showing login/home.");
     }
-});
 
-// Auth state change listener (Google Redirect & Manual Login handle karega)
-supabase.auth.onAuthStateChange((event, session) => {
-    console.log("Auth Event:", event);
-    if (session) {
-        // User logged in hai -> Seedha Dashboard Dikhayein
-        showPage('dashboardPage');
-    }
-});
+    // 2. Auth listener for real-time sign in / Google redirect
+    supabase.auth.onAuthStateChange((event, session) => {
+        console.log("Auth State Changed Event:", event);
+        if (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
+            showPage('dashboardPage');
+        }
+    });
+}
 
-// 2. EMAIL & PASSWORD SIGN IN
+// Page load par initAuth run karein
+document.addEventListener('DOMContentLoaded', initAuth);
+
+
+/* =====================================================
+   BUTTON HANDLERS
+   ===================================================== */
+
+// Email/Password Sign In
 window.handleSignIn = async function() {
     const emailInput = document.getElementById("authEmail") || document.getElementById("loginEmail");
     const passwordInput = document.getElementById("authPassword") || document.getElementById("loginPassword");
@@ -10067,18 +10101,18 @@ window.handleSignIn = async function() {
         alert("Sign In Failed: " + error.message);
     } else {
         alert("Sign In Successful!");
-        showPage('dashboardPage'); // Next Page Load Karein
+        showPage('dashboardPage');
     }
 };
 
-// 3. GOOGLE SIGN IN (Forced Account Selector)
+// Google Sign In (Direct OAuth Trigger)
 window.handleGoogleSignIn = async function() {
     const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-            redirectTo: window.location.origin, // Apki current site par wapas layega
+            redirectTo: window.location.origin,
             queryParams: {
-                prompt: 'select_account' // Yeh har baar Google Account Selection screen majboorifun kholega
+                prompt: 'select_account'
             }
         }
     });

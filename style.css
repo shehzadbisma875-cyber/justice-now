@@ -3301,3 +3301,10 @@ select:focus {
     opacity: .55;
     cursor: not-allowed;
 }
+.page {
+    display: none;
+}
+
+.page.active {
+    display: block !important;
+}
