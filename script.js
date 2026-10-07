@@ -6760,10 +6760,6 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 /* =========================================================
    JUSTICE NOW CHAT
-   FIXED SCRIPT
-   PROFILE + PICTURE + SEARCH + DIRECT MESSAGE
-   FIREBASE AUTH + FIRESTORE + STORAGE
-   NO LOADING TEXT
 ========================================================= */
 
 (function () {
@@ -6771,45 +6767,32 @@ document.addEventListener("DOMContentLoaded", function () {
     "use strict";
 
     /* =====================================================
-       FIREBASE
-    ===================================================== */
+   SUPABASE INITIALIZATION
+   ===================================================== */
+ { createClient }  "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyDqR4opYs45_yVoWV28vXmLLWYKbAKkrKw",
-        authDomain: "justice-now-406e9.firebaseapp.com",
-        projectId: "justice-now-406e9",
-        storageBucket: "justice-now-406e9.firebasestorage.app",
-        messagingSenderId: "651828513296",
-        appId: "1:651828513296:web:41f7491a9e92fddb641895"
-    };
+const SUPABASE_URL = "https://nijpkyhlhmpggcimcxqr.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_7J3qDUVInQNMdCXSy3GDsw_yN7rA5w-";
 
+let supabase;
 
-    if (typeof firebase === "undefined") {
-        console.error("Firebase SDK is not loaded.");
+try {
+    supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    if (!supabase) {
+        console.error("Supabase SDK is not loaded.");
         return;
     }
+} catch (error) {
+    console.error(
+        "Supabase initialization error:",
+        error
+    );
+    return;
+}
 
-
-    try {
-
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-
-    } catch (error) {
-
-        console.error(
-            "Firebase initialization error:",
-            error
-        );
-
-        return;
-    }
-
-
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    const storage = firebase.storage();
+const auth = supabase.auth;
+const db = supabase;
+const storage = supabase.storage;
 
 
     /* =====================================================
@@ -7060,12 +7043,12 @@ document.addEventListener("DOMContentLoaded", function () {
                     true,
 
                 lastSeen:
-                    firebase.firestore
+                    new Date().toISOString()
                         .FieldValue
                         .serverTimestamp(),
 
                 createdAt:
-                    firebase.firestore
+                    new Date().toISOString()
                         .FieldValue
                         .serverTimestamp()
 
@@ -7112,7 +7095,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         isOnline,
 
                     lastSeen:
-                        firebase.firestore
+                        new Date().toISOString()
                             .FieldValue
                             .serverTimestamp()
 
@@ -7149,7 +7132,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             false,
 
                         lastSeen:
-                            firebase.firestore
+                            new Date().toISOString()
                                 .FieldValue
                                 .serverTimestamp()
 
@@ -7659,7 +7642,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
                     /*
-                       Upload to Firebase Storage.
+                       Upload to Supabase Storage.
                     */
 
                     const safeName =
@@ -7714,7 +7697,7 @@ document.addEventListener("DOMContentLoaded", function () {
                                 downloadURL,
 
                             updatedAt:
-                                firebase.firestore
+                                new Date().toISOString()
                                     .FieldValue
                                     .serverTimestamp()
 
@@ -7762,7 +7745,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
                     showStatus(
-                        "Profile picture upload failed. Check Firebase Storage rules.",
+                        "Profile picture upload failed. Check Supabasebase Storage rules.",
                         true
                     );
 
@@ -7935,12 +7918,12 @@ document.addEventListener("DOMContentLoaded", function () {
                         true,
 
                     lastSeen:
-                        firebase.firestore
+                        new Date().toISOString()
                             .FieldValue
                             .serverTimestamp(),
 
                     updatedAt:
-                        firebase.firestore
+                        new Date().toISOString()
                             .FieldValue
                             .serverTimestamp()
 
@@ -8966,7 +8949,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 ],
 
                 updatedAt:
-                    firebase.firestore
+                    new Date().toISOString()
                         .FieldValue
                         .serverTimestamp()
 
@@ -8994,7 +8977,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         text,
 
                     createdAt:
-                        firebase.firestore
+                        new Date().toISOString()
                             .FieldValue
                             .serverTimestamp()
 
@@ -9162,7 +9145,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         url,
 
                     createdAt:
-                        firebase.firestore
+                    new Date().toISOString()
                             .FieldValue
                             .serverTimestamp()
 
@@ -9998,7 +9981,7 @@ document.addEventListener("DOMContentLoaded", function () {
                                 activeChat.uid,
 
                             blockedAt:
-                                firebase.firestore
+                                new Date().toISOString()
                                     .FieldValue
                                     .serverTimestamp()
 
@@ -10026,98 +10009,3 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 })();
-/* =====================================================
-   ROUTER & AUTHENTICATION COMPLETE FIX
-   ===================================================== */
-
-// Universal Show Page Function
-window.showPage = function(pageId) {
-    console.log("Navigating to page:", pageId);
-    
-    // Sabhi pages se active class hatayein
-    const allPages = document.querySelectorAll('.page');
-    allPages.forEach(page => {
-        page.classList.remove('active');
-        page.style.display = 'none'; // Force hide
-    });
-
-    // Target page ko display aur active karein
-    const targetPage = document.getElementById(pageId);
-    if (targetPage) {
-        targetPage.classList.add('active');
-        targetPage.style.display = 'block'; // Force display
-        window.scrollTo(0, 0);
-    } else {
-        console.error("Page ID not found:", pageId);
-    }
-};
-
-// App Load & Auth State Handler
-async function initAuth() {
-    // 1. Session check karein
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (session) {
-        console.log("Active Session Found:", session.user.email);
-        showPage('dashboardPage');
-    } else {
-        // Agar login page ka ID aapke HTML mein kuch aur hai (e.g. 'loginPage'), toh yahan change karein
-        console.log("No session found. Showing login/home.");
-    }
-
-    // 2. Auth listener for real-time sign in / Google redirect
-    supabase.auth.onAuthStateChange((event, session) => {
-        console.log("Auth State Changed Event:", event);
-        if (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
-            showPage('dashboardPage');
-        }
-    });
-}
-
-// Page load par initAuth run karein
-document.addEventListener('DOMContentLoaded', initAuth);
-
-
-/* =====================================================
-   BUTTON HANDLERS
-   ===================================================== */
-
-// Email/Password Sign In
-window.handleSignIn = async function() {
-    const emailInput = document.getElementById("authEmail") || document.getElementById("loginEmail");
-    const passwordInput = document.getElementById("authPassword") || document.getElementById("loginPassword");
-
-    if (!emailInput || !passwordInput || !emailInput.value || !passwordInput.value) {
-        alert("Please enter both email and password.");
-        return;
-    }
-
-    const { data, error } = await supabase.auth.signInWithPassword({
-        email: emailInput.value,
-        password: passwordInput.value
-    });
-
-    if (error) {
-        alert("Sign In Failed: " + error.message);
-    } else {
-        alert("Sign In Successful!");
-        showPage('dashboardPage');
-    }
-};
-
-// Google Sign In (Direct OAuth Trigger)
-window.handleGoogleSignIn = async function() {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-            redirectTo: window.location.origin,
-            queryParams: {
-                prompt: 'select_account'
-            }
-        }
-    });
-
-    if (error) {
-        alert("Google Sign-In Error: " + error.message);
-    }
-};

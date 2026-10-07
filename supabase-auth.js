@@ -1,4 +1,4 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
 /* =====================================================
    SUPABASE CONFIG
@@ -10,15 +10,31 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // State tracking variables for real-time messaging
 let currentActiveChatId = null;
-let messageSubscription = null;
+let messageChannel = null;
 let selectedUserForRequest = null;
 
 /* =====================================================
-   HELPER: GET CURRENT USER
+   SAFE PAGE REDIRECT HELPER (Fixes Blank Screen)
    ===================================================== */
-async function getCurrentUser() {
-    const { data: { session } } = await supabase.auth.getSession();
-    return session ? session.user : null;
+function handleAppNavigation(targetPageName) {
+    if (typeof openAuthPage === "function") {
+        openAuthPage(targetPageName);
+    } else if (typeof showPage === "function") {
+        showPage(targetPageName.replace("Page", ""));
+    } else {
+        // Fallback safety if global page switcher functions are missing
+        const authContainer = document.getElementById("authContainer") || document.querySelector(".auth-section");
+        const welcomeContainer = document.getElementById("welcomeContainer") || document.querySelector(".welcome-section");
+        
+        if (targetPageName === "welcomePage" || targetPageName === "welcome") {
+            if (authContainer) authContainer.style.display = "none";
+            if (welcomeContainer) welcomeContainer.style.display = "block";
+        } else if (targetPageName === "signinPage" || targetPageName === "signin") {
+            // Show signin view
+            const signinPage = document.getElementById("signinPage");
+            if (signinPage) signinPage.classList.add("active");
+        }
+    }
 }
 
 /* =====================================================
@@ -28,7 +44,7 @@ async function saveJusticeUser(user, extraData = {}) {
     const userName = extraData.name || user.user_metadata?.full_name || user.user_metadata?.name || "User";
     const userEmail = user.email || "";
     const username = extraData.username ? extraData.username.toLowerCase().replace(/^@/, "") : "";
-    const photoURL = extraData.photoURL || user.user_metadata?.avatar_url || "";
+    const photoURL = extraData.photoURL || user.user_metadata?.avatar_url || user.user_metadata?.picture || "";
 
     const profileData = {
         uid: user.id,
@@ -38,13 +54,16 @@ async function saveJusticeUser(user, extraData = {}) {
         email: userEmail,
         photoURL: photoURL,
         profileImage: photoURL,
-        updatedAt: new Date().toISOString()
+        updated_at: new Date().toISOString()
     };
 
     localStorage.setItem("justiceUser", JSON.stringify(profileData));
 
     try {
-        const { error } = await supabase.from("users").upsert(profileData, { onConflict: "uid" });
+        const { error } = await supabase
+            .from("users")
+            .upsert(profileData, { onConflict: "uid" });
+
         if (error) throw error;
         console.log("Profile successfully saved to Supabase!");
     } catch (err) {
@@ -63,7 +82,7 @@ document.addEventListener("click", async function(event) {
     if (!saveBtn) return;
     event.preventDefault();
 
-    const currentUser = await getCurrentUser();
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
     if (!currentUser) {
         alert("Please sign in first to save your profile!");
         return;
@@ -106,21 +125,24 @@ export async function searchUserByUsernameOrName(searchQuery) {
     if (!searchQuery) return [];
 
     const searchTerm = searchQuery.trim().toLowerCase().replace(/^@/, "");
-    const currentUser = await getCurrentUser();
 
     try {
-        const { data: users, error } = await supabase.from("users").select("*");
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        const { data, error } = await supabase
+            .from("users")
+            .select("*");
+
         if (error) throw error;
 
         let results = [];
-        (users || []).forEach((data) => {
-            if (currentUser && data.uid === currentUser.id) return;
+        data.forEach((userData) => {
+            if (currentUser && userData.uid === currentUser.id) return;
 
-            const uName = (data.username || "").toLowerCase();
-            const fName = (data.name || data.profileName || "").toLowerCase();
+            const uName = (userData.username || "").toLowerCase();
+            const fName = (userData.name || userData.profileName || "").toLowerCase();
 
             if (uName.includes(searchTerm) || fName.includes(searchTerm)) {
-                results.push({ id: data.uid, ...data });
+                results.push({ id: userData.uid, ...userData });
             }
         });
 
@@ -199,19 +221,21 @@ document.getElementById("jnCloseUserModal")?.addEventListener("click", () => {
    CHAT SYSTEM: CHAT REQUESTS (SEND, ACCEPT, REJECT)
    ===================================================== */
 document.getElementById("jnSendRequestButton")?.addEventListener("click", async function () {
-    const currentUser = await getCurrentUser();
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
     if (!currentUser) return alert("Please sign in first.");
     if (!selectedUserForRequest) return;
 
     try {
-        const { error } = await supabase.from("chatRequests").insert([{
-            senderId: currentUser.id,
-            receiverId: selectedUserForRequest.uid,
-            senderUsername: currentUser.user_metadata?.full_name || "User",
-            receiverUsername: selectedUserForRequest.username || "",
-            status: "pending",
-            createdAt: new Date().toISOString()
-        }]);
+        const { error } = await supabase
+            .from("chatRequests")
+            .insert({
+                senderId: currentUser.id,
+                receiverId: selectedUserForRequest.uid,
+                senderUsername: currentUser.user_metadata?.full_name || currentUser.email || "User",
+                receiverUsername: selectedUserForRequest.username || "",
+                status: "pending",
+                created_at: new Date().toISOString()
+            });
 
         if (error) throw error;
 
@@ -224,7 +248,7 @@ document.getElementById("jnSendRequestButton")?.addEventListener("click", async 
 });
 
 export async function loadRequests() {
-    const currentUser = await getCurrentUser();
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
     const list = document.getElementById("jnRequestsList");
     if (!list || !currentUser) return;
 
@@ -264,18 +288,24 @@ export async function loadRequests() {
 }
 
 async function acceptRequest(requestId, req) {
-    const currentUser = await getCurrentUser();
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
     if (!currentUser) return;
 
     try {
         const chatId = [currentUser.id, req.senderId].sort().join("_");
+        
+        await supabase
+            .from("chatRequests")
+            .update({ status: "accepted" })
+            .eq("id", requestId);
 
-        await supabase.from("chatRequests").update({ status: "accepted" }).eq("id", requestId);
-        await supabase.from("chats").upsert({
-            id: chatId,
-            members: [currentUser.id, req.senderId],
-            updatedAt: new Date().toISOString()
-        }, { onConflict: "id" });
+        await supabase
+            .from("chats")
+            .upsert({
+                id: chatId,
+                members: [currentUser.id, req.senderId],
+                updated_at: new Date().toISOString()
+            }, { onConflict: "id" });
 
         alert("Request accepted.");
         loadRequests();
@@ -287,7 +317,10 @@ async function acceptRequest(requestId, req) {
 
 async function rejectRequest(requestId) {
     try {
-        await supabase.from("chatRequests").update({ status: "rejected" }).eq("id", requestId);
+        await supabase
+            .from("chatRequests")
+            .update({ status: "rejected" })
+            .eq("id", requestId);
         loadRequests();
     } catch (error) {
         console.error("Reject Error:", error);
@@ -298,7 +331,7 @@ async function rejectRequest(requestId) {
    CHAT SYSTEM: LOAD CONVERSATIONS LIST
    ===================================================== */
 export async function loadChats() {
-    const currentUser = await getCurrentUser();
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
     const list = document.getElementById("jnChatList");
     if (!list || !currentUser) return;
 
@@ -324,19 +357,24 @@ export async function loadChats() {
             const otherUid = chat.members.find(uid => uid !== currentUser.id);
             if (!otherUid) continue;
 
-            const { data: user } = await supabase.from("users").select("*").eq("uid", otherUid).single();
-            if (!user) continue;
+            const { data: userDoc } = await supabase
+                .from("users")
+                .select("*")
+                .eq("uid", otherUid)
+                .single();
+
+            if (!userDoc) continue;
 
             const item = document.createElement("div");
             item.className = "jn-chat-item";
             item.innerHTML = `
-                <img src="${user.photoURL || user.profileImage || 'https://via.placeholder.com/120'}">
+                <img src="${userDoc.photoURL || userDoc.profileImage || 'https://via.placeholder.com/120'}">
                 <div class="jn-chat-item-content">
-                    <strong>${escapeText(user.name || user.profileName || "User")}</strong>
-                    <small>@${escapeText(user.username || "")}</small>
+                    <strong>${escapeText(userDoc.name || userDoc.profileName || "User")}</strong>
+                    <small>@${escapeText(userDoc.username || "")}</small>
                 </div>
             `;
-            item.addEventListener("click", () => openConversation(chat.id, user));
+            item.addEventListener("click", () => openConversation(chat.id, userDoc));
             list.appendChild(item);
         }
     } catch (error) {
@@ -360,58 +398,61 @@ function openConversation(chatId, otherUser) {
     listenForMessages(chatId);
 }
 
-async function listenForMessages(chatId) {
+function listenForMessages(chatId) {
     const messagesContainer = document.getElementById("jnMessages");
     if (!messagesContainer) return;
 
-    if (messageSubscription) {
-        supabase.removeChannel(messageSubscription);
-        messageSubscription = null;
+    if (messageChannel) {
+        supabase.removeChannel(messageChannel);
     }
 
-    const currentUser = await getCurrentUser();
+    async function fetchAndRenderMessages() {
+        const { data: messages, error } = await supabase
+            .from("messages")
+            .select("*")
+            .eq("chatId", chatId)
+            .order("created_at", { ascending: true });
 
-    // Load initial messages
-    const { data: messages } = await supabase
-        .from("messages")
-        .select("*")
-        .eq("chatId", chatId)
-        .order("createdAt", { ascending: true });
+        if (error) {
+            console.error("Fetch Messages Error:", error);
+            return;
+        }
 
-    renderMessages(messages || [], currentUser, messagesContainer);
+        messagesContainer.innerHTML = "";
+        const localUser = JSON.parse(localStorage.getItem("justiceUser"));
+        messages.forEach((msg) => {
+            const isMine = localUser && msg.senderId === localUser.uid;
 
-    // Subscribe to real-time new messages
-    messageSubscription = supabase
+            const bubble = document.createElement("div");
+            bubble.style.cssText = `
+                background: ${isMine ? '#f37021' : '#0d294b'};
+                color: #ffffff;
+                padding: 10px 14px;
+                border-radius: 14px;
+                margin-bottom: 8px;
+                max-width: 75%;
+                margin-left: ${isMine ? 'auto' : '0'};
+                margin-right: ${isMine ? '0' : 'auto'};
+                word-break: break-word;
+            `;
+            bubble.textContent = msg.text || "";
+            messagesContainer.appendChild(bubble);
+        });
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    fetchAndRenderMessages();
+
+    messageChannel = supabase
         .channel(`public:messages:chatId=eq.${chatId}`)
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `chatId=eq.${chatId}` }, payload => {
-            appendSingleMessage(payload.new, currentUser, messagesContainer);
-        })
+        .on(
+            'postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'messages', filter: `chatId=eq.${chatId}` },
+            () => {
+                fetchAndRenderMessages();
+            }
+        )
         .subscribe();
-}
-
-function renderMessages(messages, currentUser, container) {
-    container.innerHTML = "";
-    messages.forEach(msg => appendSingleMessage(msg, currentUser, container));
-}
-
-function appendSingleMessage(msg, currentUser, container) {
-    const isMine = currentUser && msg.senderId === currentUser.id;
-
-    const bubble = document.createElement("div");
-    bubble.style.cssText = `
-        background: ${isMine ? '#f37021' : '#0d294b'};
-        color: #ffffff;
-        padding: 10px 14px;
-        border-radius: 14px;
-        margin-bottom: 8px;
-        max-width: 75%;
-        margin-left: ${isMine ? 'auto' : '0'};
-        margin-right: ${isMine ? '0' : 'auto'};
-        word-break: break-word;
-    `;
-    bubble.textContent = msg.text || "";
-    container.appendChild(bubble);
-    container.scrollTop = container.scrollHeight;
 }
 
 async function sendMessage() {
@@ -419,22 +460,25 @@ async function sendMessage() {
     if (!input) return;
 
     const text = input.value.trim();
-    const currentUser = await getCurrentUser();
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
 
     if (!text || !currentUser || !currentActiveChatId) return;
 
     input.value = "";
     try {
-        await supabase.from("messages").insert([{
-            chatId: currentActiveChatId,
-            text: text,
-            senderId: currentUser.id,
-            createdAt: new Date().toISOString()
-        }]);
+        await supabase
+            .from("messages")
+            .insert({
+                chatId: currentActiveChatId,
+                text: text,
+                senderId: currentUser.id,
+                created_at: new Date().toISOString()
+            });
 
-        await supabase.from("chats").update({
-            updatedAt: new Date().toISOString()
-        }).eq("id", currentActiveChatId);
+        await supabase
+            .from("chats")
+            .update({ updated_at: new Date().toISOString() })
+            .eq("id", currentActiveChatId);
     } catch (error) {
         console.error("Send Message Error:", error);
     }
@@ -451,9 +495,9 @@ document.getElementById("jnMessageInput")?.addEventListener("keydown", (e) => {
 document.getElementById("jnConversationBack")?.addEventListener("click", () => {
     document.getElementById("jnConversationPage")?.classList.remove("active");
     currentActiveChatId = null;
-    if (messageSubscription) {
-        supabase.removeChannel(messageSubscription);
-        messageSubscription = null;
+    if (messageChannel) {
+        supabase.removeChannel(messageChannel);
+        messageChannel = null;
     }
 });
 
@@ -474,25 +518,25 @@ document.addEventListener("submit", function(event) {
     const message = document.getElementById("signupMessage");
 
     if (!name || !email || !password || !confirmPassword) {
-        message.textContent = "Please fill in all fields.";
+        if (message) message.textContent = "Please fill in all fields.";
         return;
     }
 
     if (password.length < 6) {
-        message.textContent = "Password must be at least 6 characters.";
+        if (message) message.textContent = "Password must be at least 6 characters.";
         return;
     }
 
     if (password !== confirmPassword) {
-        message.textContent = "Passwords do not match.";
+        if (message) message.textContent = "Passwords do not match.";
         return;
     }
 
-    message.textContent = "Creating your account...";
+    if (message) message.textContent = "Creating your account...";
 
     supabase.auth.signUp({
-        email: email,
-        password: password,
+        email,
+        password,
         options: {
             data: { full_name: name }
         }
@@ -500,22 +544,21 @@ document.addEventListener("submit", function(event) {
         if (response.error) throw response.error;
         if (response.data.user) {
             await saveJusticeUser(response.data.user, { name });
-            message.textContent = "Account created successfully!";
-            form.reset();
-
-            setTimeout(function() {
-                if (typeof openAuthPage === "function") openAuthPage("signinPage");
-                else if (typeof showPage === "function") showPage("signin");
-            }, 1000);
         }
+        if (message) message.textContent = "Account created successfully!";
+        form.reset();
+
+        setTimeout(function() {
+            handleAppNavigation("signinPage");
+        }, 1000);
     }).catch(function(error) {
         console.error("Supabase Sign Up Error:", error);
-        message.textContent = "Account creation failed: " + error.message;
+        if (message) message.textContent = "Account creation failed: " + error.message;
     });
 }, true);
 
 /* =====================================================
-   SIGN IN
+   SIGN IN (Fixed & Bulletproof Navigation)
    ===================================================== */
 document.addEventListener("submit", function(event) {
     const form = event.target;
@@ -526,39 +569,106 @@ document.addEventListener("submit", function(event) {
 
     const nameInput = document.getElementById("fullName");
     const name = nameInput ? nameInput.value.trim() : "";
-    const email = document.getElementById("email").value.trim().toLowerCase();
-    const password = document.getElementById("password").value;
+    
+    const emailField = document.getElementById("email");
+    const passwordField = document.getElementById("password");
     const message = document.getElementById("signinMessage");
 
-    if (!email || !password) {
-        message.textContent = "Please fill in all fields.";
+    if (!emailField || !passwordField) {
+        if (message) message.textContent = "Sign-in form inputs missing!";
         return;
     }
 
-    message.textContent = "Signing in...";
+    const email = emailField.value.trim().toLowerCase();
+    const password = passwordField.value;
+
+    if (!email || !password) {
+        if (message) message.textContent = "Please fill in all fields.";
+        return;
+    }
+
+    if (message) message.textContent = "Signing in...";
 
     supabase.auth.signInWithPassword({
-        email: email,
-        password: password
+        email,
+        password
     }).then(async function(response) {
         if (response.error) throw response.error;
-        if (response.data.user) {
-            await saveJusticeUser(response.data.user, { name });
-            message.textContent = "Sign in successful!";
+        
+        await saveJusticeUser(response.data.user, { name });
+        if (message) message.textContent = "Sign in successful! Redirecting...";
 
-            setTimeout(function() {
-                if (typeof openAuthPage === "function") openAuthPage("welcomePage");
-                else if (typeof showPage === "function") showPage("welcome");
-            }, 700);
-        }
+        // Direct DOM check to ensure welcome page appears instantly without blank screen
+        setTimeout(function() {
+            // 1. Try global helper if it exists
+            if (typeof handleAppNavigation === "function") {
+                handleAppNavigation("welcomePage");
+            }
+            
+            // 2. Direct DOM fallback to switch screens safely
+            const authSection = document.getElementById("authContainer") || document.getElementById("signinPage") || document.querySelector(".auth-section");
+            const welcomeSection = document.getElementById("welcomeContainer") || document.getElementById("welcomePage") || document.querySelector(".welcome-section");
+
+            if (authSection) {
+                authSection.style.display = "none";
+                authSection.classList.remove("active");
+            }
+            if (welcomeSection) {
+                welcomeSection.style.display = "block";
+                welcomeSection.classList.add("active");
+            }
+
+            // Agar pages class-based toggle hote hain (jaise .page { display: none })
+            document.querySelectorAll(".page, .screen").forEach(p => p.classList.remove("active"));
+            const targetWelcome = document.getElementById("welcomePage") || document.getElementById("welcomeContainer");
+            if (targetWelcome) targetWelcome.classList.add("active");
+
+        }, 700);
+
     }).catch(function(error) {
         console.error("Supabase Sign In Error:", error);
-        message.textContent = "Sign in failed: " + error.message;
+        if (message) message.textContent = "Sign in failed: " + error.message;
     });
 }, true);
+/* =====================================================
+   1. AUTO-CHECK SESSION ON PAGE LOAD (Prevents falling back to First Page)
+   ===================================================== */
+document.addEventListener("DOMContentLoaded", async function() {
+    // Check if user is already logged in (especially after Google OAuth redirect)
+    try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (session && session.user) {
+            console.log("Active session found, redirecting to welcome page...");
+            
+            // Hide Auth / First Page instantly
+            const authSection = document.getElementById("authContainer") || document.getElementById("signinPage") || document.querySelector(".auth-section");
+            const welcomeSection = document.getElementById("welcomeContainer") || document.getElementById("welcomePage") || document.querySelector(".welcome-section");
+
+            if (authSection) {
+                authSection.style.display = "none";
+                authSection.classList.remove("active");
+            }
+            if (welcomeSection) {
+                welcomeSection.style.display = "block";
+                welcomeSection.classList.add("active");
+            }
+
+            document.querySelectorAll(".page, .screen").forEach(p => p.classList.remove("active"));
+            const targetWelcome = document.getElementById("welcomePage") || document.getElementById("welcomeContainer");
+            if (targetWelcome) targetWelcome.classList.add("active");
+
+            // Load user data & chats in background
+            loadChats();
+            loadRequests();
+        }
+    } catch (err) {
+        console.error("Session check error:", err);
+    }
+});
 
 /* =====================================================
-   GOOGLE SIGN IN
+   2. GOOGLE SIGN IN BUTTON SETUP
    ===================================================== */
 document.addEventListener("DOMContentLoaded", function() {
     const signinForm = document.getElementById("signinForm");
@@ -585,15 +695,15 @@ document.addEventListener("DOMContentLoaded", function() {
         event.preventDefault();
 
         googleButton.disabled = true;
-        googleButton.textContent = "Opening Google...";
+        googleButton.textContent = "Connecting to Google...";
+
+        // Live Vercel app ya local host dono ke liye dynamic welcome page URL
+        const redirectUrl = window.location.origin + "/welcome.html";
 
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: window.location.origin,
-                queryParams: {
-                    prompt: 'select_account'
-                }
+                redirectTo: redirectUrl
             }
         });
 
@@ -607,7 +717,6 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     };
 });
-
 /* =====================================================
    FORGOT PASSWORD
    ===================================================== */
@@ -620,42 +729,53 @@ document.addEventListener("click", function(event) {
 
     const emailInput = document.getElementById("resetEmail");
     const message = document.getElementById("resetMessage");
-    const email = emailInput.value.trim().toLowerCase();
+    const email = emailInput ? emailInput.value.trim().toLowerCase() : "";
 
     if (!email) {
-        message.textContent = "Please enter your email address.";
+        if (message) message.textContent = "Please enter your email address.";
         return;
     }
 
-    message.textContent = "Sending password reset email...";
+    if (message) message.textContent = "Sending password reset email...";
 
     supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/#reset-password`
-    }).then(function(response) {
-        if (response.error) throw response.error;
-        message.textContent = "Password reset link has been sent to your email.";
+        redirectTo: window.location.origin
+    }).then(function({ error }) {
+        if (error) throw error;
+        if (message) message.textContent = "Password reset link has been sent to your email.";
     }).catch(function(error) {
         console.error("Password Reset Error:", error);
-        message.textContent = "Unable to send reset email: " + error.message;
+        if (message) message.textContent = "Unable to send reset email: " + error.message;
     });
 }, true);
 
 /* =====================================================
-   AUTH STATE OBSERVER
+   AUTH STATE OBSERVER (Handles Google Redirect & Session)
    ===================================================== */
-supabase.auth.onAuthStateChange(async (event, session) => {
+supabase.auth.onAuthStateChange(async function(event, session) {
     if (session && session.user) {
         const user = session.user;
-        const { data: userDoc } = await supabase.from("users").select("*").eq("uid", user.id).single();
-
+        const { data: userDoc } = await supabase
+            .from("users")
+            .select("*")
+            .eq("uid", user.id)
+            .single();
+        
         if (userDoc) {
             localStorage.setItem("justiceUser", JSON.stringify(userDoc));
         } else {
-            saveJusticeUser(user, { name: user.user_metadata?.full_name });
+            await saveJusticeUser(user, { name: user.user_metadata?.full_name });
         }
 
         loadChats();
         loadRequests();
+
+        // If user just returned from Google OAuth login, automatically direct to welcome page
+        if (event === "SIGNED_IN") {
+            setTimeout(() => {
+                handleAppNavigation("welcomePage");
+            }, 500);
+        }
     }
 });
 
