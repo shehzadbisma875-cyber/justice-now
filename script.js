@@ -6769,30 +6769,45 @@ document.addEventListener("DOMContentLoaded", function () {
     /* =====================================================
    SUPABASE INITIALIZATION
    ===================================================== */
- { createClient }  "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+  {
+    initializeApp
+} "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 
-const SUPABASE_URL = "https://nijpkyhlhmpggcimcxqr.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_7J3qDUVInQNMdCXSy3GDsw_yN7rA5w-";
+ {
+    getAuth,
+    onAuthStateChanged,
+    signOut
+}  "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 
-let supabase;
+ {
+    getFirestore,
+    collection,
+    addDoc,
+    deleteDoc,
+    doc,
+    query,
+    orderBy,
+    onSnapshot,
+    serverTimestamp
+}  "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
-try {
-    supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    if (!supabase) {
-        console.error("Supabase SDK is not loaded.");
-        return;
-    }
-} catch (error) {
-    console.error(
-        "Supabase initialization error:",
-        error
-    );
-    return;
-}
-
-const auth = supabase.auth;
-const db = supabase;
-const storage = supabase.storage;
+ {
+    getStorage,
+    ref,
+    uploadBytes,
+    getDownloadURL
+}  "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
+/* =====================================================
+   FIREBASE CONFIG
+   ===================================================== */
+const firebaseConfig = {
+    apiKey: "AIzaSyDqR4opYs45_yVoWV28vXmLLWYKbAKkrKw",
+    authDomain: "justice-now-406e9.firebaseapp.com",
+    projectId: "justice-now-406e9",
+    storageBucket: "justice-now-406e9.firebasestorage.app",
+    messagingSenderId: "651828513296",
+    appId: "1:651828513296:web:41f7491a9e92fddb641895"
+};
 
 
     /* =====================================================
@@ -7642,7 +7657,7 @@ const storage = supabase.storage;
 
 
                     /*
-                       Upload to Supabase Storage.
+                       Upload to Firebase Storage.
                     */
 
                     const safeName =
@@ -7745,7 +7760,7 @@ const storage = supabase.storage;
 
 
                     showStatus(
-                        "Profile picture upload failed. Check Supabasebase Storage rules.",
+                        "Profile picture upload failed. Check Firebase Storage rules.",
                         true
                     );
 
