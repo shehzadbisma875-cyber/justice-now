@@ -6758,8 +6758,13 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 });
+
 /* =========================================================
    JUSTICE NOW CHAT
+   FIXED SCRIPT
+   PROFILE + PICTURE + SEARCH + DIRECT MESSAGE
+   FIREBASE AUTH + FIRESTORE + STORAGE
+   NO LOADING TEXT
 ========================================================= */
 
 (function () {
@@ -6767,47 +6772,45 @@ document.addEventListener("DOMContentLoaded", function () {
     "use strict";
 
     /* =====================================================
-   SUPABASE INITIALIZATION
-   ===================================================== */
-  {
-    initializeApp
-} "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+       FIREBASE
+    ===================================================== */
 
- {
-    getAuth,
-    onAuthStateChanged,
-    signOut
-}  "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+    const firebaseConfig = {
+        apiKey: "AIzaSyDqR4opYs45_yVoWV28vXmLLWYKbAKkrKw",
+        authDomain: "justice-now-406e9.firebaseapp.com",
+        projectId: "justice-now-406e9",
+        storageBucket: "justice-now-406e9.firebasestorage.app",
+        messagingSenderId: "651828513296",
+        appId: "1:651828513296:web:41f7491a9e92fddb641895"
+    };
 
- {
-    getFirestore,
-    collection,
-    addDoc,
-    deleteDoc,
-    doc,
-    query,
-    orderBy,
-    onSnapshot,
-    serverTimestamp
-}  "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
- {
-    getStorage,
-    ref,
-    uploadBytes,
-    getDownloadURL
-}  "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
-/* =====================================================
-   FIREBASE CONFIG
-   ===================================================== */
-const firebaseConfig = {
-    apiKey: "AIzaSyDqR4opYs45_yVoWV28vXmLLWYKbAKkrKw",
-    authDomain: "justice-now-406e9.firebaseapp.com",
-    projectId: "justice-now-406e9",
-    storageBucket: "justice-now-406e9.firebasestorage.app",
-    messagingSenderId: "651828513296",
-    appId: "1:651828513296:web:41f7491a9e92fddb641895"
-};
+    if (typeof firebase === "undefined") {
+        console.error("Firebase SDK is not loaded.");
+        return;
+    }
+
+
+    try {
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Firebase initialization error:",
+            error
+        );
+
+        return;
+    }
+
+
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
 
 
     /* =====================================================
@@ -7058,12 +7061,12 @@ const firebaseConfig = {
                     true,
 
                 lastSeen:
-                    new Date().toISOString()
+                    firebase.firestore
                         .FieldValue
                         .serverTimestamp(),
 
                 createdAt:
-                    new Date().toISOString()
+                    firebase.firestore
                         .FieldValue
                         .serverTimestamp()
 
@@ -7110,7 +7113,7 @@ const firebaseConfig = {
                         isOnline,
 
                     lastSeen:
-                        new Date().toISOString()
+                        firebase.firestore
                             .FieldValue
                             .serverTimestamp()
 
@@ -7147,7 +7150,7 @@ const firebaseConfig = {
                             false,
 
                         lastSeen:
-                            new Date().toISOString()
+                            firebase.firestore
                                 .FieldValue
                                 .serverTimestamp()
 
@@ -7712,7 +7715,7 @@ const firebaseConfig = {
                                 downloadURL,
 
                             updatedAt:
-                                new Date().toISOString()
+                                firebase.firestore
                                     .FieldValue
                                     .serverTimestamp()
 
@@ -7933,12 +7936,12 @@ const firebaseConfig = {
                         true,
 
                     lastSeen:
-                        new Date().toISOString()
+                        firebase.firestore
                             .FieldValue
                             .serverTimestamp(),
 
                     updatedAt:
-                        new Date().toISOString()
+                        firebase.firestore
                             .FieldValue
                             .serverTimestamp()
 
@@ -8964,7 +8967,7 @@ const firebaseConfig = {
                 ],
 
                 updatedAt:
-                    new Date().toISOString()
+                    firebase.firestore
                         .FieldValue
                         .serverTimestamp()
 
@@ -8992,7 +8995,7 @@ const firebaseConfig = {
                         text,
 
                     createdAt:
-                        new Date().toISOString()
+                        firebase.firestore
                             .FieldValue
                             .serverTimestamp()
 
@@ -9160,7 +9163,7 @@ const firebaseConfig = {
                         url,
 
                     createdAt:
-                    new Date().toISOString()
+                        firebase.firestore
                             .FieldValue
                             .serverTimestamp()
 
@@ -9996,7 +9999,7 @@ const firebaseConfig = {
                                 activeChat.uid,
 
                             blockedAt:
-                                new Date().toISOString()
+                                firebase.firestore
                                     .FieldValue
                                     .serverTimestamp()
 
